@@ -1,5 +1,3 @@
-// Directory: src/main/java/org/itu/p372/data
-
 package org.itu.p372.data;
 
 /**
@@ -12,14 +10,15 @@ package org.itu.p372.data;
 public interface CoefficientProvider {
 
     /**
-     * Retrieves interpolated atmospheric noise parameters for a given 4-hour time block,
-     * location, and frequency.
+     * Retrieves interpolated atmospheric noise parameters for a given month,
+     * 4-hour time block, location, and frequency.
      *
+     * @param month         Month index (0–11)
      * @param blockIndex    Index of the 4-hour time block (0–5)
      * @param latitudeDeg   Latitude in decimal degrees
      * @param longitudeDeg  Longitude in decimal degrees
      * @param frequencyMHz  Frequency in MHz
      * @return FamParameters containing F<sub>A</sub>, D<sub>u</sub>, and D<sub>l</sub> in dB
      */
-    FamParameters getFamParameters(int blockIndex, int blockNow, double latitudeDeg, double longitudeDeg, double frequencyMHz);
+    FamParameters getFamParameters(int month, int blockIndex, double latitudeDeg, double longitudeDeg, double frequencyMHz);
 }

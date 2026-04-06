@@ -1,5 +1,3 @@
-// Directory: src/main/java/org/itu/p372/model
-
 package org.itu.p372.model;
 
 import org.itu.p372.api.ManMadeNoiseInput;
@@ -46,13 +44,13 @@ public class ManMadeNoiseCalculator {
                 // QUIETRURAL
                 c = 53.6; d = 28.6; du = 9.2;  dl = 4.6;
             }
-            case 5 -> {
-                // QUIET
-                c = 65.2; d = 29.1; du = 9.2;  dl = 4.6;
-            }
             case 4 -> {
                 // NOISY
                 c = 83.2; d = 37.5; du = 11.0; dl = 6.7;
+            }
+            case 5 -> {
+                // QUIET
+                c = 65.2; d = 29.1; du = 9.2;  dl = 4.6;
             }
             default -> {
                 // Numeric override of noise level
@@ -62,10 +60,7 @@ public class ManMadeNoiseCalculator {
             }
         }
 
-        // Compute median noise: FaM = c - d * log10(freq)
         double medianDb = c - d * Math.log10(freq);
-
-        // Return result record (median, lower decile, upper decile)
         return new ManMadeNoiseResult(medianDb, dl, du);
     }
 }

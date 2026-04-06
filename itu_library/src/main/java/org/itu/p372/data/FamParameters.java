@@ -1,5 +1,3 @@
-// Directory: src/main/java/org/itu/p372/data
-
 package org.itu.p372.data;
 
 /**

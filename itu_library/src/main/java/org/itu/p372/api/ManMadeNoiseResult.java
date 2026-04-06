@@ -1,4 +1,3 @@
-// File: ManMadeNoiseResult.java
 package org.itu.p372.api;
 
 /**

@@ -1,5 +1,3 @@
-
-// File: LocationRecord.java
 package org.itu.p372.api;
 
 /**

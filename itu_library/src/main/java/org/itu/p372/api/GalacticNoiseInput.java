@@ -1,4 +1,3 @@
-// File: GalacticNoiseInput.java
 package org.itu.p372.api;
 
 import java.time.ZonedDateTime;

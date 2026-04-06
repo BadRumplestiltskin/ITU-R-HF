@@ -1,4 +1,3 @@
-// File: NoiseInputParameters.java
 package org.itu.p372.api;
 
 import java.time.ZonedDateTime;

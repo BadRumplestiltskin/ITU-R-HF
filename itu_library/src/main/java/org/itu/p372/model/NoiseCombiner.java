@@ -1,5 +1,3 @@
-// Directory: src/main/java/org/itu/p372/model
-
 package org.itu.p372.model;
 
 import java.util.List;

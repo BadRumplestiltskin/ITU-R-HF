@@ -1,9 +1,4 @@
-// Directory: src/main/java/org/itu/p372/api
-
-// File: RadioNoiseService.java
 package org.itu.p372.api;
-
-import java.time.ZonedDateTime;
 
 /**
  * Service interface for calculating radio noise according to ITU-R P.372-17.

@@ -1,5 +1,3 @@
-// Directory: src/main/java/org/itu/p372/model
-
 package org.itu.p372.model;
 
 import org.itu.p372.api.GalacticNoiseInput;
@@ -21,18 +19,8 @@ public class CosmicNoiseCalculator {
      * @return GalacticNoiseResult containing noise level (median = fixed), and deciles
      */
     public GalacticNoiseResult calculate(GalacticNoiseInput input) {
-        double freq = input.frequencyMHz();
-
-        // 1. Constants from P.372-17 Table for galactic noise
-        double c = 52.0;
-        double d = 23.0;
-
-        // 2. Compute median noise: FaG = c - d * log10(freq)
-        double noiseDb = c - d * Math.log10(freq);
-
-        // 3. Standard decile deviation is fixed at 2 dB
-        double decile = 2.0;
-
+        // P.372-17 Table: FaG = 52 - 23 * log10(freq)
+        double noiseDb = 52.0 - 23.0 * Math.log10(input.frequencyMHz());
         return new GalacticNoiseResult(noiseDb);
     }
 }

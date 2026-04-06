@@ -1,10 +1,19 @@
-// Directory: src/main/java/org/itu/p372/service
-
 package org.itu.p372.service;
 
-import org.itu.p372.api.*;
-import org.itu.p372.model.*;
 import java.util.List;
+import org.itu.p372.api.AtmosphericNoiseInput;
+import org.itu.p372.api.AtmosphericNoiseResult;
+import org.itu.p372.api.GalacticNoiseInput;
+import org.itu.p372.api.GalacticNoiseResult;
+import org.itu.p372.api.ManMadeNoiseInput;
+import org.itu.p372.api.ManMadeNoiseResult;
+import org.itu.p372.api.NoiseInputParameters;
+import org.itu.p372.api.NoiseResult;
+import org.itu.p372.api.RadioNoiseService;
+import org.itu.p372.model.CosmicNoiseCalculator;
+import org.itu.p372.model.LightningNoiseCalculator;
+import org.itu.p372.model.ManMadeNoiseCalculator;
+import org.itu.p372.model.NoiseCombiner;
 
 /**
  * Default implementation of RadioNoiseService.
@@ -18,13 +27,6 @@ public class DefaultRadioNoiseService implements RadioNoiseService {
     private final CosmicNoiseCalculator cosmicCalculator;
     private final NoiseCombiner noiseCombiner;
 
-    /**
-     * Constructs the service with required calculators and combiner.
-     * @param lightningCalculator
-     * @param manMadeCalculator
-     * @param cosmicCalculator
-     * @param noiseCombiner
-     */
     public DefaultRadioNoiseService(
             LightningNoiseCalculator lightningCalculator,
             ManMadeNoiseCalculator manMadeCalculator,
@@ -38,18 +40,17 @@ public class DefaultRadioNoiseService implements RadioNoiseService {
 
     @Override
     public NoiseResult calculateCombinedNoise(NoiseInputParameters params) {
-        // 1. Calculate individual components
-        AtmosphericNoiseResult atm = lightningCalculator.calculate(params);
+        AtmosphericNoiseResult atm = lightningCalculator.calculate(
+            new AtmosphericNoiseInput(params.frequencyMHz(), params.location(), params.dateTimeUtc(), 0.0)
+        );
         ManMadeNoiseResult man = manMadeCalculator.calculate(
-            new ManMadeNoiseInput(params.frequencyMHz(), params.location(), params.dateTimeUtc(), /* default env factor */ 0)
+            new ManMadeNoiseInput(params.frequencyMHz(), params.location(), params.dateTimeUtc(), 0)
         );
         GalacticNoiseResult gal = cosmicCalculator.calculate(
             new GalacticNoiseInput(params.frequencyMHz(), params.location(), params.dateTimeUtc())
         );
 
-        // 2. Combine the components
-        List<Double> deciles = List.of(atm.medianDb(), man.medianDb(), gal.noiseDb());
-        double totalDb = noiseCombiner.combine(deciles);
+        double totalDb = noiseCombiner.combine(List.of(atm.medianDb(), man.medianDb(), gal.noiseDb()));
 
         return new NoiseResult(
             atm.medianDb(),

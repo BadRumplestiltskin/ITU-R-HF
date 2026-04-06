@@ -1,4 +1,3 @@
-// File: GalacticNoiseResult.java
 package org.itu.p372.api;
 
 /**
