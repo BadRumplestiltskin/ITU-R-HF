@@ -1,5 +1,5 @@
 % P372 - MATLAB implementation of Recommendation ITU-R P.372-14 (radio noise)
-% Version 1.0.0 (engine 14.3)  8-Sep-2026
+% Version 1.1.0 (engine 14.3)  8-Sep-2026
 %
 % Port of the ITU-R Study Group 3 reference C code (ITU-R-HF/P372).
 % Angles passed to engine functions are radians; use p372.D2R to convert.

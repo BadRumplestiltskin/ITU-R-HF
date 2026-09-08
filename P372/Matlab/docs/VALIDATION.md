@@ -29,7 +29,8 @@ and `-fcommon` accommodates the tentative global definitions in
 | test_readFamDud | 4 arrays x 12 months | exact equality | 0 |
 | test_readVdCoeffs | 240 coefficients | exact equality | 0 |
 | test_readCoeff | 28 arrays, dims and consistency | exact | pass |
-| test_noise_vs_reference | 24 500 points, 12 outputs | < 1e-6 dB | 5.0e-10 dB |
+| test_noise_vs_reference | 24 500 points, 12 outputs, `sigmaRule='reference'` | < 1e-6 dB | 5.0e-10 dB |
+| test_sigmaRule | 3 000 points, default rule vs independent eq. 18-26 | < 1e-9 dB | pass |
 | test_noise_vs_reference | 3 500 points, 6 LT statistics | < 1e-6 dB | 5.0e-10 dB |
 | test_vectorised_equals_scalar | grid vs point evaluation | bit-identical | pass |
 | test_mode2_csv | a, b, c data files | byte-identical text | pass |

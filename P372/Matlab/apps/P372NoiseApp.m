@@ -11,7 +11,9 @@ classdef P372NoiseApp < handle
 %     Month, Hour (UTC 0-23), Latitude and Longitude (degrees, north and
 %     east positive), Frequency (0.01-30 MHz), Man-made noise category
 %     (City, Residential, Rural, Quiet rural, Noisy, Quiet) or an override
-%     value in dB that bypasses the model, and the data folder.
+%     value in dB that bypasses the model, the sigma_T rule for deciles
+%     above 12 dB (ITU C code behaviour or P.372-17 wording, see
+%     p372.noise), and the data folder.
 %   Results tab:
 %     Table of the twelve outputs of p372.noise (medians and decile
 %     deviations of the atmospheric, man-made, galactic and total noise,
@@ -47,6 +49,7 @@ classdef P372NoiseApp < handle
         FreqEF       % numeric edit field, MHz
         MMDD         % uidropdown, man-made category or override (-1)
         MMValEF      % numeric edit field, override value dB
+        RuleDD       % uidropdown, sigma_T rule ('reference' / 'p372-17')
         DataEF       % text edit field, data folder
         % Output controls
         ResultTable  % uitable of the 12 results
@@ -75,8 +78,8 @@ classdef P372NoiseApp < handle
 
             % ---------- input panel ----------
             pnl = uipanel(g, 'Title', 'Inputs');
-            pg = uigridlayout(pnl, [10 2]);
-            pg.RowHeight = repmat({28}, 1, 10);
+            pg = uigridlayout(pnl, [11 2]);
+            pg.RowHeight = repmat({28}, 1, 11);
             pg.ColumnWidth = {120, '1x'};
 
             uilabel(pg, 'Text', 'Month');
@@ -97,6 +100,9 @@ classdef P372NoiseApp < handle
                 'ValueChangedFcn', @(~, ~) app.onMMChanged());
             uilabel(pg, 'Text', 'Override Fa (dB)');
             app.MMValEF = uieditfield(pg, 'numeric', 'Value', 50, 'Enable', 'off');
+            uilabel(pg, 'Text', 'sigma_T rule (>12 dB)');
+            app.RuleDD = uidropdown(pg, 'Items', {'P.372-17 text (min of eq. 19, 25)', 'ITU C code (eq. 25 replaces 19)'}, ...
+                'ItemsData', {'p372-17', 'reference'}, 'Value', 'p372-17');
             uilabel(pg, 'Text', 'Data folder');
             app.DataEF = uieditfield(pg, 'text', 'Value', app.DataDir);
             b1 = uibutton(pg, 'Text', 'Browse...', 'ButtonPushedFcn', @(~, ~) app.browse());
@@ -156,7 +162,8 @@ classdef P372NoiseApp < handle
                 dataDir = app.DataEF.Value;
                 coeff = p372.readFamDud(dataDir, month);
                 D2R = p372.D2R();
-                n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, freq);
+                rule = app.RuleDD.Value;
+                n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, freq, rule);
                 names = {'FaA', 'Noise component (atmospheric)'; 'DuA', 'Upper decile (atmospheric)'; ...
                          'DlA', 'Lower decile (atmospheric)'; 'FaM', 'Noise component (man-made)'; ...
                          'DuM', 'Upper decile (man-made)'; 'DlM', 'Lower decile (man-made)'; ...
@@ -166,20 +173,20 @@ classdef P372NoiseApp < handle
                 vals = cellfun(@(f) n.(f), names(:, 1));
                 app.ResultTable.Data = [names, num2cell(round(vals * 1000) / 1000)];
                 app.ReportTA.Value = strsplit(p372.formatReport(n, month, hour, lng, lat, freq), newline);
-                app.updatePlots(coeff, mm, hour, lat, lng, freq);
+                app.updatePlots(coeff, mm, hour, lat, lng, freq, rule);
             catch err
                 app.StatusLbl.Text = err.message;
             end
         end
 
-        function updatePlots(app, coeff, mm, hour, lat, lng, freq)
+        function updatePlots(app, coeff, mm, hour, lat, lng, freq, rule)
             %UPDATEPLOTS Redraw the frequency and hour sweeps for the current point.
             D2R = p372.D2R();
             % Fam vs frequency at this point and UTC hour
             f = logspace(-2, log10(30), 80);
             FaA = zeros(size(f)); FaM = FaA; FaG = FaA; FamT = FaA;
             for k = 1:numel(f)
-                n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, f(k));
+                n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, f(k), rule);
                 FaA(k) = n.FaA; FaM(k) = n.FaM; FaG(k) = n.FaG; FamT(k) = n.FamT;
             end
             ax = app.AxFreq;
@@ -191,7 +198,7 @@ classdef P372NoiseApp < handle
             % Noise vs UTC hour at this frequency
             h = 0:23; A = zeros(size(h)); T = A;
             for k = 1:numel(h)
-                n = p372.noise(coeff, mm, h(k), lng * D2R, lat * D2R, freq);
+                n = p372.noise(coeff, mm, h(k), lng * D2R, lat * D2R, freq, rule);
                 A(k) = n.FaA; T(k) = n.FamT;
             end
             ax = app.AxHour;

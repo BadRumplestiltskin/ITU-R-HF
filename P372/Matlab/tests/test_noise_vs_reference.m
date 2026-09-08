@@ -1,5 +1,7 @@
 function test_noise_vs_reference()
 %TEST_NOISE_VS_REFERENCE Engine reproduces 24 500 C reference calculations.
+%   Uses sigmaRule = 'reference' (ITU C behaviour); the default P.372-17
+%   rule is covered by test_sigmaRule.
 %   reference/ref_points.csv covers months {1,4,7,10}, UTC hours
 %   {0,5,11,17,23}, latitudes {-60..60}, longitudes {-150..165},
 %   frequencies {0.01..30} MHz and man-made settings {0..5, -50}. All 12
@@ -18,7 +20,7 @@ for r = 1:size(M, 1)
         coeff = p372.readFamDud(dataDir, month);
         curMonth = month;
     end
-    n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, freq);
+    n = p372.noise(coeff, mm, hour, lng * D2R, lat * D2R, freq, 'reference');
     got = [n.FaA n.DuA n.DlA n.FaM n.DuM n.DlM n.FaG n.DuG n.DlG n.FamT n.DuT n.DlT];
     d = max(abs(got - M(r, 7:18)));
     if d > tol

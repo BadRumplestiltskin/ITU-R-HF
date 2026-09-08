@@ -68,7 +68,7 @@ same truncated constants as the C code (`p372.D2R`, `p372.R2D`).
 
 ## Fidelity
 
-The port reproduces the C implementation to round-off. `tests/reference/`
+With `sigmaRule = 'reference'` the port reproduces the C implementation to round-off. `tests/reference/`
 holds outputs of the original C code built by `tools/build_reference.sh`:
 24 500 noise calculations over months, hours, positions, frequencies and
 man-made categories agree to better than 1e-9 dB, and the a/b/c figure
@@ -79,7 +79,11 @@ formulas were checked against Recommendation ITU-R P.372-17 (08/2024)
 and agree (docs/ALGORITHM.md sections 3-5). One reading difference is
 documented there: the C code applies equation (25) unconditionally when
 a decile exceeds 12 dB, whereas the Recommendation describes it as an
-upper limit on sigma_T.
+upper limit on sigma_T. The port follows the Recommendation by default
+(`sigmaRule = 'p372-17'`); pass `'reference'` to `p372.noise` /
+`p372.makeNoise` (or choose it in the app) to reproduce the C code, as the
+reference tests do. The two rules differ only when a component decile
+exceeds 12 dB, by at most about 0.6 dB in the total deciles.
 
 Behaviours of the C code that were kept deliberately:
 

@@ -1,7 +1,8 @@
-function [n, out] = makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise, dataDir, pntflag)
+function [n, out] = makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise, dataDir, pntflag, sigmaRule)
 %MAKENOISE Stand-alone single-point P.372-14 noise calculation.
 %   [n, out] = p372.makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise)
 %   [n, out] = p372.makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise, dataDir, pntflag)
+%   [n, out] = p372.makeNoise(..., dataDir, pntflag, sigmaRule)
 %
 %   Convenience wrapper that reads the coefficients, converts degrees to
 %   radians, runs p372.noise and optionally prints the report. Equivalent
@@ -18,6 +19,8 @@ function [n, out] = makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise, dataDi
 %     pntflag - optional: 0 silent (default), 1 print the report to the
 %               command window, 2 write it to MakeNoiseOut.txt in the
 %               current folder.
+%     sigmaRule - optional, 'p372-17' (default, Recommendation wording) or
+%                 'reference' (ITU C code behaviour); see p372.noise.
 %   Outputs:
 %     n   - result struct (see p372.noise).
 %     out - 1x12 double [FaA DuA DlA FaM DuM DlM FaG DuG DlG FamT DuT DlT],
@@ -30,6 +33,9 @@ function [n, out] = makeNoise(month, hour, latDeg, lngDeg, freq, mmnoise, dataDi
 %     [n, out] = p372.makeNoise(1, 13, 40, 165, 1.0, 0, [], 1);
 %
 %   See also p372.noise, p372.iturNoise, p372.formatReport.
+if nargin < 9
+    sigmaRule = '';
+end
 if nargin < 8 || isempty(pntflag)
     pntflag = 0;
 end
@@ -39,7 +45,7 @@ end
 coeff = p372.readFamDud(dataDir, month);
 rlat = latDeg * p372.D2R();
 rlng = lngDeg * p372.D2R();
-n = p372.noise(coeff, mmnoise, hour, rlng, rlat, freq);
+n = p372.noise(coeff, mmnoise, hour, rlng, rlat, freq, sigmaRule);
 out = [n.FaA n.DuA n.DlA n.FaM n.DuM n.DlM n.FaG n.DuG n.DlG n.FamT n.DuT n.DlT];
 
 if pntflag == 1

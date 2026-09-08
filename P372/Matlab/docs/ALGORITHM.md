@@ -110,9 +110,14 @@ The C code uses equation (25) unconditionally in that case, and the port
 reproduces that. Over the 24 500 reference points the rule triggers in
 5 640 cases; in 1 285 of them equation (25) exceeds equation (19), by up
 to 0.64 dB. The `min` reading would also lower sigma_T in 9 191 cases
-where no decile exceeds 12 dB if applied unconditionally, so the exact
-intent of the text is ambiguous; the port follows the reference
-software.
+where no decile exceeds 12 dB if applied unconditionally; the port only
+applies it in the >12 dB case that the text describes.
+
+The port follows the Recommendation: by default `p372.noise` uses
+`sigma_T = min(eq.19, eq.25)` when a decile exceeds 12 dB (`sigmaRule =
+'p372-17'`). Passing `sigmaRule = 'reference'` to `p372.noise` or
+`p372.makeNoise` reproduces the C code instead; the test suite uses it to
+compare against the golden data, and the app offers it in a drop-down.
 
 ## 6. Bypass
 

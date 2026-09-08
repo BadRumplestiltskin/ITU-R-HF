@@ -9,8 +9,10 @@ convention of the ITU command line. Full details: `help p372.<name>`.
 
 | Function | Signature |
 |---|---|
-| `p372.makeNoise` | `[n, out] = makeNoise(month, hourUTC, latDeg, lngDeg, freq, mmnoise [, dataDir, pntflag])` |
-| `p372.noise` | `n = noise(coeff, mmnoise, hourUTC, rlng, rlat, freq)` |
+| `p372.makeNoise` | `[n, out] = makeNoise(month, hourUTC, latDeg, lngDeg, freq, mmnoise [, dataDir, pntflag, sigmaRule])` |
+
+`sigmaRule`: `'p372-17'` (default, sigma_T capped by equation 25 as the Recommendation states) or `'reference'` (ITU C behaviour, for comparison); see `docs/ALGORITHM.md` section 5.
+| `p372.noise` | `n = noise(coeff, mmnoise, hourUTC, rlng, rlat, freq [, sigmaRule])` |
 | `p372.iturNoise` | `[retval, out] = iturNoise(month, hour1to24, freq, lat, lng, mmnoise, dataDir [, pntflag])` or `iturNoise(dataDir)` |
 | `p372.formatReport` | `txt = formatReport(n, month, hourUTC, lngDeg, latDeg, freq [, timestr])` |
 
@@ -52,5 +54,5 @@ Result struct `n` fields, in order: `FaA DuA DlA FaM DuM DlM FaG DuG DlG FamT Du
 ## Error identifiers
 
 `p372:readLines`, `p372:readNamedBlock`, `p372:readFamDud`,
-`p372:getFamParameters`, `p372:makeNoise`, `p372:iturNoise`,
+`p372:getFamParameters`, `p372:noise`, `p372:makeNoise`, `p372:iturNoise`,
 `p372:makeP372Figs`.
