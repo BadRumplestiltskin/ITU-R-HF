@@ -3,8 +3,9 @@ function n = noise(coeff, manMadeNoise, hour, rlng, rlat, frequency)
 %   n = p372.noise(coeff, manMadeNoise, hour, rlng, rlat, frequency)
 %
 %   Main entry point of the engine. Computes the three noise components
-%   and combines them according to P.372 section 8 ("The combination of
-%   noises from several sources") assuming log-normal distributions.
+%   and combines them according to P.372-17 Part 7 ("The combination of
+%   noises from several sources", equations 18-26) assuming log-normal
+%   distributions.
 %   The combination is evaluated twice, once with the upper and once with
 %   the lower decile deviations; the total median is the lower of the
 %   two (worst-case noise), as in the C code.
@@ -33,7 +34,16 @@ function n = noise(coeff, manMadeNoise, hour, rlng, rlat, frequency)
 %     n = p372.noise(coeff, 0, 13, 165 * p372.D2R(), 40 * p372.D2R(), 1.0);
 %     % n.FamT = 76.987, n.DuT = 10.940, n.DlT = 6.574
 %
-%   Reference: P.372-14 sections 4-8; Noise.c Noise().
+%   Divergence from the P.372-17 text (kept for equivalence with the C
+%   code): equation (25), sigma_T = c*sqrt(2*ln(alpha_T/gamma_T)), is
+%   described in the Recommendation as a MAXIMUM to which the sigma_T of
+%   equation (19) should be restricted when any component decile exceeds
+%   12 dB. The C code instead uses equation (25) unconditionally in that
+%   case. Over the 24 500 reference points this makes the C result larger
+%   than min(eq.19, eq.25) in about a fifth of the affected cases, by up
+%   to 0.64 dB in DuT/DlT. See docs/ALGORITHM.md section 5.
+%
+%   Reference: P.372-17 Parts 5-7; Noise.c Noise().
 %
 %   See also p372.makeNoise, p372.atmosphericNoise, p372.manMadeNoise,
 %   p372.galacticNoise, p372.readFamDud.

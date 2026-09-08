@@ -60,19 +60,33 @@ directly and all six statistics returned; it is what the figures use.
 
 ## 3. Man-made noise (`p372.manMadeNoise`)
 
-P.372 section 5, `Fam = c - d log10(f)` with the constants of Table 2
-for City, Residential, Rural and Quiet rural. Two further categories,
-Noisy and Quiet, come from the ITU software (not the Recommendation).
-Deciles are fixed per category. Any other positive value `V` is treated
-as a noise figure specified directly, `Fam = 204 - V`.
+P.372-17 Part 6, section 6.1.1 (outdoor, additive white Gaussian noise),
+equation (17) `Fam = c - d log10(f)` with the constants of Table 1:
+
+| Category | c | d | Du | Dl | Source of deciles |
+|---|---|---|---|---|---|
+| City (curve A) | 76.8 | 27.7 | 11.0 | 6.7 | Table 2 |
+| Residential (curve B) | 72.5 | 27.7 | 10.6 | 5.3 | Table 2 |
+| Rural (curve C) | 67.2 | 27.7 | 9.2 | 4.6 | Table 2 |
+| Quiet rural (curve D) | 53.6 | 28.6 | 9.2 | 4.6 | not in Table 2; Rural values used, as in the C code |
+| Noisy (ITU software only) | 83.2 | 37.5 | 11.0 | 6.7 | City values |
+| Quiet (ITU software only) | 65.2 | 29.1 | 9.2 | 4.6 | Rural values |
+
+All values checked against P.372-17 (08/2024); they are unchanged from
+the edition the C code was written against. Equation (17) is stated
+valid for 0.3 to 250 MHz; the engine extrapolates below 0.3 MHz as the C
+code does. Table 2's "variation with location" deviations are not used.
+Any other positive value `V` is treated as a noise figure specified
+directly, `Fam = 204 - V`.
 
 ## 4. Galactic noise (`p372.galacticNoise`)
 
-P.372 section 6, `Fam = 52 - 23 log10(f)`, deciles 2 dB.
+P.372-17 Table 1 curve E, `Fam = 52 - 23 log10(f)`, deciles 2 dB
+(sigma 1.56 dB as specified in Part 7).
 
 ## 5. Combination (`p372.noise`)
 
-P.372 section 8. Each component is a log-normal variable with median
+P.372-17 Part 7, equations (18) to (26). Each component is a log-normal variable with median
 `Fam_i` and standard deviation `sigma_i = D_i / 1.282` (galactic fixed
 at 1.56 dB). With `c = 10 / ln 10`:
 
@@ -89,6 +103,17 @@ This is evaluated once with the upper deciles (giving `FamT_u`, `DuT`)
 and once with the lower deciles (`FamT_l`, `DlT`); the reported total
 median is `min(FamT_u, FamT_l)`.
 
+**Divergence from the Recommendation text.** P.372-17 says that when a
+decile exceeds 12 dB the sigma_T from equation (19) "should be restricted
+to a maximum value of" equation (25), i.e. `sigma_T = min(eq.19, eq.25)`.
+The C code uses equation (25) unconditionally in that case, and the port
+reproduces that. Over the 24 500 reference points the rule triggers in
+5 640 cases; in 1 285 of them equation (25) exceeds equation (19), by up
+to 0.64 dB. The `min` reading would also lower sigma_T in 9 191 cases
+where no decile exceeds 12 dB if applied unconditionally, so the exact
+intent of the text is ambiguous; the port follows the reference
+software.
+
 ## 6. Bypass
 
 A negative man-made value `-X` skips everything and returns
@@ -104,7 +129,10 @@ Reproduces ITURNoise.exe Mode 2 for months 1, 4, 7, 10 and local hours
 
 ## References
 
-- Recommendation ITU-R P.372-14 (08/2019), *Radio noise*.
+- Recommendation ITU-R P.372-17 (08/2024), *Radio noise*. Parts 5-7
+  (atmospheric, man-made, combination) were checked against this
+  edition; the numerical content used by the engine is unchanged since
+  P.372-14.
 - ITU-R Study Group 3, *ITU-R-HF* software, folder P372 (Noise.c,
   MakeNoise.c, ITURNoise.c), engine version 14.3.
 - Lucas, D. L. and Harper, J. D., *A numerical representation of CCIR

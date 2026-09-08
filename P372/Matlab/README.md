@@ -74,6 +74,13 @@ holds outputs of the original C code built by `tools/build_reference.sh`:
 man-made categories agree to better than 1e-9 dB, and the a/b/c figure
 CSV files are byte-identical.
 
+Man-made and galactic constants, decile tables and the combination
+formulas were checked against Recommendation ITU-R P.372-17 (08/2024)
+and agree (docs/ALGORITHM.md sections 3-5). One reading difference is
+documented there: the C code applies equation (25) unconditionally when
+a decile exceeds 12 dB, whereas the Recommendation describes it as an
+upper limit on sigma_T.
+
 Behaviours of the C code that were kept deliberately:
 
 - `D2R = 0.0174532925` and `R2D = 57.2957795` (truncated), and local

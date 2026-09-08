@@ -1,5 +1,5 @@
 function [FaG, DuG, DlG] = galacticNoise(frequency)
-%GALACTICNOISE Galactic radio noise (P.372 section 6, Table 1 / Figure 10).
+%GALACTICNOISE Galactic radio noise (P.372-17 Part 6 Table 1, curve E).
 %   [FaG, DuG, DlG] = p372.galacticNoise(frequency)
 %
 %   Inputs:
@@ -11,6 +11,9 @@ function [FaG, DuG, DlG] = galacticNoise(frequency)
 %
 %   The 2 dB decile corresponds to the 1.56 dB standard deviation used for
 %   the galactic term in the combination formula of p372.noise.
+%
+%   Checked against P.372-17: c = 52.0, d = 23.0 (Table 1, curve E of
+%   Figure 39) and sigma = 1.56 dB (= 2/1.282, Part 7).
 %
 %   Reference: Noise.c GalacticNoise().
 %

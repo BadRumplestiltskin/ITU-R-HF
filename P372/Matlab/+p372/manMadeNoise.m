@@ -1,5 +1,5 @@
 function [FaM, DuM, DlM] = manMadeNoise(manMadeNoise, frequency)
-%MANMADENOISE Man-made radio noise (P.372 section 5, Table 2 / Figure 2).
+%MANMADENOISE Outdoor man-made radio noise (P.372-17 Part 6, section 6.1.1).
 %   [FaM, DuM, DlM] = p372.manMadeNoise(category, frequency)
 %
 %   Inputs:
@@ -20,6 +20,19 @@ function [FaM, DuM, DlM] = manMadeNoise(manMadeNoise, frequency)
 %     DuM - upper decile deviation, dB.
 %     DlM - lower decile deviation, dB.
 %
+%   Checked against Recommendation ITU-R P.372-17 (08/2024):
+%     * c and d for City, Residential, Rural and Quiet rural equal Table 1
+%       (curves A-D of Figure 39); equation (17) Fam = c - d log f.
+%     * Du and Dl for City, Residential and Rural equal the "variation
+%       with time" column of Table 2. Table 2 has no Quiet rural entry;
+%       the C code, and this port, use the Rural deciles for it.
+%     * Table 2 also gives a "variation with location" deviation (8.4,
+%       5.8, 6.8 dB); the ITU software does not use it and neither does
+%       this port.
+%     * Equation (17) is stated valid from 0.3 to 250 MHz. The engine
+%       accepts 0.01..30 MHz and extrapolates below 0.3 MHz, as the C code
+%       does.
+%
 %   Known upstream quirk (reproduced deliberately): for the "other value"
 %   branch the C code assigns DlM = 11.0 and DuM = 6.7, the reverse of the
 %   City category it claims to use. It is reproduced so that outputs match
@@ -29,7 +42,8 @@ function [FaM, DuM, DlM] = manMadeNoise(manMadeNoise, frequency)
 %   the whole calculation, so the "other value" branch is reached only
 %   for positive values outside 0..5.
 %
-%   Reference: Noise.c ManMadeNoise().
+%   Reference: P.372-17 Part 6, equation (17), Tables 1 and 2, Figure 39;
+%   Noise.c ManMadeNoise().
 %
 %   See also p372.galacticNoise, p372.noise.
 switch manMadeNoise
