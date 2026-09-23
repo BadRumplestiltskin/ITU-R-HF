@@ -68,7 +68,7 @@ AntennaOrientation "TX2RX"
 Path.year {year}
 Path.month {month}
 Path.hour 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24
-Path.SSN {min(c['ssn'],160)}
+Path.SSN {c['ssn']}
 Path.frequency {c['freq']}
 Path.txpower 0.0
 Path.BW 6000.0
