@@ -96,6 +96,10 @@ struct Result {
 	double delay;			// group delay of the dominant mode (s)
 	double grange;			// group range of the dominant mode (km)
 	double noiseRx;			// total noise at the receiver (dB above kT0B)
+	double fM, fL;			// long-model upper/lower reference frequencies (MHz)
+	double snfM, snfL;		// dB at those, when they are inside 1-30 MHz
+	int    fMok, fLok;		// FALSE when not computed
+	int    islong;			// TRUE when the long model was used
 	int    valid;
 	const char *status;	// why a row has no results, or "OK"
 };
@@ -521,9 +525,38 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		it were a 99.9 MHz MUF.
 	*/
 	if (r->f[FRQBUF] >= 99.0 || path->distance > 9000.0) {
+
+		/*
+			Beyond 9000 km P.533 uses the long model, which characterises the
+			circuit by the upper and lower reference frequencies fM and fL
+			rather than by a basic or operational MUF. Those come only from a
+			propagation run -- MedianSkywaveFieldStrengthLong() sets them -- but
+			they do not depend on the frequency of interest, so one run finds
+			them and one run at each evaluates the circuit there.
+		*/
 		r->f[FRQBUF] = r->f[FRQMUF] = r->f[FRQOWF] = 0.0;
-		r->valid  = FALSE;
+		r->islong = TRUE;
 		r->status = "LONG_PATH";
+
+		SetPath(path, c, 10.0);
+		retval = csvP533(path);
+		if (retval != RTN_P533OK) return retval;
+
+		r->fM      = path->fM;
+		r->fL      = path->fL;
+		r->noiseRx = path->noiseP.FamT;
+		r->prob    = path->BCR;
+
+		if (r->fM >= 1.0 && r->fM <= 30.0) {
+			SetPath(path, c, r->fM * FreqMargin);
+			if (csvP533(path) == RTN_P533OK) { r->snfM = path->SNR; r->fMok = TRUE; }
+		}
+		if (r->fL >= 1.0 && r->fL <= 30.0) {
+			SetPath(path, c, r->fL);
+			if (csvP533(path) == RTN_P533OK) { r->snfL = path->SNR; r->fLok = TRUE; }
+		}
+
+		r->valid = TRUE;
 		return RTN_CSVOK;
 	}
 
@@ -608,7 +641,8 @@ static void PrintHeader(FILE *fp) {
 		"txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,t_Index,"
 		"minTOA,txPow,reqSN,rxNoise,bandW,percDays,"
 		"Circuit#,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,"
-		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,Status\n");
+		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,"
+		"fM,SN_fM,fL,SN_fL,Status\n");
 
 }
 
@@ -651,7 +685,7 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 	if (r->valid == FALSE) {
 		// No results. Geometry is still meaningful when the circuit ran but no
 		// mode was supported; it is zero when the circuit never ran at all.
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,%s\n",
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,,,,,%s\n",
 			number, r->dist, r->txBearing, r->rxBearing,
 			(r->status != NULL) ? r->status : "NO_MODE");
 		return;
@@ -666,26 +700,45 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 		else                    snbuf[n][0] = '\0';
 	}
 
+	// BUF, MUF and OWF do not exist on the long model, so they print blank
+	// rather than as a zero.
+	char fbuf[3][32];
+	for (int n = 0; n < NFRQ; n++) {
+		if (r->f[n] > 0.0) snprintf(fbuf[n], sizeof(fbuf[n]), "%.6g", r->f[n]);
+		else               fbuf[n][0] = '\0';
+	}
+
+	// fM and fL exist only on the long model, so they are blank on short paths.
+	char fmbuf[32] = "", fmsn[32] = "", flbuf[32] = "", flsn[32] = "";
+	if (r->islong == TRUE) {
+		snprintf(fmbuf, sizeof(fmbuf), "%.6g", r->fM);
+		snprintf(flbuf, sizeof(flbuf), "%.6g", r->fL);
+		if (r->fMok == TRUE) snprintf(fmsn, sizeof(fmsn), "%.6g", r->snfM);
+		if (r->fLok == TRUE) snprintf(flsn, sizeof(flsn), "%.6g", r->snfL);
+	}
+
 	// A path longer than about 7000 km has no dominant mode, so the columns that
 	// describe one are left empty while the frequencies, SNRs and noise are not.
 	if (r->hops > 0) {
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%.6g,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%.6g,%s,%.6g,%s,%s\n",
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%s,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
 			number, r->dist, r->txBearing, r->rxBearing,
 			r->hops, r->layer,
-			r->f[FRQBUF], r->prob, r->toa, r->loss, snbuf[FRQBUF],
+			fbuf[FRQBUF], r->prob, r->toa, r->loss, snbuf[FRQBUF],
 			r->delay, r->grange,
 			r->noiseRx, r->noiseRx,
-			r->f[FRQMUF], snbuf[FRQMUF],
-			r->f[FRQOWF], snbuf[FRQOWF],
+			fbuf[FRQMUF], snbuf[FRQMUF],
+			fbuf[FRQOWF], snbuf[FRQOWF],
+			fmbuf, fmsn, flbuf, flsn,
 			(r->status != NULL) ? r->status : "OK");
 	}
 	else {
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,,%.6g,%.6g,,,%s,,,%.6g,%.6g,%.6g,%s,%.6g,%s,%s\n",
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,,%s,%.6g,,,%s,,,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
 			number, r->dist, r->txBearing, r->rxBearing,
-			r->f[FRQBUF], r->prob, snbuf[FRQBUF],
+			fbuf[FRQBUF], r->prob, snbuf[FRQBUF],
 			r->noiseRx, r->noiseRx,
-			r->f[FRQMUF], snbuf[FRQMUF],
-			r->f[FRQOWF], snbuf[FRQOWF],
+			fbuf[FRQMUF], snbuf[FRQMUF],
+			fbuf[FRQOWF], snbuf[FRQOWF],
+			fmbuf, fmsn, flbuf, flsn,
 			(r->status != NULL) ? r->status : "OK");
 	}
 

@@ -56,7 +56,7 @@ empty result fields and a `Status` saying why:
 | `BAD_RECORD` | the record was short, so some input columns were missing |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
-| `LONG_PATH` | over 9000 km, where P.533 uses the long model and defines no basic or operational MUF |
+| `LONG_PATH` | over 9000 km: the long model applies, so `fM`/`fL` are filled instead of `BUF`/`MUF`/`OWF` |
 
 `Circuit#` is the input file's **data row number** (1 for the first row after
 the header), so it is a direct index back into the input regardless of how many
@@ -81,6 +81,8 @@ Written in the engine's own units with `%.6g`, no fixed-point scaling.
 | `Delay_BUF` | group delay, seconds |
 | `Grange_BUF` | group range, km |
 | `Noise Rx`, `Noise Tx` | total noise, dB above kT0B |
+| `fM`, `fL` | long-model upper and lower reference frequencies, MHz (blank on short paths) |
+| `SN_fM`, `SN_fL` | signal-to-noise ratio at each, dB |
 | `Status` | see Row matching above |
 
 ## Notes on the calculation
@@ -118,10 +120,13 @@ those circuits, and the rest of the row is filled in as usual.
 operational MUF above 30 MHz is common at low latitudes near solar maximum; the
 frequency is still reported and only its SNR column is left empty.
 
-**Over 9000 km.** The long model characterises a circuit by the reference
-frequencies fM and fL rather than by a basic or operational MUF, so `BUF`, `MUF`
-and `OWF` do not exist for it. Those rows carry `Status` `LONG_PATH` with the
-frequency columns blank; the geometry columns are still filled in.
+**Over 9000 km.** The long model characterises a circuit by the upper and lower
+reference frequencies fM and fL rather than by a basic or operational MUF, so
+`BUF`, `MUF` and `OWF` do not exist for it and are left blank. Those rows carry
+`Status` `LONG_PATH` and report `fM`/`fL` with the signal-to-noise ratio at
+each. fM and fL come only from a propagation run, but they do not depend on the
+frequency of interest, so a long circuit costs one run to find them plus one at
+each -- the same three as a short one.
 
 **The step at the MUF.** A mode supported just below a MUF is screened just
 above it, and the engine's loss jumps by about 8 dB across that boundary. For
@@ -139,8 +144,11 @@ transmitter-end noise figure in the Recommendation, so `Noise Tx` repeats
 value, which forms the noise figure as `204 - value`; because P.372 expects the
 magnitude, the sign of `rxNoise` is inverted on the way in.
 
-**minTOA** is read and echoed, but P.533 applies its own minimum elevation angle
-(`MINELEANGLES`, 3 degrees) which is set at compile time.
+**minTOA** is read and echoed but not applied. `MINELEANGLES` in P533.h looks
+like the place it would be enforced, but nothing in the engine references it --
+only `MINELEANGLEL`, in the long model, is used. So the short model applies no
+minimum take-off angle at all, and a per-circuit minTOA cannot be honoured
+without changing the engine.
 
 ## Verification
 
