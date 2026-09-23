@@ -16,8 +16,7 @@ cases, 24 hourly values each, with 99 marking a missing hour.
 | `Catagories.csv` | the stratification the P.1148 report groups by |
 | `D1_1148.py` | the comparison itself, per Recommendation ITU-R P.1148. **Works, runs under python3 unmodified** |
 | `D1Comp.csv` | predictions to compare. Tracked, but produced by an engine that is not identified anywhere |
-| `D1_GenComp.py`, `D1_GenList.py`, `D1_InputFiles.py`, `D1_InputFiles_REC.py`, `D1_1148_00.py` | earlier or partial stages, see below |
-| `D1.bat`, `D1_REC.bat` | generated runners holding absolute paths from a contributor's machine |
+| `D1_GenComp.py`, `D1_GenList.py`, `D1_InputFiles.py`, `D1_InputFiles_REC.py` | earlier or partial stages, see below |
 
 ## Running the comparison
 
@@ -49,10 +48,12 @@ in the repository. `macos-build/d1_makecomp.py` replaces it by driving the
 engine directly rather than parsing saved reports.
 
 `D1_InputFiles.py` reads a `D1.csv` that is also absent; `D1_Table1.csv` holds
-the same fields. `D1.bat` and `D1_REC.bat` reference `ITU_in\` and `ITU_out\`
-directories that `D1_InputFiles.py` would have created. None of this is needed
-for the comparison above, and none of it has been deleted: it records how the
-original submission was assembled.
+the same fields. It and `D1_InputFiles_REC.py` write `D1.bat` and `D1_REC.bat`,
+which drive ITURHFProp over `ITU_in\` and `ITU_out\`. Those two runners were
+committed holding absolute paths from a contributor's machine; since they are
+generated rather than written, they have been deleted and are now ignored. An
+earlier variant of the comparison, `D1_1148_00.py`, has been deleted as well.
+Both are recoverable from history if the generators are ever revived.
 
 ## Long-path circuits
 

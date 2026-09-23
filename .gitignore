@@ -367,3 +367,10 @@ FodyWeavers.xsd
 !*.vcxproj.d
 ITURHFProp/Src/CircuitCSV/CircuitCSV
 P372/Src/ReadCoeff/FAKP.out
+
+# ITURHFProp/D1: D1_InputFiles.py and D1_InputFiles_REC.py generate the runners,
+# and D1_1148.py names its report after the engine and the run time.
+ITURHFProp/D1/*.bat
+ITURHFProp/D1/D1 to *.txt
+ITURHFProp/D1/ITU_in/
+ITURHFProp/D1/ITU_out/
