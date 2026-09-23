@@ -40,7 +40,7 @@ from files.
 
 ## 3. Design
 
-### 3.1 Package layout (`/Users/warrensly/matlab_p372_p533/P533`)
+### 3.1 Package layout (`P533/Matlab`)
 
 ```
 P533/
