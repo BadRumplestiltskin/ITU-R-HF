@@ -44,6 +44,53 @@ DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, in
 }
 
 
+
+/*
+	AllocFailed() - Releases a partially built path and returns the error.
+
+		AllocatePathMemory() used to return on a failed allocation without
+		freeing what it had already built, and left the caller no way to know
+		whether FreePathMemory() was safe to call. The arrays are now attached
+		to the path as each is completed, so this releases whatever exists and
+		leaves the path safe either to discard or to free again.
+
+		INPUT
+			struct PathData *path, int retval
+
+		OUTPUT
+			returns retval
+
+		SUBROUTINES
+			FreeIonMaps()
+*/
+static int AllocFailed(struct PathData *path, int retval) {
+
+	int i, j, k, m;
+
+	FreeIonMaps(path);		// foF2 and M3kF2, NULL-tolerant
+
+	if (path->foF2var != NULL) {
+		for (i=0; i<3; i++) {					// season
+			if (path->foF2var[i] == NULL) continue;
+			for (j=0; j<24; j++) {				// hours
+				if (path->foF2var[i][j] == NULL) continue;
+				for (k=0; k<19; k++) {			// latitude
+					if (path->foF2var[i][j][k] == NULL) continue;
+					for (m=0; m<3; m++) free(path->foF2var[i][j][k][m]);
+					free(path->foF2var[i][j][k]);
+				}
+				free(path->foF2var[i][j]);
+			}
+			free(path->foF2var[i]);
+		}
+		free(path->foF2var);
+		path->foF2var = NULL;
+	}
+
+	return retval;
+
+}
+
 DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	
 	/*
@@ -91,37 +138,41 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	// that test foF2/M3kF2/foF2var against NULL could never fire: the arrays
 	// were already dereferenced here, several levels deep, before reaching them.
 	foF2 = (float****) calloc(hrs, sizeof(float***));
-	if (foF2 == NULL) return RTN_ERRALLOCATEFOF2;
+	if (foF2 == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2);
 	for (i=0; i<hrs; i++) {
 		foF2[i] = (float***) calloc(lng, sizeof(float**));
-		if (foF2[i] == NULL) return RTN_ERRALLOCATEFOF2;
+		if (foF2[i] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2);
 		for (j=0; j<lng; j++) {
 			foF2[i][j] = (float**) calloc(lat, sizeof(float*));
-			if (foF2[i][j] == NULL) return RTN_ERRALLOCATEFOF2;
+			if (foF2[i][j] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2);
 			for (k=0; k<lat; k++) {
 				foF2[i][j][k] = (float*) calloc(ssn, sizeof(float));
-				if (foF2[i][j][k] == NULL) return RTN_ERRALLOCATEFOF2;
+				if (foF2[i][j][k] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2);
 			}
         }
     }
+
+	path->foF2 = foF2;
 
     /* 
      * Create the M(3000)F2 array so you can pass it into the core P.533 process.
      */
 	M3kF2 = (float****) calloc(hrs, sizeof(float***));
-	if (M3kF2 == NULL) return RTN_ERRALLOCATEM3KF2;
+	if (M3kF2 == NULL) return AllocFailed(path, RTN_ERRALLOCATEM3KF2);
 	for (i=0; i<hrs; i++) {
 		M3kF2[i] = (float***) calloc(lng, sizeof(float**));
-		if (M3kF2[i] == NULL) return RTN_ERRALLOCATEM3KF2;
+		if (M3kF2[i] == NULL) return AllocFailed(path, RTN_ERRALLOCATEM3KF2);
 		for (j=0; j<lng; j++) {
 			M3kF2[i][j] = (float**) calloc(lat, sizeof(float*));
-			if (M3kF2[i][j] == NULL) return RTN_ERRALLOCATEM3KF2;
+			if (M3kF2[i][j] == NULL) return AllocFailed(path, RTN_ERRALLOCATEM3KF2);
 			for (k=0; k<lat; k++) {
 				M3kF2[i][j][k] = (float*) calloc(ssn, sizeof(float));
-				if (M3kF2[i][j][k] == NULL) return RTN_ERRALLOCATEM3KF2;
+				if (M3kF2[i][j][k] == NULL) return AllocFailed(path, RTN_ERRALLOCATEM3KF2);
 			}
         }
     }
+
+	path->M3kF2 = M3kF2;
 
     /*
      * Allocate the foF2 variablity arrays that will be used by the P533 engine.
@@ -140,23 +191,25 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	 * Create the foF2 array so you can pass it into the core P.533 process.
 	 */
 	foF2var = (double*****) calloc(season, sizeof(double****));
-	if (foF2var == NULL) return RTN_ERRALLOCATEFOF2VAR;
+	if (foF2var == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2VAR);
 	for (i=0; i<season; i++) {
 		foF2var[i] = (double****) calloc(hrs, sizeof(double***));
-		if (foF2var[i] == NULL) return RTN_ERRALLOCATEFOF2VAR;
+		if (foF2var[i] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2VAR);
 		for (j=0; j<hrs; j++) {
 			foF2var[i][j] = (double***) calloc(lat, sizeof(double**));
-			if (foF2var[i][j] == NULL) return RTN_ERRALLOCATEFOF2VAR;
+			if (foF2var[i][j] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2VAR);
 			for (k=0; k<lat; k++) {
 				foF2var[i][j][k] = (double**) calloc(ssn, sizeof(double*));
-				if (foF2var[i][j][k] == NULL) return RTN_ERRALLOCATEFOF2VAR;
+				if (foF2var[i][j][k] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2VAR);
 				for (m=0; m<ssn; m++) {
 					foF2var[i][j][k][m] = (double*) calloc(decile, sizeof(double));
-					if (foF2var[i][j][k][m] == NULL) return RTN_ERRALLOCATEFOF2VAR;
+					if (foF2var[i][j][k][m] == NULL) return AllocFailed(path, RTN_ERRALLOCATEFOF2VAR);
 				}
 			}
 		}
 	}
+
+	path->foF2var = foF2var;
 
 	/*
 	 * The TX and RX antenna arrays are allocated when parsing the
@@ -168,15 +221,8 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
  	path->A_tx.pattern = NULL;
 	path->A_rx.pattern = NULL;
 
-	// Check for NULLs and save the pointers to the path structure.
-	if(foF2 != NULL) path->foF2 = foF2;
-	else return RTN_ERRALLOCATEFOF2;
-
-	if(M3kF2 != NULL) path->M3kF2 = M3kF2;
-	else return RTN_ERRALLOCATEM3KF2;
-
-	if(foF2var != NULL) path->foF2var = foF2var;
-	else return RTN_ERRALLOCATEFOF2VAR;
+	// The arrays are attached to the path as they are completed, above, so that
+	// AllocFailed() can release a partially built structure.
 
 	// P372.dll **********************************************************
     

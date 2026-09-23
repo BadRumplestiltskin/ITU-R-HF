@@ -25,6 +25,7 @@
 	vAtmosphericNoise dllAtmosphericNoise;
 	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
 	iMakeNoise dllMakeNoise;
+	dFamFreqVariation dllFamFreqVariation;
 #elif defined(__linux__) || defined(__APPLE__)
 	void *hLib;
 	char *(*dllP372Version)();
@@ -37,6 +38,7 @@
 	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
 	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
 	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
 #endif
 
 

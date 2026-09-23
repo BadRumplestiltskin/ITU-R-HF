@@ -34,6 +34,7 @@
 	vAtmosphericNoise dllAtmosphericNoise;
 	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
 	iMakeNoise dllMakeNoise;
+	dFamFreqVariation dllFamFreqVariation;
 #elif defined(__linux__) || defined(__APPLE__)
 	void *hLib;
 	char *(*dllP372Version)();
@@ -46,6 +47,7 @@
 	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
 	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
 	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
 #endif
 
 
@@ -420,6 +422,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	dllInitializeNoise = (vInitializeNoise)GetProcAddress((HMODULE)hLib, "InitializeNoise");
 	dllAtmosphericNoise_LT = (vAtmosphericNoise_LT)GetProcAddress((HMODULE)hLib, "AtmosphericNoise_LT");
 	dllAtmosphericNoise = (vAtmosphericNoise)GetProcAddress((HMODULE)hLib, "AtmosphericNoise");
+	dllFamFreqVariation = (dFamFreqVariation)GetProcAddress((HMODULE)hLib, "FamFreqVariation");
 	dllReadFamDud = (iReadFamDud)GetProcAddress((HMODULE)hLib, "ReadFamDud");
 #elif defined(__linux__) || defined(__APPLE__)
 	// Note: no local hLib here; the global from Noise.h is what gets unloaded.
@@ -438,10 +441,12 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	// Both of these were resolved only in the Windows branch.
 	dllAtmosphericNoise = dlsym(hLib, "AtmosphericNoise");
 	dllAtmosphericNoise_LT = dlsym(hLib, "AtmosphericNoise_LT");
+	dllFamFreqVariation = dlsym(hLib, "FamFreqVariation");
 #endif
 
 	if (dllReadFamDud == NULL || dllP372Version == NULL || dllP372CompileTime == NULL ||
-		dllAtmosphericNoise == NULL || dllAtmosphericNoise_LT == NULL) {
+		dllAtmosphericNoise == NULL || dllAtmosphericNoise_LT == NULL ||
+		dllFamFreqVariation == NULL) {
 		printf("ITURNoise: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
 		P372_LIB_CLOSE(hLib);
 		return RTN_ERRP372DLL;
@@ -479,10 +484,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 		1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0,
 		10.0, 15.0, 20.0, 25.0, 30.0};
 
-	// Variables specific to the code fragment from AtmosphericNoise() 
-	// for the b) figure data generation
-	double pz, px, cz = 0.0;
-	double u[2];
+	// Variables for the b) figure data generation. The polynomial's own
+	// working values now live in FamFreqVariation() in Noise.c.
 	double Fam[11]; // Output array for b) figure data generation
 	double Fam1MHz;
 	// End Variables for code fragment from AtmosphericNoise() 
@@ -733,41 +736,10 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 					// Set the time block to the current local time, the h loop
 					FamS.tmblk = (int)(h / 4.0); // Set the timeblock to the correct 4 hour block
 
-					//*** Code from AtmosphericNoise() **********************************
-
-					// Determine if the reciever latitude is positive or negative
-					if (rlat < 0) {
-						i = FamS.tmblk + 6; // TIMEBLOCKINDX=TIMEBLOCKINDX+6
-					}
-					else {
-						i = FamS.tmblk; // TIMEBLOCKINDX=TIMEBLOCKINDX
-					}
-
-					// for K = 0 then U1 = -0.75
-					// for K = 1 then U1 = U
-					u[0] = -0.75;
-					u[1] = (8.0 * pow(2.0, log10(f_log[f])) - 11.0) / 4.0; // U = (8. * 2.**X - 11.)/4. where X = ALOG10(FREQ)
-					// Please See Page 5
-					// NBS Tech Note 318 Lucas and Harper
-					// "A Numerical Representation of CCIR Report 322 High Frequeny (3-30 Mc/s) Atmospheric Radio Noise Data"
-					for (int k = 0; k < 2; k++) {
-						pz = u[k] * noiseP.fam[i][0] + noiseP.fam[i][1]; // PZ = U1*FAM(1,TIMEBLOCKINDX) + FAM(2,TIMEBLOCKINDX)
-						px = u[k] * noiseP.fam[i][7] + noiseP.fam[i][8]; // PX = U1*FAM(8,TIMEBLOCKINDX) + FAM(9,TIMEBLOCKINDX)
-
-						for (int j = 2; j < 7; j++) {
-							pz = u[k] * pz + noiseP.fam[i][j];			// PZ = U1*PZ + FAM(I,TIMEBLOCKINDX)
-							px = u[k] * px + noiseP.fam[i][j + 7];		// PX = U1*PX + FAM(I+7,TIMEBLOCKINDX)
-						} // j=2,6
-
-						if (k == 0) {
-							cz = Fam1MHz * (2.0 - pz) - px;
-							// U1 = U
-						}
-					} // k=0,1
-
-					// Frequency variation of atmospheric noise
-					Fam[F1] = cz * pz + px;
-					//*** Code from AtmosphericNoise() **********************************
+					// The frequency-variation polynomial lives in Noise.c, shared with
+					// AtmosphericNoise(). It used to be copied verbatim here, which
+					// would have drifted from the library the moment either changed.
+					Fam[F1] = dllFamFreqVariation(&noiseP, i, Fam1MHz, f_log[f]);
 
 				} // End Fam1MHz loop
 

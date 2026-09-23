@@ -26,6 +26,7 @@
 	vAtmosphericNoise dllAtmosphericNoise;
 	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
 	iMakeNoise dllMakeNoise;
+	dFamFreqVariation dllFamFreqVariation;
 #elif defined(__linux__) || defined(__APPLE__)
 	void *hLib;
 	char *(*dllP372Version)();
@@ -38,6 +39,7 @@
 	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
 	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
 	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
 #endif
 
 
@@ -262,6 +264,66 @@ int Noise(
     return RTN_NOISEOK;
 }
 
+/*
+	FamFreqVariation() - Frequency variation of atmospheric noise.
+
+		The polynomial from NBS Tech Note 318 (Lucas and Harper), "A Numerical
+		Representation of CCIR Report 322 High Frequency (3-30 Mc/s) Atmospheric
+		Radio Noise Data", page 5, which turns the 1 MHz noise figure into the
+		figure at the frequency of interest.
+
+		AtmosphericNoise() and the figure generator in ITURNoise.c both need it.
+		ITURNoise.c carried a verbatim copy, which would have drifted from this
+		one the moment either was corrected; the figure generator is what
+		implementers validate against, so the two must not diverge.
+
+		INPUT
+			struct NoiseParams *noiseP
+			int tmblk		the time-block index, already adjusted for hemisphere
+			double Fam1MHz	the noise figure at 1 MHz
+			double frequency (MHz)
+
+		OUTPUT
+			returns the noise figure at frequency (dB above kT0B)
+
+		SUBROUTINES
+			None
+*/
+DLLEXPORT double FamFreqVariation(struct NoiseParams *noiseP, int tmblk,
+                                  double Fam1MHz, double frequency) {
+
+    double u[2];
+    double pz = 0.0, px = 0.0, cz = 0.0;
+    int j, k;
+
+    u[0] = -0.75;
+    // U = (8. * 2.**X - 11.)/4. where X = ALOG10(FREQ)
+    u[1] = (8.0 * pow(2.0, log10(frequency)) - 11.0) / 4.0;
+
+    for (k = 0; k < 2; k++) {
+        // PZ = U1*FAM(1,TIMEBLOCKINDX) + FAM(2,TIMEBLOCKINDX)
+        pz = u[k] * noiseP->fam[tmblk][0] + noiseP->fam[tmblk][1];
+        // PX = U1*FAM(8,TIMEBLOCKINDX) + FAM(9,TIMEBLOCKINDX)
+        px = u[k] * noiseP->fam[tmblk][7] + noiseP->fam[tmblk][8];
+
+        for (j = 2; j < 7; j++) {
+            // PZ = U1*PZ + FAM(I,TIMEBLOCKINDX)
+            pz = u[k] * pz + noiseP->fam[tmblk][j];
+            // PX = U1*PX + FAM(I+7,TIMEBLOCKINDX)
+            px = u[k] * px + noiseP->fam[tmblk][j + 7];
+        } // j=2,6
+
+        if (k == 0) {
+            cz = Fam1MHz * (2.0 - pz) - px;
+            // U1 = U
+        }
+    } // k=0,1
+
+    return cz * pz + px;
+
+}
+
+
 void AtmosphericNoise(
     struct NoiseParams *noiseP,
     int hour, 
@@ -411,10 +473,6 @@ void GetFamParameters(
      */
 
     double v[5];
-    double u[2];
-    double cz = 0.0;
-    double pz;
-    double px;
     double x;
     double y;
     double Fam1MHz; // Atmospheric noise Fam (dB above kT0b at 1 MHz)
@@ -471,35 +529,9 @@ void GetFamParameters(
 
     // for K = 0 then U1 = -0.75
     // for K = 1 then U1 = U
-    u[0] = -0.75;
-    // U = (8. * 2.**X - 11.)/4. where X = ALOG10(FREQ)
-    u[1] = (8.0 * pow(2.0, log10(frequency)) - 11.0) / 4.0;
-    /* 
-    Please See Page 5 NBS Tech Note 318 Lucas and Harper
-    "A Numerical Representation of CCIR Report 322 High Frequeny (3-30 Mc/s)
-    Atmospheric Radio Noise Data".
-    */
-    for (k = 0; k < 2; k++) {
-        // PZ = U1*FAM(1,TIMEBLOCKINDX) + FAM(2,TIMEBLOCKINDX)
-        pz = u[k] * noiseP->fam[i][0] + noiseP->fam[i][1];
-        // PX = U1*FAM(8,TIMEBLOCKINDX) + FAM(9,TIMEBLOCKINDX)
-        px = u[k] * noiseP->fam[i][7] + noiseP->fam[i][8];
-
-        for (j = 2; j < 7; j++) {
-            // PZ = U1*PZ + FAM(I,TIMEBLOCKINDX)
-            pz = u[k] * pz + noiseP->fam[i][j];
-            // PX = U1*PX + FAM(I+7,TIMEBLOCKINDX)
-            px = u[k] * px + noiseP->fam[i][j + 7];
-        } // j=2,6
-
-        if (k == 0) {
-            cz = Fam1MHz * (2.0 - pz) - px;
-            // U1 = U
-        }
-    } // k=0,1
-
-    // Frequency variation of atmospheric noise
-    FS->FA = cz * pz + px;
+    // Frequency variation of atmospheric noise. Shared with ITURNoise.c, which
+    // used to hold a verbatim copy of this polynomial.
+    FS->FA = FamFreqVariation(noiseP, i, Fam1MHz, frequency);
 
     // Limit frequency to 20 MHz for Du, Dl, SigmaDu, SigmaDl
     // because curves in ITU-R P.372 only go to 20 MHz.

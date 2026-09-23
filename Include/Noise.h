@@ -150,6 +150,8 @@ struct NoiseParams {
         double lat,
         double frequency
     );
+    // FamFreqVariation()
+    typedef double(__cdecl *dFamFreqVariation)(struct NoiseParams *, int, double, double);
     // MakeNoise().
     typedef int(__stdcall *iMakeNoise)(
         int month,
@@ -206,6 +208,7 @@ DLLEXPORT void AtmosphericNoise_LT(
     double frequency
 );
 // Note: MakeNoise() requires decimal degrees lat and lng.
+DLLEXPORT double FamFreqVariation(struct NoiseParams *noiseP, int tmblk, double Fam1MHz, double frequency);
 DLLEXPORT int MakeNoise(
     int month,
     int hour,
@@ -294,6 +297,7 @@ DLLEXPORT int MakeNoise(
     extern vAtmosphericNoise dllAtmosphericNoise;
     extern vAtmosphericNoise_LT dllAtmosphericNoise_LT;
     extern iMakeNoise dllMakeNoise;
+    extern dFamFreqVariation dllFamFreqVariation;
 #elif defined(__linux__) || defined(__APPLE__)
     #include <dlfcn.h>
     extern void *hLib;
@@ -309,6 +313,7 @@ DLLEXPORT int MakeNoise(
     extern void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
     extern void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
     extern int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+    extern double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
 #endif
 /* End operating system preprocessor */
 #endif // NOISE_H
