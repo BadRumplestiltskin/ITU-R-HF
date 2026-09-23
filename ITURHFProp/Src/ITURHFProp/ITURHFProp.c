@@ -189,6 +189,20 @@ int main(int argc, char *argv[]) {
 	//printf("%s\n",dllP533Version());
 #endif
 
+	// Every entry point is checked before the first call below. Without this a
+	// renamed or missing export in the library is a call through a NULL pointer
+	// rather than a diagnostic; the loaders in P533.c, CircuitCSV.c and
+	// ITURNoise.c all check, this one did not.
+	if (dllP533Version == NULL || dllP533CompileTime == NULL || dllP533 == NULL ||
+		dllAllocatePathMemory == NULL || dllFreePathMemory == NULL ||
+		dllInputDump == NULL || dllBearing == NULL ||
+		dllReadType11Func == NULL || dllReadType13Func == NULL || dllReadType14Func == NULL ||
+		dllIsotropicPatternFunc == NULL || dllReadIonParametersBinFunc == NULL ||
+		dllReadIonParametersTxtFunc == NULL || dllReadP1239Func == NULL) {
+		printf("Main: Error %d P533 entry point not found\n", RTN_ERRP533DLL);
+		return RTN_ERRP533DLL;
+	}
+
 	//********************************************************************************************
 	// End Load P533 DLL *************************************************************************
 	//********************************************************************************************

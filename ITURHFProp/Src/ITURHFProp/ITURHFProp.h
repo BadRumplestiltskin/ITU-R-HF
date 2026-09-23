@@ -175,7 +175,7 @@
 
 // Returns OKAY numbers Returns > 30 and <= 40
 #define RTN_ITURHFPropOK			32 // ITURHFProp()
-#define RTN_VALIDATEITURHFPOK		32 // ValidateITURHFP()
+#define RTN_VALIDATEITURHFPOK		34 // ValidateITURHFP()
 #define RTN_RICOK					33 // ReadInputConfiguration()
 
 // Return from ITURHFProp

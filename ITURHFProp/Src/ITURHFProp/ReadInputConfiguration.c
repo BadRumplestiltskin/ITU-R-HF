@@ -586,9 +586,11 @@ void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
 	for(i=0; i<NMBOFFREQS; i++) ITURHFP->frqs[i] = 99.0;
 	for(i=0; i<NMBOFHOURS; i++) ITURHFP->hrs[i] = 99;
 	for(i=0; i<NMBOFMONTHS; i++) ITURHFP->months[i] = 99;
-	#ifdef _WIN32
-	  sprintf(ITURHFP->RptFilePath, ".");
-	#endif
+	// Defaulted on every platform. This used to be guarded by #ifdef _WIN32, so
+	// on Linux and macOS an input file that omitted RptFilePath left the member
+	// holding whatever was on the stack, which was then used to build the output
+	// path. ITURHFP is not zeroed by its caller.
+	sprintf(ITURHFP->RptFilePath, ".");
 	ITURHFP->RptFileFormat = RPT_ALL;
 	ITURHFP->L_LL.lat = TOOBIG;
 	ITURHFP->L_LL.lng = TOOBIG;

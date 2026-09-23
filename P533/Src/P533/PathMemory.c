@@ -86,13 +86,21 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	/* 
 	 * Create the foF2 array so you can pass it into the core P.533 process.
 	 */
-	foF2 = (float****) malloc(hrs * sizeof(float***));
+	// calloc() so a partly built array is all-NULL below the point of failure,
+	// and every result is checked before it is indexed. The checks further down
+	// that test foF2/M3kF2/foF2var against NULL could never fire: the arrays
+	// were already dereferenced here, several levels deep, before reaching them.
+	foF2 = (float****) calloc(hrs, sizeof(float***));
+	if (foF2 == NULL) return RTN_ERRALLOCATEFOF2;
 	for (i=0; i<hrs; i++) {
-		foF2[i] = (float***) malloc(lng * sizeof(float**));
+		foF2[i] = (float***) calloc(lng, sizeof(float**));
+		if (foF2[i] == NULL) return RTN_ERRALLOCATEFOF2;
 		for (j=0; j<lng; j++) {
-			foF2[i][j] = (float**) malloc(lat * sizeof(float*));
+			foF2[i][j] = (float**) calloc(lat, sizeof(float*));
+			if (foF2[i][j] == NULL) return RTN_ERRALLOCATEFOF2;
 			for (k=0; k<lat; k++) {
-				foF2[i][j][k] = (float*) malloc(ssn * sizeof(float));
+				foF2[i][j][k] = (float*) calloc(ssn, sizeof(float));
+				if (foF2[i][j][k] == NULL) return RTN_ERRALLOCATEFOF2;
 			}
         }
     }
@@ -100,13 +108,17 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
     /* 
      * Create the M(3000)F2 array so you can pass it into the core P.533 process.
      */
-	M3kF2 = (float****) malloc(hrs * sizeof(float***));
+	M3kF2 = (float****) calloc(hrs, sizeof(float***));
+	if (M3kF2 == NULL) return RTN_ERRALLOCATEM3KF2;
 	for (i=0; i<hrs; i++) {
-		M3kF2[i] = (float***) malloc(lng * sizeof(float**));
+		M3kF2[i] = (float***) calloc(lng, sizeof(float**));
+		if (M3kF2[i] == NULL) return RTN_ERRALLOCATEM3KF2;
 		for (j=0; j<lng; j++) {
-			M3kF2[i][j] = (float**) malloc(lat * sizeof(float*));
+			M3kF2[i][j] = (float**) calloc(lat, sizeof(float*));
+			if (M3kF2[i][j] == NULL) return RTN_ERRALLOCATEM3KF2;
 			for (k=0; k<lat; k++) {
-				M3kF2[i][j][k] = (float*) malloc(ssn * sizeof(float));
+				M3kF2[i][j][k] = (float*) calloc(ssn, sizeof(float));
+				if (M3kF2[i][j][k] == NULL) return RTN_ERRALLOCATEM3KF2;
 			}
         }
     }
@@ -127,15 +139,20 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	/* 
 	 * Create the foF2 array so you can pass it into the core P.533 process.
 	 */
-	foF2var = (double*****) malloc(season * sizeof(double****));
+	foF2var = (double*****) calloc(season, sizeof(double****));
+	if (foF2var == NULL) return RTN_ERRALLOCATEFOF2VAR;
 	for (i=0; i<season; i++) {
-		foF2var[i] = (double****) malloc(hrs * sizeof(double***));
+		foF2var[i] = (double****) calloc(hrs, sizeof(double***));
+		if (foF2var[i] == NULL) return RTN_ERRALLOCATEFOF2VAR;
 		for (j=0; j<hrs; j++) {
-			foF2var[i][j] = (double***) malloc(lat * sizeof(double**));
+			foF2var[i][j] = (double***) calloc(lat, sizeof(double**));
+			if (foF2var[i][j] == NULL) return RTN_ERRALLOCATEFOF2VAR;
 			for (k=0; k<lat; k++) {
-				foF2var[i][j][k] = (double**) malloc(ssn * sizeof(double*));
+				foF2var[i][j][k] = (double**) calloc(ssn, sizeof(double*));
+				if (foF2var[i][j][k] == NULL) return RTN_ERRALLOCATEFOF2VAR;
 				for (m=0; m<ssn; m++) {
-					foF2var[i][j][k][m] = (double*) malloc(decile * sizeof(double));
+					foF2var[i][j][k][m] = (double*) calloc(decile, sizeof(double));
+					if (foF2var[i][j][k][m] == NULL) return RTN_ERRALLOCATEFOF2VAR;
 				}
 			}
 		}
