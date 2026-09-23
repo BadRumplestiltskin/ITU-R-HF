@@ -95,7 +95,7 @@ Path.T0 0.0
 Path.F0 0.0
 Path.SorL "{sorl(c)}"
 RptFilePath "{tmp}/"
-RptFileFormat "RPT_D | RPT_E"
+RptFileFormat "RPT_D | RPT_BMUF | RPT_E"
 LL.lat {c['rxlat']}
 LL.lng {c['rxlng']}
 LR.lat {c['rxlat']}
@@ -114,13 +114,13 @@ DataFilePath "{DATA}"
     try:
         for line in open(outp, errors="surrogateescape"):
             p = [x.strip() for x in line.split(",")]
-            if len(p) >= 5 and p[0].isdigit() and p[1].isdigit():
-                res[int(p[1])] = float(p[4])
+            if len(p) >= 6 and p[0].isdigit() and p[1].isdigit():
+                res[int(p[1])] = (float(p[4]), float(p[5]))   # basic MUF, E
     except FileNotFoundError:
         pass
     return res
 
-geo, meas, diffs, used = geometry(), measured(), [], 0
+geo, meas, rec, used = geometry(), measured(), [], 0
 with tempfile.TemporaryDirectory() as tmp:
     for cid, yy, mm, vals in meas:
         if used >= NCASE: break
@@ -133,16 +133,32 @@ with tempfile.TemporaryDirectory() as tmp:
         for h in range(1, 25):
             m = vals[h-1]
             if m >= 99 or h not in pred: continue
-            diffs.append(pred[h] - m); got = True
+            bmuf, e = pred[h]
+            rec.append((e - m, c['dist'], c['freq'] > bmuf)); got = True
         if got: used += 1
 
-if diffs:
-    n = len(diffs)
-    bias = sum(diffs)/n
-    rms  = math.sqrt(sum(d*d for d in diffs)/n)
-    print(f"  cases {used}, hourly comparisons {n}")
-    print(f"  bias (predicted - measured) = {bias:+.3f} dB")
-    print(f"  RMS error                   = {rms:.3f} dB")
-    print(f"  max |error|                 = {max(abs(d) for d in diffs):.2f} dB")
+def report(rs, label):
+    if not rs:
+        print(f"  {label:26s} n=     0")
+        return
+    d = [r[0] for r in rs]
+    n = len(d)
+    print(f"  {label:26s} n={n:6d}  bias {sum(d)/n:+7.3f}  "
+          f"RMS {math.sqrt(sum(x*x for x in d)/n):7.3f}  "
+          f"max {max(abs(x) for x in d):8.2f}")
+
+if rec:
+    print(f"  cases {used}, hourly comparisons {len(rec)}  (dB, predicted - measured)")
+    report(rec, "all")
+    # By distance: which of the three P.533 models produced the value.
+    report([r for r in rec if r[1] <= 7000],            "d <= 7000 km")
+    report([r for r in rec if 7000 < r[1] <= 9000],     "7000 < d <= 9000 km")
+    report([r for r in rec if r[1] > 9000],             "d > 9000 km")
+    # By operating frequency relative to the basic MUF. The above-the-MUF loss
+    # Lm, P.533-14 eq (24)-(26), acts only on the second of these, and that is
+    # where the short model's bias lives -- see the KNOWN BIAS note in
+    # P533/Src/P533/MedianSkywaveFieldStrengthShort.c.
+    report([r for r in rec if r[1] <= 7000 and not r[2]], "d<=7000, f <= basic MUF")
+    report([r for r in rec if r[1] <= 7000 and r[2]],     "d<=7000, f  > basic MUF")
 else:
     print("  no comparisons made")

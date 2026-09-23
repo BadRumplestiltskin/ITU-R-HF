@@ -387,6 +387,25 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				// previously branched at 3000 km -- a split that appears nowhere
 				// in P.533-14 -- and added 5 dB below it and 8 dB above, so Lm
 				// stepped discontinuously as f crossed the basic MUF.
+				//
+				// KNOWN BIAS. Against the CCIR D1 databank (all 1613 cases,
+				// macos-build/d1_absolute.py) this expression leaves the short
+				// model biased high on circuits operated above the basic MUF:
+				//
+				//     f <= fb   n = 8002   bias +0.42 dB   RMS  8.19
+				//     f  > fb   n = 3618   bias +5.13 dB   RMS 11.83
+				//
+				// The removed 3000 km branch gave -1.23 dB / 10.92 above fb,
+				// i.e. it under-predicted the field instead of over-predicting
+				// it. Below fb the two are indistinguishable (-0.11 / 8.17), so
+				// the whole discrepancy is the above-the-MUF term. Worst single
+				// case: circuit 76 (Teheran-Norddeich, 3945 km, 15.1 MHz), where
+				// at f/fb = 1.39 this gives Lm = 22.6 dB against the old 35.5 dB
+				// and a measurement implying roughly 75 dB.
+				//
+				// The Recommendation's expression is kept regardless: it is what
+				// P.533-14 states, and Lz cannot absorb a bias confined to one
+				// population. Re-deriving Lm is an SG3 matter, not a local fix.
 				if(path->frequency <= path->Md_F2[n].BMUF) {
 					Lm = 0.0;
 				}
