@@ -20,6 +20,10 @@ int main(void) {
 							 GETFAM | GETSYS1 | GETSYS2 | GETPERR | GETF2D | GETPKO | GETSLP | GETCCR;
 		
 		ReadCoeff(&Coeff, 4, What2Read);
+		if (ReadCoeffOK() != 1) {
+			printf("ReadCoeffExample: ERROR coefficient file not read; set ITU_COEFF_DIR\n");
+			return EXIT_FAILURE;
+		}
 
 		// Do something with this wonderful data.
 

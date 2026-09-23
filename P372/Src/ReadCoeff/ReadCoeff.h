@@ -54,6 +54,9 @@ struct IonoCoeff {
 };
 
 // ReadCoeff.c prototypes
+// ReadCoeff() cannot report failure through its void return, so callers ask
+// afterwards: TRUE only when the last ReadCoeff() filled the structure.
+int  ReadCoeffOK(void);
 void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read);
 void FreeCoeffArrays(struct IonoCoeff *Coeff);
 void NullCoeffArrays(struct IonoCoeff *Coeff);

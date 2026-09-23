@@ -480,7 +480,9 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN);
 // Initialize.c Prototypes
 //	Only three of the five control points are determined in InitializePath() T + 1000, M and R - 1000.
 //	The control points T + d0/2 and R - d0/2  are determined in MUFBasic()
-void InitializePath(struct PathData *path);
+// Exported: CircuitCSV binds these to run the MUF chain without a full P533().
+// Without DLLEXPORT they are absent from P533.dll and the bind fails on Windows.
+DLLEXPORT void InitializePath(struct PathData *path);
 
 // P533.c Prototype for the P533 propagation model engine
 DLLEXPORT int P533(struct PathData *path);
@@ -497,25 +499,25 @@ DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
 DLLEXPORT double Bearing(struct Location here, struct Location there, int direction);
 
 // ValidataPath.c Prototypes
-int ValidatePath(struct PathData *path);
+DLLEXPORT int ValidatePath(struct PathData *path);
 
 // magfit.c Prototype
 void magfit(struct ControlPt *here, double height);
 
 // MUFBasic Prototype
 //	Note MUFBasic() determines the control points T + d0/2 and R - d0/2
-void MUFBasic(struct PathData *path);
+DLLEXPORT void MUFBasic(struct PathData *path);
 double CalcCd(double d, double dmax);
 double CalcF2DMUF(struct ControlPt *CP, double distance, double dmax, double B);
 double Calcdmax(struct ControlPt *CP);
 double CalcB(struct ControlPt *CP);
 
 // MUFVariability.c Prototype
-void MUFVariability(struct PathData *path);
+DLLEXPORT void MUFVariability(struct PathData *path);
 double FindfoF2var(struct PathData path, double hour, double lat, int decile);
 
 // MUFOperational.c Prototype
-void MUFOperational(struct PathData *path);
+DLLEXPORT void MUFOperational(struct PathData *path);
 
 // ELayerScreeningFrequency.c Prototype
 void ELayerScreeningFrequency(struct PathData *path);

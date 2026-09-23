@@ -486,6 +486,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 
 	// Variables for the b) figure data generation. The polynomial's own
 	// working values now live in FamFreqVariation() in Noise.c.
+	int    tmblk;   // Time-block index, hemisphere adjusted
 	double Fam[11]; // Output array for b) figure data generation
 	double Fam1MHz;
 	// End Variables for code fragment from AtmosphericNoise() 
@@ -736,10 +737,16 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 					// Set the time block to the current local time, the h loop
 					FamS.tmblk = (int)(h / 4.0); // Set the timeblock to the correct 4 hour block
 
-					// The frequency-variation polynomial lives in Noise.c, shared with
-					// AtmosphericNoise(). It used to be copied verbatim here, which
-					// would have drifted from the library the moment either changed.
-					Fam[F1] = dllFamFreqVariation(&noiseP, i, Fam1MHz, f_log[f]);
+					// Southern hemisphere uses the second half of the fam table.
+					// This adjustment was deleted along with the inlined
+					// polynomial, leaving the call using a stale loop variable
+					// (5 from the sigma_V_d parser) as the time-block index, so
+					// every figure file was written from the 20:00-24:00 block.
+					tmblk = (rlat < 0.0) ? FamS.tmblk + 6 : FamS.tmblk;
+
+					// The frequency-variation polynomial lives in Noise.c, shared
+					// with AtmosphericNoise(), which used to hold a verbatim copy.
+					Fam[F1] = dllFamFreqVariation(&noiseP, tmblk, Fam1MHz, f_log[f]);
 
 				} // End Fam1MHz loop
 

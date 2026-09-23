@@ -33,6 +33,16 @@
 		} \
 	} while (0)
 
+/*
+	Records whether the last ReadCoeff() completed. ReadCoeff() returns void and
+	its failure paths -- a missing file, a short read, a malformed record -- were
+	silent, so FAKP dereferenced the NULL arrays NullCoeffArrays() had left and
+	crashed with no message.
+*/
+static int CoeffReadOK = 0;
+
+int ReadCoeffOK(void) { return CoeffReadOK; }
+
 void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 	/*
@@ -91,6 +101,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 	};
 	
 	// Clear the Coeff structure
+	CoeffReadOK = 0;
 	NullCoeffArrays(Coeff);
 
 	// Read the first header line
@@ -1134,7 +1145,12 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 	// Clean up;
 	fclose(fp);
 
+	// Reached only when every block parsed; the RCGETS/RCSCAN abort paths and
+	// the fopen failure all return before here, leaving CoeffReadOK at 0.
+	CoeffReadOK = 1;
+
 	return;
+
 };
 
 void	FreeCoeffArrays(struct IonoCoeff *Coeff) {

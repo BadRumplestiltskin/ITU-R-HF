@@ -10,6 +10,46 @@
 #include "ITURHFProp.h"
 
 /*
+	Definitions of the P533 handle and entry points that ITURHFProp.h declares
+	extern. This is the one translation unit in this program that defines them.
+*/
+#ifdef _WIN32
+	HINSTANCE hLib;
+	cP533Info dllP533Version;
+	cP533Info dllP533CompileTime;
+	iP533 dllP533;
+	iPathMemory dllAllocatePathMemory;
+	iPathMemory dllFreePathMemory;
+	iPathMemory dllAllocateAntennaMemory;
+	dBearing dllBearing;
+	iReadType11Func dllReadType11Func;
+	iReadType13Func dllReadType13Func;
+	iReadType14Func dllReadType14Func;
+	vIsotropicPatternFunc dllIsotropicPatternFunc;
+	iReadIonParametersBinFunc dllReadIonParametersBinFunc;
+	iReadIonParametersTxtFunc dllReadIonParametersTxtFunc;
+	iReadP1239Func dllReadP1239Func;
+#elif defined(__linux__) || defined(__APPLE__)
+	void * hLib;
+	char * (*dllP533Version)();
+	char * (*dllP533CompileTime)();
+	int (*dllP533)(struct PathData *);
+	int (*dllAllocatePathMemory)(struct PathData *);
+	int (*dllFreePathMemory)(struct PathData *);
+	int (*dllAllocateAntennaMemory)(struct Antenna *Ant, int freqn, int azin, int elen);
+	double (*dllBearing)(struct Location,struct Location,int direction);
+	int  (*dllReadType11Func)(struct Antenna *Ant, FILE *fp, int silent);
+	int  (*dllReadType13Func)(struct Antenna *Ant, FILE *fp, double bearing, int silent);
+	int  (*dllReadType14Func)(struct Antenna *Ant, FILE *fp, int silent);
+	void (*dllIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
+	int  (*dllReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
+	int  (*dllReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
+	int  (*dllReadP1239Func)(struct PathData *path, const char * DataFilePath);
+#endif
+
+
+
+/*
 	Definitions of the P372 handle and entry points that Noise.h declares extern.
 	This is the one translation unit in this artifact that defines them; every
 	other includer of Noise.h now merely declares them. Before this, each
@@ -289,12 +329,21 @@ int main(int argc, char *argv[]) {
 			(ITURHFP.RptFileFormat == RPT_DUMPPATH) ? "PDD" : "RPT",
 			ITURHFP.time->tm_mday, ITURHFP.time->tm_mon+1, ITURHFP.time->tm_year-100,
 			ITURHFP.time->tm_hour, ITURHFP.time->tm_min, ITURHFP.time->tm_sec);
-		// Append the generated name to the user's report directory. The concatenation
-		// is bounded because RptFilePath and OutFilePath are the same size.
-		if((size_t)snprintf(OutFilePath, sizeof(OutFilePath), "%s%s", ITURHFP.RptFilePath, OutFileName) >= sizeof(OutFilePath)) {
-			printf("Main: Error %d Report file path too long (max %d characters)\n",
-				RTN_ERROPENOUTPUTFILE, (int)sizeof(OutFilePath) - 1);
-			return RTN_ERROPENOUTPUTFILE;
+		// Append the generated name to the user's report directory, inserting the
+		// separator when the directory does not already end in one. Without it a
+		// default RptFilePath of "." produced the hidden file ".RPT<stamp>.txt",
+		// and "/tmp/reports" produced "/tmp/reportsRPT<stamp>.txt".
+		{
+			size_t dlen = strlen(ITURHFP.RptFilePath);
+			const char *dsep = (dlen == 0 || ITURHFP.RptFilePath[dlen-1] == '/'
+			                    || ITURHFP.RptFilePath[dlen-1] == '\\') ? "" : "/";
+
+			if ((size_t)snprintf(OutFilePath, sizeof(OutFilePath), "%s%s%s",
+			                     ITURHFP.RptFilePath, dsep, OutFileName) >= sizeof(OutFilePath)) {
+				printf("Main: Error %d Report file path too long (max %d characters)\n",
+					RTN_ERROPENOUTPUTFILE, (int)sizeof(OutFilePath) - 1);
+				return RTN_ERROPENOUTPUTFILE;
+			}
 		}
     }
 

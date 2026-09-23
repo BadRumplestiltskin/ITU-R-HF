@@ -33,39 +33,48 @@
 #endif
 // End P533.dll typedefs ************************************************
 
+/*
+	Declarations, not definitions. Every translation unit that includes this
+	header used to define its own copy of hLib and the dll* pointers, so all
+	five ITURHFProp objects emitted them and the link succeeded only because
+	-z muldefs discarded the duplicates, or because a toolchain still defaulted
+	to common symbols. Under -fno-common -- the default for GCC 10 and Clang 11
+	onwards -- that link fails with 16 duplicate symbols. The single definition
+	of each now lives in ITURHFProp.c.
+*/
 #ifdef _WIN32
-	HINSTANCE hLib;
-	cP533Info dllP533Version;
-	cP533Info dllP533CompileTime;
-	iP533 dllP533;
-	iPathMemory dllAllocatePathMemory;
-	iPathMemory dllFreePathMemory;
-	iPathMemory dllAllocateAntennaMemory;
-	dBearing dllBearing;
-	iReadType11Func dllReadType11Func;
-	iReadType13Func dllReadType13Func;
-	iReadType14Func dllReadType14Func;
-	vIsotropicPatternFunc dllIsotropicPatternFunc;
-	iReadIonParametersBinFunc dllReadIonParametersBinFunc;
-	iReadIonParametersTxtFunc dllReadIonParametersTxtFunc;
-	iReadP1239Func dllReadP1239Func;
+	extern HINSTANCE hLib;
+	extern cP533Info dllP533Version;
+	extern cP533Info dllP533CompileTime;
+	extern iP533 dllP533;
+	extern iPathMemory dllAllocatePathMemory;
+	extern iPathMemory dllFreePathMemory;
+	extern iPathMemory dllAllocateAntennaMemory;
+	extern dBearing dllBearing;
+	extern iReadType11Func dllReadType11Func;
+	extern iReadType13Func dllReadType13Func;
+	extern iReadType14Func dllReadType14Func;
+	extern vIsotropicPatternFunc dllIsotropicPatternFunc;
+	extern iReadIonParametersBinFunc dllReadIonParametersBinFunc;
+	extern iReadIonParametersTxtFunc dllReadIonParametersTxtFunc;
+	extern iReadP1239Func dllReadP1239Func;
 #elif __linux__ || __APPLE__
 	#include <dlfcn.h>
-	void * hLib;
-	char * (*dllP533Version)();
-	char * (*dllP533CompileTime)();
-	int (*dllP533)(struct PathData *);
-	int (*dllAllocatePathMemory)(struct PathData *);
-	int (*dllFreePathMemory)(struct PathData *);
-	int (*dllAllocateAntennaMemory)(struct Antenna *Ant, int freqn, int azin, int elen);
-	double (*dllBearing)(struct Location,struct Location,int direction);
-	int  (*dllReadType11Func)(struct Antenna *Ant, FILE *fp, int silent);
-	int  (*dllReadType13Func)(struct Antenna *Ant, FILE *fp, double bearing, int silent);
-	int  (*dllReadType14Func)(struct Antenna *Ant, FILE *fp, int silent);
-	void (*dllIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
-	int  (*dllReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
-        int  (*dllReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
-	int  (*dllReadP1239Func)(struct PathData *path, const char * DataFilePath);
+	extern void * hLib;
+	extern char * (*dllP533Version)();
+	extern char * (*dllP533CompileTime)();
+	extern int (*dllP533)(struct PathData *);
+	extern int (*dllAllocatePathMemory)(struct PathData *);
+	extern int (*dllFreePathMemory)(struct PathData *);
+	extern int (*dllAllocateAntennaMemory)(struct Antenna *Ant, int freqn, int azin, int elen);
+	extern double (*dllBearing)(struct Location,struct Location,int direction);
+	extern int  (*dllReadType11Func)(struct Antenna *Ant, FILE *fp, int silent);
+	extern int  (*dllReadType13Func)(struct Antenna *Ant, FILE *fp, double bearing, int silent);
+	extern int  (*dllReadType14Func)(struct Antenna *Ant, FILE *fp, int silent);
+	extern void (*dllIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
+	extern int  (*dllReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
+        extern int  (*dllReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
+	extern int  (*dllReadP1239Func)(struct PathData *path, const char * DataFilePath);
 #endif
 
 // End operating system preprocessor **************************************************************

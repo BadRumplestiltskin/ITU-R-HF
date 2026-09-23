@@ -820,7 +820,6 @@ int ReadFamDud(
     // Already parsed this month: copy it out and skip the file entirely.
     if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE) {
         FamDudCopyOut(noiseP, month);
-        if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month);
 
     return RTN_READFAMDUDOK;
     }
@@ -1075,6 +1074,10 @@ int ReadFamDud(
 
     // Clean up;
     fclose(fp);
+
+    // Seed the cache from the freshly parsed month. This call used to sit on
+    // the hit path above, where it could never run, so the cache never loaded.
+    if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month);
 
     return RTN_READFAMDUDOK;
 

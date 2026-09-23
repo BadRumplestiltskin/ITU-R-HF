@@ -164,6 +164,7 @@ static const struct RptCol RptCols[] = {
 	{ RPT_RSN,             "RF - Probability that the required frequency spread f0 is not exceeded (%)", "RF", DBLFIELD, RFC4180_DBLFIELD, rget_RF, NULL },
 	{ RPT_BCR,             "BCR - Basic circuit reliability (%)", "BCR", DBLFIELD, RFC4180_DBLFIELD, rget_BCR, NULL },
 	{ RPT_OCR,             "OCR - Overall circuit reliability not considering scattering (%)", "OCR", DBLFIELD, RFC4180_DBLFIELD, rget_OCR, NULL },
+	{ RPT_OCRS,            NULL, NULL, NULL, NULL, NULL, function_RPT_OCRS },
 	{ RPT_MIR,             "MIR - Multimode Interference (%)", "MIR", DBLFIELD, RFC4180_DBLFIELD, rget_MIR, NULL },
 	{ RPT_DOMMODE,         NULL, NULL, NULL, NULL, NULL, function_RPT_DOMMODE },
 	{ RPT_ESL,             "Short Path (<=7000 km) Field Strength (dB(1uV/m))", "Es", DBLFIELD1, RFC4180_DBLFIELD1, rget_Es, NULL },

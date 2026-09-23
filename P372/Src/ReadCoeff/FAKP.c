@@ -58,6 +58,12 @@ int main(void) {
 							GETFAM;
 		
 	ReadCoeff(&Coeff, 4, What2Read);
+	if (ReadCoeffOK() != 1) {
+		printf("FAKP: ERROR coefficient file not read. Set ITU_COEFF_DIR to the\n");
+		printf("      directory holding COEFF01W.txt (e.g. ITU-R-HF/P372/Data).\n");
+		fclose(fp);
+		return EXIT_FAILURE;
+	}
 
 	/////////////////////////////////////////
 	// Do something with this wonderful data.

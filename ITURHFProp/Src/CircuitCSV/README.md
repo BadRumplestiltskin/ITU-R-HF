@@ -18,7 +18,10 @@ different circuits in one pass.
       -m <factor> evaluate at factor x each MUF (default 1.0)
       -s          silent
 
-Antenna patterns are read once at startup and reused for every circuit.
+Antenna patterns are read once at startup and re-pointed along each circuit's
+own great circle before its gains are evaluated, which is what ITURHFProp's
+`AntennaOrientation "TX2RX"` does. Type 11, 13 and 14 VOACAP files are all
+accepted; the type is read from the file rather than assumed.
 
 ## Input columns
 
@@ -56,6 +59,7 @@ empty result fields and a `Status` saying why:
 | `BAD_RECORD` | the record was short, so some input columns were missing |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
+| `FREQ_RANGE` | every characteristic frequency fell outside P.533's 1-30 MHz, so nothing was evaluated |
 | `LONG_PATH` | over 9000 km: the long model applies, so `fM`/`fL` are filled instead of `BUF`/`MUF`/`OWF` |
 
 `Circuit#` is the input file's **data row number** (1 for the first row after
@@ -121,10 +125,9 @@ operational MUF above 30 MHz is common at low latitudes near solar maximum; the
 frequency is still reported and only its SNR column is left empty.
 
 **Over 9000 km.** The long model characterises a circuit by the upper and lower
-reference frequencies fM and fL rather than by a basic or operational MUF, so
-`BUF`, `MUF` and `OWF` do not exist for it and are left blank. Those rows carry
-`Status` `LONG_PATH` and report `fM`/`fL` with the signal-to-noise ratio at
-each. fM and fL come only from a propagation run, but they do not depend on the
+reference frequencies fM and fL, and also sets the MUFs, so those rows carry
+`Status` `LONG_PATH` and report `BUF`/`MUF`/`OWF` *and* `fM`/`fL` with the
+signal-to-noise ratio at each. fM and fL come only from a propagation run, but they do not depend on the
 frequency of interest, so a long circuit costs one run to find them plus one at
 each -- the same three as a short one.
 

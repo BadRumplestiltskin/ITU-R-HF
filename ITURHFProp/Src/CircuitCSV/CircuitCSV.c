@@ -50,6 +50,9 @@ static int    (*csvReadIonParametersBin)(int, float ****, float ****, char *, in
 static int    (*csvReadP1239)(struct PathData *, const char *);
 static int    (*csvReadType13)(struct Antenna *, FILE *, double, int);
 static void   (*csvIsotropicPattern)(struct Antenna *, double, int);
+static int    (*csvReadType11)(struct Antenna *, FILE *, int);
+static int    (*csvReadType14)(struct Antenna *, FILE *, int);
+static double (*csvElevationAngle)(double, double);
 static int    (*csvReadFamDud)(struct NoiseParams *, const char *, int);
 static int    (*csvIonMapGet)(int, char *, int, float *****, float *****);
 static void   (*csvIonMapFree)(void);
@@ -65,6 +68,9 @@ static void   (*csvMUFOperational)(struct PathData *);
 #define FRQMUF	1	// path MUF exceeded 50% of days
 #define FRQOWF	2	// path MUF exceeded 90% of days, the FOT
 #define NFRQ	3
+
+// Azimuth resolution of a Type 13 pattern, per ReadType13().
+#define ANTAZIMUTHS	360
 
 /*
 	Results of one circuit. Every value is in the engine's own units, with no
@@ -95,6 +101,16 @@ struct Result {
 
 static void PrintUsage(void);
 
+// Antenna orientation; defined below, used by RunCircuit().
+struct AntennaMaster {
+	double ***rows;		// [freq][azimuth] as loaded, unrotated
+	int      freqn;
+	int      valid;
+};
+static struct AntennaMaster TxMaster, RxMaster;
+static int  SaveAntennaMaster(struct AntennaMaster *m, struct Antenna *ant);
+static void OrientAntenna(struct Antenna *ant, struct AntennaMaster *m, double bearing);
+
 /*
 	LoadP533() - Resolves the entry points of the P533 and P372 libraries.
 
@@ -120,6 +136,9 @@ static int LoadP533(void) {
 		{ "ReadIonParametersBin", (void **)&csvReadIonParametersBin },
 		{ "ReadP1239",            (void **)&csvReadP1239 },
 		{ "ReadType13",           (void **)&csvReadType13 },
+		{ "ReadType11",           (void **)&csvReadType11 },
+		{ "ReadType14",           (void **)&csvReadType14 },
+		{ "ElevationAngle",       (void **)&csvElevationAngle },
 		{ "IsotropicPattern",     (void **)&csvIsotropicPattern },
 		{ "IonMapGet",            (void **)&csvIonMapGet },
 		{ "IonMapFree",           (void **)&csvIonMapFree },
@@ -493,6 +512,11 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 	r->txBearing = csvBearing(path->L_tx, path->L_rx, path->SorL) * R2D;
 	r->rxBearing = csvBearing(path->L_rx, path->L_tx, path->SorL) * R2D;
 
+	// Point each antenna along this circuit's great circle, as ITURHFProp's
+	// AntennaOrientation TX2RX does, before any gain is evaluated.
+	OrientAntenna(&path->A_tx, &TxMaster, r->txBearing * D2R);
+	OrientAntenna(&path->A_rx, &RxMaster, r->rxBearing * D2R);
+
 	/*
 		The path-level MUFs, not the dominant mode's. P.533 sets a dominant mode
 		only for paths it treats with the short model; between 7000 and 9000 km
@@ -513,6 +537,18 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		sentinel. Report that rather than letting 99.9 reach the file as though
 		it were a 99.9 MHz MUF.
 	*/
+	/*
+		MUFBasic() signals "no mode supported" with path->BMUF = TOOBIG, which is
+		DBL_MAX, so it must be tested BEFORE the long-path check -- DBL_MAX also
+		satisfies >= 99.0 and short no-mode circuits were being labelled
+		LONG_PATH, which left the NO_MODE branch unreachable.
+	*/
+	if (r->f[FRQBUF] >= TOOBIG) {
+		r->f[FRQBUF] = r->f[FRQMUF] = r->f[FRQOWF] = 0.0;
+		r->valid = FALSE;
+		return RTN_CSVOK;			// caller labels this NO_MODE
+	}
+
 	if (r->f[FRQBUF] >= 99.0 || path->distance > 9000.0) {
 
 		/*
@@ -530,6 +566,18 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		SetPath(path, c, 10.0);
 		retval = csvP533(path);
 		if (retval != RTN_P533OK) return retval;
+
+		/*
+			The long model sets the MUFs too (MedianSkywaveFieldStrengthLong.c
+			lines 520-546), so read them back rather than leaving the zeros
+			written above: they were being blanked one line before the run that
+			computes them.
+		*/
+		if (path->BMUF > 0.0 && path->BMUF < 99.0) r->f[FRQBUF] = path->BMUF;
+		if (path->OPMUF   > 0.0 && path->OPMUF   < 99.0) r->f[FRQMUF] = path->OPMUF;
+		else if (path->MUF50 > 0.0 && path->MUF50 < 99.0) r->f[FRQMUF] = path->MUF50;
+		if (path->OPMUF90 > 0.0 && path->OPMUF90 < 99.0) r->f[FRQOWF] = path->OPMUF90;
+		else if (path->MUF90 > 0.0 && path->MUF90 < 99.0) r->f[FRQOWF] = path->MUF90;
 
 		r->fM      = path->fM;
 		r->fL      = path->fL;
@@ -585,6 +633,17 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 
 		if (n == FRQBUF) {
 
+			/*
+				For 7000 < d < 9000 km, Between7000kmand9000km() overwrites
+				path->BMUF with P.533 section 5.4's interpolation. That runs only
+				inside P533(), so the MUF chain above could not see it and the
+				BUF column carried the un-interpolated short-model value.
+			*/
+			if (path->distance > 7000.0 && path->distance < 9000.0 &&
+				path->BMUF > 0.0 && path->BMUF < 99.0) {
+				r->f[FRQBUF] = path->BMUF;
+			}
+
 			r->prob    = path->BCR;
 			r->noiseRx = path->noiseP.FamT;
 
@@ -596,9 +655,18 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 				r->toa   = path->DMptr->ele * R2D;
 				r->loss  = path->DMptr->Lb;
 				{
+					/*
+						Reproduce CircuitReliability()'s own calculation, which
+						re-derives the elevation deliberately: the elevation
+						stored on the mode was computed under the E-layer
+						screening condition, which does not apply here. Using the
+						stored one made Grange_BUF short by 210-416 km.
+					*/
 					double dh    = path->distance / hops;
+					double hr    = (layer == 'E') ? 110.0 : path->DMptr->hr;
+					double delta = csvElevationAngle(dh, hr);
 					double psi   = dh / (2.0*R0);
-					double ptick = 2.0*R0*(sin(psi)/cos(path->DMptr->ele - psi));
+					double ptick = 2.0*R0*(sin(psi)/cos(delta - psi));
 					r->grange = hops * ptick;
 					r->delay  = r->grange * 1000.0 / VofL;
 				}
@@ -606,7 +674,15 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		}
 	}
 
-	r->valid = TRUE;
+	/*
+		Only claim a result if at least one frequency was actually evaluated. All
+		three can be skipped when they fall outside P.533's 1-30 MHz, and valid
+		was set unconditionally, so such a row was written as OK with Prob and
+		Noise reported as a computed 0.
+	*/
+	r->valid = (r->snok[FRQBUF] == TRUE || r->snok[FRQMUF] == TRUE || r->snok[FRQOWF] == TRUE)
+	           ? TRUE : FALSE;
+	if (r->valid != TRUE) r->status = "FREQ_RANGE";
 
 	return RTN_CSVOK;
 
@@ -788,6 +864,88 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 
 }
 
+
+/*
+	Antenna orientation.
+
+	ReadType13() stores a pattern indexed by ABSOLUTE azimuth: it applies an
+	integer offset iMBOS = (int)(bearing*R2D) so that pattern[az] holds the
+	file's gain for (az - bearing). AntennaGain() then looks the pattern up at
+	the path's own bearing, so a pattern loaded at one bearing is only correct
+	for circuits on that bearing.
+
+	Loading the file once at bearing 0.0 and never re-orienting left every
+	circuit in a batch using a pattern pointed at true north. Re-reading the
+	file per circuit would be 100,000 file reads, but the rotation is only a
+	cyclic shift of the azimuth axis, so keeping the unrotated rows and
+	permuting the 360 row pointers per circuit costs 360 pointer writes.
+*/
+/*
+	SaveAntennaMaster() - Keeps the unrotated azimuth rows of a loaded pattern.
+
+		INPUT
+			struct AntennaMaster *m, struct Antenna *ant
+
+		OUTPUT
+			returns TRUE on success
+
+		SUBROUTINES
+			None
+*/
+static int SaveAntennaMaster(struct AntennaMaster *m, struct Antenna *ant) {
+
+	int f, a;
+
+	m->valid = FALSE;
+	if (ant->pattern == NULL || ant->freqn <= 0) return FALSE;
+
+	m->rows = (double ***)calloc(ant->freqn, sizeof(double **));
+	if (m->rows == NULL) return FALSE;
+	for (f = 0; f < ant->freqn; f++) {
+		m->rows[f] = (double **)calloc(ANTAZIMUTHS, sizeof(double *));
+		if (m->rows[f] == NULL) return FALSE;
+		for (a = 0; a < ANTAZIMUTHS; a++) m->rows[f][a] = ant->pattern[f][a];
+	}
+	m->freqn = ant->freqn;
+	m->valid = TRUE;
+
+	return TRUE;
+
+}
+
+/*
+	OrientAntenna() - Points a loaded pattern along the given bearing.
+
+		Equivalent to having called ReadType13() with this bearing, but without
+		re-reading the file: the azimuth axis is a cyclic shift, so only the row
+		pointers move.
+
+		INPUT
+			struct Antenna *ant, struct AntennaMaster *m, double bearing (radians)
+
+		OUTPUT
+			ant->pattern re-indexed for that bearing
+
+		SUBROUTINES
+			None
+*/
+static void OrientAntenna(struct Antenna *ant, struct AntennaMaster *m, double bearing) {
+
+	int f, a, iMBOS;
+
+	if (m->valid != TRUE) return;		// ISOTROPIC, or nothing loaded
+
+	iMBOS = (int)(bearing*R2D);
+	iMBOS = ((iMBOS % ANTAZIMUTHS) + ANTAZIMUTHS) % ANTAZIMUTHS;
+
+	for (f = 0; f < m->freqn; f++) {
+		for (a = 0; a < ANTAZIMUTHS; a++) {
+			ant->pattern[f][(iMBOS + a) % ANTAZIMUTHS] = m->rows[f][a];
+		}
+	}
+
+}
+
 /*
 	LoadAntenna() - Loads one antenna pattern, once, for the whole batch.
 
@@ -808,6 +966,7 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 static int LoadAntenna(struct Antenna *ant, const char *spec, double gos, int silent) {
 
 	FILE *fp;
+	int retval;
 
 	if (spec == NULL || strcmp(spec, "ISOTROPIC") == 0) {
 		csvIsotropicPattern(ant, gos, silent);
@@ -821,11 +980,43 @@ static int LoadAntenna(struct Antenna *ant, const char *spec, double gos, int si
 		return RTN_ERRCSVANTENNA;
 	}
 
-	// A bearing of 0.0 keeps the pattern in the file's own orientation.
-	if (csvReadType13(ant, fp, 0.0, silent) != RTN_READANTENNAPATTERNSOK) {
-		printf("CircuitCSV: Error %d Can't read antenna file %s\n", RTN_ERRCSVANTENNA, spec);
-		fclose(fp);
-		return RTN_ERRCSVANTENNA;
+	/*
+		Identify the VOACAP antenna type the way ReadAntennaPatterns() does. The
+		type marker is on the fourth line; ReadType13() reads it but never checks
+		it, so handing every file to ReadType13() parsed a Type 11 or Type 14
+		pattern into garbage gains with no error.
+	*/
+	{
+		char line[256];
+		int antType = 0, i;
+
+		for (i = 0; i < 4; i++) {
+			if (fgets(line, sizeof(line), fp) == NULL) {
+				printf("CircuitCSV: Error %d Antenna file %s is too short\n", RTN_ERRCSVANTENNA, spec);
+				fclose(fp);
+				return RTN_ERRCSVANTENNA;
+			}
+		}
+		sscanf(line, " %d", &antType);
+		rewind(fp);
+
+		// A bearing of 0.0 loads the pattern unrotated; OrientAntenna() points
+		// it along each circuit's own great circle.
+		if (antType == 11)      retval = csvReadType11(ant, fp, silent);
+		else if (antType == 13) retval = csvReadType13(ant, fp, 0.0, silent);
+		else if (antType == 14) retval = csvReadType14(ant, fp, silent);
+		else {
+			printf("CircuitCSV: Error %d Unsupported antenna type %d in %s\n",
+				RTN_ERRCSVANTENNA, antType, spec);
+			fclose(fp);
+			return RTN_ERRCSVANTENNA;
+		}
+
+		if (retval != RTN_READANTENNAPATTERNSOK) {
+			printf("CircuitCSV: Error %d Can't read antenna file %s\n", RTN_ERRCSVANTENNA, spec);
+			fclose(fp);
+			return RTN_ERRCSVANTENNA;
+		}
 	}
 	fclose(fp);
 
@@ -926,6 +1117,11 @@ int main(int argc, char *argv[]) {
 	if (LoadAntenna(&path.A_tx, txant, gos, silent) != RTN_CSVOK) return RTN_ERRCSVANTENNA;
 	if (LoadAntenna(&path.A_rx, rxant, gos, silent) != RTN_CSVOK) return RTN_ERRCSVANTENNA;
 
+	// Keep the unrotated rows so each circuit can point the pattern along its
+	// own great circle. An isotropic pattern needs no orientation.
+	if (txant != NULL && strcmp(txant, "ISOTROPIC") != 0) SaveAntennaMaster(&TxMaster, &path.A_tx);
+	if (rxant != NULL && strcmp(rxant, "ISOTROPIC") != 0) SaveAntennaMaster(&RxMaster, &path.A_rx);
+
 	// The path's own 10.7 MB maps are released immediately: from here on it
 	// borrows the library's month cache instead, so nothing is duplicated.
 	csvFreeIonMaps(&path);
@@ -974,7 +1170,14 @@ int main(int argc, char *argv[]) {
 	// of 100,000+ rows.
 	while (fgets(line, sizeof(line), fin) != NULL) {
 
-		if (Trim(line)[0] == '\0') continue;	// skip blank records
+		// Test for a blank record without touching it: Trim() unquotes a FIELD
+		// in place, so running it on the whole record stripped the closing quote
+		// of the last field before SplitCSV() ever saw it.
+		{
+			const char *scan = line;
+			while (*scan == ' ' || *scan == '\t' || *scan == '\r' || *scan == '\n') scan++;
+			if (*scan == '\0') continue;	// skip blank records
+		}
 
 		nrow++;
 
