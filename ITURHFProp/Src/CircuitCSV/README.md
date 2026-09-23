@@ -128,6 +128,12 @@ each. fM and fL come only from a propagation run, but they do not depend on the
 frequency of interest, so a long circuit costs one run to find them plus one at
 each -- the same three as a short one.
 
+**What `-m` changes.** The frequency columns always report the true
+characteristic frequency. `-m` moves only the frequency the circuit is
+*evaluated* at, so with `-m 0.99` the `SN_` columns are the signal-to-noise
+ratio at 0.99 x the frequency printed beside them. It applies to BUF, MUF, OWF,
+fM and fL alike.
+
 **The step at the MUF.** A mode supported just below a MUF is screened just
 above it, and the engine's loss jumps by about 8 dB across that boundary. For
 one test circuit, 15.525567 MHz gives an SNR of 20.12 dB and 15.5256 MHz gives

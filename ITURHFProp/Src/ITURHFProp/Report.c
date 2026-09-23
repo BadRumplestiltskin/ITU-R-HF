@@ -48,8 +48,6 @@ void function_RPT_LONG(struct PathData path, int option, int *col);
 
 // Local globals
 char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-char *cp[] = {"T + 1000","T + d0/2","MidPoint","R + d0/2","R + 1000"};
-char *season[] = {"Winter", "Equinox", "Summer"};
 char outstr[256] = "";
 FILE *fp; // Temp file pointer for readability
 static int Header = TRUE; // The first time you enter this routine the head will need to be printed.

@@ -172,15 +172,36 @@ static int LoadP533(void) {
 static char *Trim(char *s) {
 
 	char *end;
+	size_t len;
+	size_t i, j;
 
-	while (*s == ' ' || *s == '\t' || *s == '"') s++;
+	// Leading and trailing white space first.
+	while (*s == ' ' || *s == '\t') s++;
 	end = s + strlen(s);
 	while (end > s) {
 		char c = *(end-1);
-		if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '"') end--;
+		if (c == ' ' || c == '\t' || c == '\r' || c == '\n') end--;
 		else break;
 	}
 	*end = '\0';
+
+	/*
+		Then unquote, per RFC 4180: a field is quoted only when it both starts
+		and ends with a quote, and an embedded quote is written doubled. This
+		used to strip quote characters from either end greedily, which turned
+		a name like  say "hi"  into  say ""hi  by removing the wrong ones and
+		leaving the doubling in place.
+	*/
+	len = strlen(s);
+	if (len >= 2 && s[0] == '"' && s[len-1] == '"') {
+		s[len-1] = '\0';
+		s++;
+		for (i = 0, j = 0; s[i] != '\0'; i++, j++) {
+			if (s[i] == '"' && s[i+1] == '"') i++;	// collapse a doubled quote
+			s[j] = s[i];
+		}
+		s[j] = '\0';
+	}
 
 	return s;
 
@@ -213,7 +234,9 @@ static int SplitCSV(char *line, char **field, int maxfields) {
 		if (*p == '"') inquote = !inquote;
 		else if (*p == ',' && inquote == 0) {
 			*p = '\0';
-			if (n >= maxfields) return n;
+			// Stop collecting, but still fall through to the trim below: an
+			// early return here left every field untrimmed, quotes and all.
+			if (n >= maxfields) break;
 			field[n++] = p + 1;
 		}
 	}
@@ -518,7 +541,7 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 			if (csvP533(path) == RTN_P533OK) { r->snfM = path->SNR; r->fMok = TRUE; }
 		}
 		if (r->fL >= 1.0 && r->fL <= 30.0) {
-			SetPath(path, c, r->fL);
+			SetPath(path, c, r->fL * FreqMargin);
 			if (csvP533(path) == RTN_P533OK) { r->snfL = path->SNR; r->fLok = TRUE; }
 		}
 
@@ -612,6 +635,56 @@ static void PrintHeader(FILE *fp) {
 
 }
 
+
+/*
+	CsvQuote() - Renders a field, quoting it when the csv grammar requires.
+
+		A site name may contain a comma -- SplitCSV() reads one correctly from a
+		quoted input field -- but writing it back raw split the row into more
+		fields than the header has, which silently broke the one-row-in,
+		one-row-out column alignment. A field containing a comma, a quote, a
+		newline or leading or trailing space is wrapped in quotes with any
+		embedded quote doubled, per RFC 4180.
+
+		INPUT
+			char *out, size_t n, const char *in
+
+		OUTPUT
+			returns out
+
+		SUBROUTINES
+			None
+*/
+static const char *CsvQuote(char *out, size_t n, const char *in) {
+
+	size_t i, j = 0;
+	int need = 0;
+
+	if (in == NULL) { out[0] = '\0'; return out; }
+
+	for (i = 0; in[i] != '\0'; i++) {
+		if (in[i] == ',' || in[i] == '"' || in[i] == '\n' || in[i] == '\r') need = 1;
+	}
+	if (i > 0 && (in[0] == ' ' || in[i-1] == ' ')) need = 1;
+
+	if (need == 0) {
+		snprintf(out, n, "%s", in);
+		return out;
+	}
+
+	if (n < 3) { out[0] = '\0'; return out; }
+	out[j++] = '"';
+	for (i = 0; in[i] != '\0' && j + 2 < n; i++) {
+		if (in[i] == '"' && j + 3 < n) out[j++] = '"';	// double an embedded quote
+		out[j++] = in[i];
+	}
+	out[j++] = '"';
+	out[j] = '\0';
+
+	return out;
+
+}
+
 /*
 	WriteRow() - Writes one input row and its results.
 
@@ -643,8 +716,13 @@ static void PrintHeader(FILE *fp) {
 */
 static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) {
 
+	// Site names are the only free-text input columns, so they are the only
+	// ones that can need quoting on the way out.
+	char txq[CSVMAXNAME*2+3], rxq[CSVMAXNAME*2+3];
+
 	fprintf(fp, "%s,%.6g,%.6g,%s,%.6g,%.6g,%d,%d,%d,%d,%d,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,",
-		c->txSite, c->txLat, c->txLon, c->rxSite, c->rxLat, c->rxLon,
+		CsvQuote(txq, sizeof(txq), c->txSite), c->txLat, c->txLon,
+		CsvQuote(rxq, sizeof(rxq), c->rxSite), c->rxLat, c->rxLon,
 		c->year, c->month, c->day, c->hour, c->t_Index,
 		c->minTOA, c->txPow, c->reqSN, c->rxNoise, c->bandW, c->percDays);
 
@@ -765,8 +843,10 @@ static void PrintUsage(void) {
 	printf("  -t <file>   Transmit antenna: a Type 13 file, or ISOTROPIC (default)\n");
 	printf("  -r <file>   Receive antenna:  a Type 13 file, or ISOTROPIC (default)\n");
 	printf("  -g <dBi>    Gain of an isotropic pattern (default 0.0)\n");
-	printf("  -m <factor> Evaluate at factor x each MUF (default 1.0). The loss has an\n");
-	printf("              ~8 dB step at the MUF, so 0.99 sits clear of it.\n");
+	printf("  -m <factor> Evaluate at factor x each characteristic frequency\n");
+	printf("              (default 1.0). The loss has an ~8 dB step at a MUF, so\n");
+	printf("              0.99 sits clear of it. The frequency columns still report\n");
+	printf("              the true MUF; only the SN_ columns move with the factor.\n");
 	printf("  -s          Silent: suppress progress output\n");
 	printf("  -h          This help\n\n");
 	printf("Input columns (looked up by name, order and extra columns do not matter):\n");

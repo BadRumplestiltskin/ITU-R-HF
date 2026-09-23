@@ -71,7 +71,11 @@ int ReadP1239(struct PathData *path, const char * DataFilePath) {
 					// Read the next latitude line of text
 					fgets(line, 256, fp);
 					// Scan 1 string latitude and 24 numbers corresponding to hours
-					sscanf(line, "%s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf/n", substr,
+					// %44s, not %s: line is 256 bytes and substr is 45, so an
+					// over-long first token -- a corrupt or hand-edited decile
+					// file -- overran the stack. The latitude labels are a few
+					// characters, so the width costs nothing.
+					sscanf(line, "%44s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf/n", substr,
 									&path->foF2var[i][0][k][m][n],  &path->foF2var[i][1][k][m][n],  &path->foF2var[i][2][k][m][n],  &path->foF2var[i][3][k][m][n], 
 									&path->foF2var[i][4][k][m][n],  &path->foF2var[i][5][k][m][n],  &path->foF2var[i][6][k][m][n],  &path->foF2var[i][7][k][m][n],
 									&path->foF2var[i][8][k][m][n],  &path->foF2var[i][9][k][m][n],  &path->foF2var[i][10][k][m][n], &path->foF2var[i][11][k][m][n], 
