@@ -40,6 +40,27 @@ ignored. All are required.
 
 `day` is echoed to the output but unused: P.533 predicts monthly medians.
 
+## Row matching
+
+**Every input row produces exactly one output row, in input order.** The input
+columns are echoed ahead of the results, so the output file is the input
+concatenated with the calculated fields.
+
+Nothing is ever dropped. A row that cannot be calculated still appears, with
+empty result fields and a `Status` saying why:
+
+| `Status` | Meaning |
+|---|---|
+| `OK` | calculated normally |
+| `NO_MODE` | ran, but no propagation mode is supported; geometry columns are still filled |
+| `BAD_RECORD` | the record was short, so some input columns were missing |
+| `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
+| `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
+
+`Circuit#` is the input file's **data row number** (1 for the first row after
+the header), so it is a direct index back into the input regardless of how many
+rows failed. Blank lines are skipped and do not consume a number.
+
 ## Output columns
 
 Written in the engine's own units with `%.6g`, no fixed-point scaling.
@@ -59,9 +80,7 @@ Written in the engine's own units with `%.6g`, no fixed-point scaling.
 | `Delay_BUF` | group delay, seconds |
 | `Grange_BUF` | group range, km |
 | `Noise Rx`, `Noise Tx` | total noise, dB above kT0B |
-
-A circuit with no supported mode gets `NONE` in `Mode` and blank results; its
-geometry columns are still filled in.
+| `Status` | see Row matching above |
 
 ## Notes on the calculation
 

@@ -23,6 +23,8 @@
 	t_Index is the 12-month smoothed sunspot number, R12, which P.533 calls SSN.
 */
 struct Circuit {
+	int    row;				// 1-based data row number in the input file
+	int    parsed;			// TRUE when every input column was present
 	char   txSite[CSVMAXNAME];
 	double txLat;			// degrees, N positive
 	double txLon;			// degrees, E positive

@@ -88,7 +88,7 @@ struct Result {
 	double grange;			// group range of the dominant mode (km)
 	double noiseRx;			// total noise at the receiver (dB above kT0B)
 	int    valid;
-	int    failed;		// TRUE when P533 returned an error for this circuit
+	const char *status;	// why a row has no results, or "OK"
 };
 
 static void PrintUsage(void);
@@ -276,28 +276,37 @@ static const char *InputColumns[] = {
 */
 static int ReadCircuit(struct Circuit *c, char **f, int nf, int *col) {
 
-	// col[] was validated when the header was read, so every index is present.
+	// Parse on a best-effort basis: a short record still yields a Circuit, with
+	// the missing fields left empty, so that it can be echoed back and matched
+	// to its input row. The return value says whether anything was missing.
+	int complete = TRUE;
 	for (int i = 0; i < NINPUTCOLUMNS; i++) {
-		if (col[i] >= nf) return RTN_ERRCSVFIELD;
+		if (col[i] >= nf) complete = FALSE;
 	}
 
-	snprintf(c->txSite, sizeof(c->txSite), "%s", f[col[0]]);
-	c->txLat    = atof(f[col[1]]);
-	c->txLon    = atof(f[col[2]]);
-	snprintf(c->rxSite, sizeof(c->rxSite), "%s", f[col[3]]);
-	c->rxLat    = atof(f[col[4]]);
-	c->rxLon    = atof(f[col[5]]);
-	c->year     = atoi(f[col[6]]);
-	c->month    = atoi(f[col[7]]);
-	c->day      = atoi(f[col[8]]);
-	c->hour     = atoi(f[col[9]]);
-	c->t_Index  = atoi(f[col[10]]);
-	c->minTOA   = atof(f[col[11]]);
-	c->txPow    = atof(f[col[12]]);
-	c->reqSN    = atof(f[col[13]]);
-	c->rxNoise  = atof(f[col[14]]);
-	c->bandW    = atof(f[col[15]]);
-	c->percDays = atof(f[col[16]]);
+	#define CSVFLD(i) ((col[i] < nf) ? f[col[i]] : "")
+
+	snprintf(c->txSite, sizeof(c->txSite), "%s", CSVFLD(0));
+	c->txLat    = atof(CSVFLD(1));
+	c->txLon    = atof(CSVFLD(2));
+	snprintf(c->rxSite, sizeof(c->rxSite), "%s", CSVFLD(3));
+	c->rxLat    = atof(CSVFLD(4));
+	c->rxLon    = atof(CSVFLD(5));
+	c->year     = atoi(CSVFLD(6));
+	c->month    = atoi(CSVFLD(7));
+	c->day      = atoi(CSVFLD(8));
+	c->hour     = atoi(CSVFLD(9));
+	c->t_Index  = atoi(CSVFLD(10));
+	c->minTOA   = atof(CSVFLD(11));
+	c->txPow    = atof(CSVFLD(12));
+	c->reqSN    = atof(CSVFLD(13));
+	c->rxNoise  = atof(CSVFLD(14));
+	c->bandW    = atof(CSVFLD(15));
+	c->percDays = atof(CSVFLD(16));
+
+	#undef CSVFLD
+
+	c->parsed = complete;
 
 	return RTN_CSVOK;
 
@@ -529,7 +538,7 @@ static void PrintHeader(FILE *fp) {
 		"txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,t_Index,"
 		"minTOA,txPow,reqSN,rxNoise,bandW,percDays,"
 		"Circuit#,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,"
-		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF\n");
+		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,Status\n");
 
 }
 
@@ -548,6 +557,11 @@ static void PrintHeader(FILE *fp) {
 		Noise Tx repeats Noise Rx: P.533 calculates the noise at the receiver
 		only, and there is no transmitter-end noise figure in the Recommendation.
 
+		Every input row produces exactly one output row, in input order, with the
+		input columns echoed ahead of the results. Circuit# is the input file's
+		data row number and Status says why a row has no results, so an input
+		row and its output row can always be matched one to one.
+
 		INPUT
 			FILE *fp, struct Circuit *c, struct Result *r, int number
 
@@ -565,20 +579,23 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 		c->minTOA, c->txPow, c->reqSN, c->rxNoise, c->bandW, c->percDays);
 
 	if (r->valid == FALSE) {
-		// Geometry is still meaningful when no mode is supported.
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,\n",
-			number, r->dist, r->txBearing, r->rxBearing);
+		// No results. Geometry is still meaningful when the circuit ran but no
+		// mode was supported; it is zero when the circuit never ran at all.
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,%s\n",
+			number, r->dist, r->txBearing, r->rxBearing,
+			(r->status != NULL) ? r->status : "NO_MODE");
 		return;
 	}
 
-	fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g\n",
+	fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%s\n",
 		number, r->dist, r->txBearing, r->rxBearing,
 		r->hops, r->layer,
 		r->f[FRQBUF], r->prob, r->toa, r->loss, r->sn[FRQBUF],
 		r->delay, r->grange,
 		r->noiseRx, r->noiseRx,
 		r->f[FRQMUF], r->sn[FRQMUF],
-		r->f[FRQOWF], r->sn[FRQOWF]);
+		r->f[FRQOWF], r->sn[FRQOWF],
+		(r->status != NULL) ? r->status : "OK");
 
 }
 
@@ -664,7 +681,7 @@ int main(int argc, char *argv[]) {
 	int col[NINPUTCOLUMNS];
 	struct Circuit *circ = NULL;
 	struct Result  *res  = NULL;
-	int ncirc = 0, ncircmax = 0, monthsloaded = 0;
+	int ncirc = 0, ncircmax = 0, monthsloaded = 0, nrow = 0;
 	int nf, nhdr, retval, number = 0, failed = 0;
 	FILE *fin, *fout;
 	char dpath[256];
@@ -777,14 +794,25 @@ int main(int argc, char *argv[]) {
 			circ = nc; res = nr; ncircmax = grown;
 		}
 
+		nrow++;
+
 		nf = SplitCSV(line, field, CSVMAXFIELDS);
-		if (ReadCircuit(&circ[ncirc], field, nf, col) != RTN_CSVOK) {
-			printf("CircuitCSV: Warning: skipping short record %d\n", ncirc+1);
-			failed++;
-			continue;
-		}
+		ReadCircuit(&circ[ncirc], field, nf, col);
+		circ[ncirc].row = nrow;
 
 		memset(&res[ncirc], 0, sizeof(res[ncirc]));
+
+		// A row that is short, or carries a month outside 1-12, is kept so that
+		// it still appears in the output; it just never reaches the engine.
+		if (circ[ncirc].parsed != TRUE) {
+			res[ncirc].status = "BAD_RECORD";
+			failed++;
+		}
+		else if (circ[ncirc].month < 1 || circ[ncirc].month > 12) {
+			res[ncirc].status = "BAD_MONTH";
+			failed++;
+		}
+
 		ncirc++;
 	}
 
@@ -793,7 +821,8 @@ int main(int argc, char *argv[]) {
 	for (int m = 1; m <= 12; m++) {
 
 		int any = FALSE;
-		for (int i = 0; i < ncirc; i++) if (circ[i].month == m) { any = TRUE; break; }
+		for (int i = 0; i < ncirc; i++)
+			if (circ[i].month == m && res[i].status == NULL) { any = TRUE; break; }
 		if (any == FALSE) continue;
 
 		retval = csvReadIonParametersBin(m - 1, path.foF2, path.M3kF2, dpath, silent);
@@ -811,27 +840,25 @@ int main(int argc, char *argv[]) {
 		monthsloaded++;
 
 		for (int i = 0; i < ncirc; i++) {
-			if (circ[i].month != m) continue;
+			if (circ[i].month != m || res[i].status != NULL) continue;
 			if (RunCircuit(&path, &circ[i], &res[i]) != RTN_CSVOK) {
-				printf("CircuitCSV: Warning: circuit %d returned an error from P533, skipping\n", i+1);
+				printf("CircuitCSV: Warning: input row %d returned an error from P533\n", circ[i].row);
 				res[i].valid = FALSE;
-				res[i].failed = TRUE;
+				res[i].status = "P533_ERROR";
 				failed++;
 				continue;
 			}
+			res[i].status = (res[i].valid == TRUE) ? "OK" : "NO_MODE";
 			number++;
 			if (silent == FALSE) printf("\rCircuit %d of %d", number, ncirc);
 		}
 	}
 
-	// Write in input order, so the output rows line up with the input file.
+	// One output row per input row, in input order. Nothing is dropped: a row
+	// that could not be calculated still appears, with empty results and a
+	// Status saying why, so input and output line up one to one.
 	for (int i = 0; i < ncirc; i++) {
-		if (circ[i].month < 1 || circ[i].month > 12) {
-			printf("CircuitCSV: Warning: circuit %d has month %d, skipping\n", i+1, circ[i].month);
-			continue;
-		}
-		if (res[i].failed == TRUE) continue;
-		WriteRow(fout, &circ[i], &res[i], i+1);
+		WriteRow(fout, &circ[i], &res[i], circ[i].row);
 	}
 
 	free(circ);
