@@ -35,35 +35,14 @@ void PrintLastRecord(struct PathData path, struct ITURHFProp ITURHFP);
 char EW(double lng);
 char NS(double lat);
 void function_RPT_D(   struct PathData path, int option, int *col);
-void function_RPT_DMAX(struct PathData path, int option, int *col);
 void function_RPT_ELE( struct PathData path, int option, int *col);
-void function_RPT_BMUF(struct PathData path, int option, int *col);
-void function_RPT_BMUFD(struct PathData path, int option, int *col);
-void function_RPT_OPMUF(struct PathData path, int option, int *col);
-void function_RPT_OPMUFD(struct PathData path, int option, int *col);
 void function_RPT_N0_F2(struct PathData path, int option, int *col);
 void function_RPT_N0_E(struct PathData path, int option, int *col);
-void function_RPT_E(struct PathData path, int option, int *col);
-void function_RPT_PR(struct PathData path, int option, int *col);
-void function_RPT_GRW(struct PathData path, int option, int *col);
-void function_RPT_NOISESOURCES(struct PathData path, int option, int *col);
-void function_RPT_NOISESOURCESD(struct PathData path, int option, int *col);
-void function_RPT_NOISETOTALD(struct PathData path, int option, int *col);
-void function_RPT_NOISETOTAL(struct PathData path, int option, int *col);
-void function_RPT_SNR(struct PathData path, int option, int *col);
-void function_RPT_SNRD(struct PathData path, int option, int *col);
 void function_RPT_SNRXX(struct PathData path, int option, int *col);
-void function_RPT_SIRD(struct PathData path, int option, int *col);
-void function_RPT_SIR(struct PathData path, int option, int *col);
-void function_RPT_RSN(struct PathData path, int option, int *col);
-void function_RPT_BCR(struct PathData path, int option, int *col);
-void function_RPT_OCR(struct PathData path, int option, int *col);
 void function_RPT_OCRS(struct PathData path, int option, int *col);
-void function_RPT_MIR(struct PathData path, int option, int *col);
 void function_RPT_ANTENNA(struct PathData path, int option, int *col);
 void function_RPT_DOMMODE(struct PathData path, int option, int *col);
 void function_RPT_RXLOCATION(struct PathData path, int option, int *col);
-void function_RPT_ESL(struct PathData path, int option, int *col);
 void function_RPT_LONG(struct PathData path, int option, int *col);
 // End local prototypes
 
@@ -75,6 +54,161 @@ char outstr[256] = "";
 FILE *fp; // Temp file pointer for readability
 static int Header = TRUE; // The first time you enter this routine the head will need to be printed.
 // End local globals
+
+static double rget_distance(const struct PathData *p) { return p->distance; }
+static double rget_dmax(const struct PathData *p) { return p->dmax; }
+static double rget_ptick(const struct PathData *p) { return p->ptick; }
+static double rget_ele_deg(const struct PathData *p) { return p->ele*R2D; }
+static double rget_BMUF(const struct PathData *p) { return p->BMUF; }
+static double rget_MUF50(const struct PathData *p) { return p->MUF50; }
+static double rget_MUF90(const struct PathData *p) { return p->MUF90; }
+static double rget_MUF10(const struct PathData *p) { return p->MUF10; }
+static double rget_OPMUF(const struct PathData *p) { return p->OPMUF; }
+static double rget_OPMUF90(const struct PathData *p) { return p->OPMUF90; }
+static double rget_OPMUF10(const struct PathData *p) { return p->OPMUF10; }
+static double rget_Ep(const struct PathData *p) { return p->Ep; }
+static double rget_Pr(const struct PathData *p) { return p->Pr; }
+static double rget_Grw(const struct PathData *p) { return p->Grw; }
+static double rget_FaA(const struct PathData *p) { return p->noiseP.FaA; }
+static double rget_FaM(const struct PathData *p) { return p->noiseP.FaM; }
+static double rget_FaG(const struct PathData *p) { return p->noiseP.FaG; }
+static double rget_DuA(const struct PathData *p) { return p->noiseP.DuA; }
+static double rget_DlA(const struct PathData *p) { return p->noiseP.DlA; }
+static double rget_DuM(const struct PathData *p) { return p->noiseP.DuM; }
+static double rget_DlM(const struct PathData *p) { return p->noiseP.DlM; }
+static double rget_DuG(const struct PathData *p) { return p->noiseP.DuG; }
+static double rget_DlG(const struct PathData *p) { return p->noiseP.DlG; }
+static double rget_DuT(const struct PathData *p) { return p->noiseP.DuT; }
+static double rget_DlT(const struct PathData *p) { return p->noiseP.DlT; }
+static double rget_FamT(const struct PathData *p) { return p->noiseP.FamT; }
+static double rget_SNR(const struct PathData *p) { return p->SNR; }
+static double rget_DuSN(const struct PathData *p) { return p->DuSN; }
+static double rget_DlSN(const struct PathData *p) { return p->DlSN; }
+static double rget_SIR(const struct PathData *p) { return p->SIR; }
+static double rget_DuSI(const struct PathData *p) { return p->DuSI; }
+static double rget_DlSI(const struct PathData *p) { return p->DlSI; }
+static double rget_RSN(const struct PathData *p) { return p->RSN; }
+static double rget_RT(const struct PathData *p) { return p->RT; }
+static double rget_RF(const struct PathData *p) { return p->RF; }
+static double rget_BCR(const struct PathData *p) { return p->BCR; }
+static double rget_OCR(const struct PathData *p) { return p->OCR; }
+static double rget_MIR(const struct PathData *p) { return p->MIR; }
+static double rget_Es(const struct PathData *p) { return p->Es; }
+static double rget_El(const struct PathData *p) { return p->El; }
+
+/*
+	The report columns as data.
+
+	Each row is one output column: the flag that selects it, the text for the
+	header listing, the RFC4180 column name, the two field formats and a getter.
+	A row with a fn instead is dispatched to a hand-written function, for the
+	six columns that are not a plain value -- a receiver location, the two
+	lowest-order mode names, SNRXX, the dominant mode and the long-model block.
+
+	This replaced 23 near-identical functions, each a four-case switch varying
+	only in those five slots, plus a dispatch branch apiece. Adding a column is
+	now one row here rather than a prototype, a dispatch branch and a 20-line
+	body that can fall out of step between its four cases.
+
+	The order of this table is the column order of the report.
+*/
+typedef double (*RptGet)(const struct PathData *);
+
+struct RptCol {
+	unsigned long flag;			// which RptFileFormat bit selects it
+	const char   *desc;			// header text, NULL when fn is used instead
+	const char   *csvname;		// RFC4180 column name
+	const char   *fmt;			// field format for the human-readable report
+	const char   *fmt4180;		// field format for the RFC4180 report
+	RptGet        get;			// value
+	void        (*fn)(struct PathData, int, int *);	// irregular columns
+};
+
+static const struct RptCol RptCols[] = {
+	{ RPT_RXLOCATION,      NULL, NULL, NULL, NULL, NULL, function_RPT_RXLOCATION },
+	{ RPT_D,               "D - Path distance (km)", "distance", DBLFIELD2, RFC4180_DBLFIELD2, rget_distance, NULL },
+	{ RPT_DMAX,            "dmax - Path maximum hop distance (km)", "dmax", DBLFIELD, RFC4180_DBLFIELD, rget_dmax, NULL },
+	{ RPT_DMAX,            "ptick - Slant Path distance (km)", "ptick", DBLFIELD2, RFC4180_DBLFIELD2, rget_ptick, NULL },
+	{ RPT_ELE,             "ele - Path minimum Rx elevation angle (deg)", "ele", DBLFIELD, RFC4180_DBLFIELD, rget_ele_deg, NULL },
+	{ RPT_BMUF,            "BMUF - Path basic MUF (MHz)", "BMUF", DBLFIELD, RFC4180_DBLFIELD, rget_BMUF, NULL },
+	{ RPT_BMUFD,           "MUF50 - 50% Path basic MUF (MHz)", "MUF50", DBLFIELD, RFC4180_DBLFIELD, rget_MUF50, NULL },
+	{ RPT_BMUFD,           "MUF90 - 90% Path basic MUF (MHz)", "MUF90", DBLFIELD, RFC4180_DBLFIELD, rget_MUF90, NULL },
+	{ RPT_BMUFD,           "MUF10 - 10% Path basic MUF (MHz)", "MUF10", DBLFIELD, RFC4180_DBLFIELD, rget_MUF10, NULL },
+	{ RPT_OPMUF,           "OPMUF - Operation MUF (MHz)", "OPMUF", DBLFIELD, RFC4180_DBLFIELD, rget_OPMUF, NULL },
+	{ RPT_OPMUFD,          "OPMUF90 - 90% Operation MUF (MHz)", "OPMUF90", DBLFIELD, RFC4180_DBLFIELD, rget_OPMUF90, NULL },
+	{ RPT_OPMUFD,          "OPMUF10 - 10% Operation MUF (MHz)", "OPMUF10", DBLFIELD, RFC4180_DBLFIELD, rget_OPMUF10, NULL },
+	{ RPT_N0_F2,           NULL, NULL, NULL, NULL, NULL, function_RPT_N0_F2 },
+	{ RPT_N0_E,            NULL, NULL, NULL, NULL, NULL, function_RPT_N0_E },
+	{ RPT_E,               "E - Path Field Strength (dB(1uV/m))", "Ep", DBLFIELD, RFC4180_DBLFIELD, rget_Ep, NULL },
+	{ RPT_PR,              "Pr - Median receiver power (dB)", "PR", DBLFIELD, RFC4180_DBLFIELD, rget_Pr, NULL },
+	{ RPT_GRW,             "Grw - Receive Antenna Gain (dbi)", "Grw", DBLFIELD, RFC4180_DBLFIELD, rget_Grw, NULL },
+	{ RPT_NOISESOURCES,    "FaA - Atmospheric noise (dB)", "FaA", DBLFIELD, RFC4180_DBLFIELD, rget_FaA, NULL },
+	{ RPT_NOISESOURCES,    "FaM - Man-made noise (dB)", "FaM", DBLFIELD, RFC4180_DBLFIELD, rget_FaM, NULL },
+	{ RPT_NOISESOURCES,    "FaG - Galactic noise (dB)", "FaG", DBLFIELD, RFC4180_DBLFIELD, rget_FaG, NULL },
+	{ RPT_NOISESOURCESD,   "DuA - Upper decile deviation of atmospheric noise (dB)", "DuA", DBLFIELD, RFC4180_DBLFIELD, rget_DuA, NULL },
+	{ RPT_NOISESOURCESD,   "DlA - Lower decile deviation of atmospheric noise (dB)", "DlA", DBLFIELD, RFC4180_DBLFIELD, rget_DlA, NULL },
+	{ RPT_NOISESOURCESD,   "DuM - Upper decile deviation of man-made noise (dB)", "DuM", DBLFIELD, RFC4180_DBLFIELD, rget_DuM, NULL },
+	{ RPT_NOISESOURCESD,   "DlM - Lower decile deviation of man-made noise (dB)", "DlM", DBLFIELD, RFC4180_DBLFIELD, rget_DlM, NULL },
+	{ RPT_NOISESOURCESD,   "DuG - Upper decile deviation of atmospheric noise (dB)", "DuG", DBLFIELD, RFC4180_DBLFIELD, rget_DuG, NULL },
+	{ RPT_NOISESOURCESD,   "DlG - Lower decile deviation of atmospheric noise (dB)", "DlG", DBLFIELD, RFC4180_DBLFIELD, rget_DlG, NULL },
+	{ RPT_NOISETOTALD,     "DuT - Upper decile deviation of total noise (dB)", "DuT", DBLFIELD, RFC4180_DBLFIELD, rget_DuT, NULL },
+	{ RPT_NOISETOTALD,     "DlT - Lower decile deviation of total noise (dB)", "DlT", DBLFIELD, RFC4180_DBLFIELD, rget_DlT, NULL },
+	{ RPT_NOISETOTAL,      "FamT - Total noise (dB)", "FamT", DBLFIELD, RFC4180_DBLFIELD, rget_FamT, NULL },
+	{ RPT_SNR,             "SNR - Median signal-to-noise ratio (dB)", "SNR", DBLFIELD, RFC4180_DBLFIELD, rget_SNR, NULL },
+	{ RPT_SNRD,            "DuSN - Upper decile deviation of signal-to-noise ratio (dB)", "DuSN", DBLFIELD, RFC4180_DBLFIELD, rget_DuSN, NULL },
+	{ RPT_SNRD,            "DlSN - Lower decile deviation of signal-to-noise ratio (dB)", "DlSN", DBLFIELD, RFC4180_DBLFIELD, rget_DlSN, NULL },
+	{ RPT_SNRXX,           NULL, NULL, NULL, NULL, NULL, function_RPT_SNRXX },
+	{ RPT_SIR,             "SIR - Signal-to-interference ratio (dB)", "SIR", DBLFIELD, RFC4180_DBLFIELD, rget_SIR, NULL },
+	{ RPT_SIRD,            "DuSI - Upper decile deviation of signal-to-interference ratio (dB)", "DuSI", DBLFIELD, RFC4180_DBLFIELD, rget_DuSI, NULL },
+	{ RPT_SIRD,            "DlSI - Lower decile deviation of signal-to-interference ratio (dB)", "DlSI", DBLFIELD, RFC4180_DBLFIELD, rget_DlSI, NULL },
+	{ RPT_RSN,             "RSN - Probability that the required SNR is achieved (%)", "RSN", DBLFIELD, RFC4180_DBLFIELD, rget_RSN, NULL },
+	{ RPT_RSN,             "RT - Probability that the required time spread T0 is not exceeded (%)", "RT", DBLFIELD, RFC4180_DBLFIELD, rget_RT, NULL },
+	{ RPT_RSN,             "RF - Probability that the required frequency spread f0 is not exceeded (%)", "RF", DBLFIELD, RFC4180_DBLFIELD, rget_RF, NULL },
+	{ RPT_BCR,             "BCR - Basic circuit reliability (%)", "BCR", DBLFIELD, RFC4180_DBLFIELD, rget_BCR, NULL },
+	{ RPT_OCR,             "OCR - Overall circuit reliability not considering scattering (%)", "OCR", DBLFIELD, RFC4180_DBLFIELD, rget_OCR, NULL },
+	{ RPT_MIR,             "MIR - Multimode Interference (%)", "MIR", DBLFIELD, RFC4180_DBLFIELD, rget_MIR, NULL },
+	{ RPT_DOMMODE,         NULL, NULL, NULL, NULL, NULL, function_RPT_DOMMODE },
+	{ RPT_ESL,             "Short Path (<=7000 km) Field Strength (dB(1uV/m))", "Es", DBLFIELD1, RFC4180_DBLFIELD1, rget_Es, NULL },
+	{ RPT_ESL,             "Long Path (>9000km) Field Strength (dB(1uV/m))", "El", DBLFIELD1, RFC4180_DBLFIELD1, rget_El, NULL },
+	{ RPT_LONG,            NULL, NULL, NULL, NULL, NULL, function_RPT_LONG },
+};
+#define NRPTCOLS ((int)(sizeof(RptCols)/sizeof(RptCols[0])))
+
+/*
+	EmitCol() - Writes one table-driven column in the requested form.
+
+		INPUT
+			const struct RptCol *c, struct PathData path, int option, int *col
+
+		OUTPUT
+			One column of the header listing, the csv header or a data record
+
+		SUBROUTINES
+			None
+*/
+static void EmitCol(const struct RptCol *c, struct PathData path, int option, int *col) {
+
+	switch (option) {
+		case PRINT_HEADER:
+			fprintf(fp, "Column %02d: %s\n", ++*col, c->desc);
+			break;
+		case PRINT_RFC4180_HEADER:
+			fprintf(fp, ",%s", c->csvname);
+			++*col;
+			break;
+		case PRINT_DATA:
+			fprintf(fp, ",");
+			fprintf(fp, c->fmt, c->get(&path));
+			break;
+		case PRINT_RFC4180_DATA:
+			fprintf(fp, ",");
+			fprintf(fp, c->fmt4180, c->get(&path));
+			break;
+	}
+
+	return;
+
+}
 
 void Report(struct PathData path, struct ITURHFProp ITURHFP) {
 
@@ -190,96 +324,13 @@ void PrintRecord(struct PathData path, struct ITURHFProp ITURHFP, int option) {
 			break;
 	}
 
-    if((ITURHFP.RptFileFormat & RPT_RXLOCATION) == RPT_RXLOCATION) {
-		function_RPT_RXLOCATION(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_D) == RPT_D) {
-		function_RPT_D(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_DMAX) == RPT_DMAX) {
-		function_RPT_DMAX(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_ELE) == RPT_ELE) {
-		function_RPT_ELE(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_BMUF) == RPT_BMUF) {
-		function_RPT_BMUF(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_BMUFD) == RPT_BMUFD) {
-		function_RPT_BMUFD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_OPMUF) == RPT_OPMUF) {
-		function_RPT_OPMUF(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_OPMUFD) == RPT_OPMUFD) {
-		function_RPT_OPMUFD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_N0_F2) == RPT_N0_F2) {
-		function_RPT_N0_F2(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_N0_E) == RPT_N0_E) {
-		function_RPT_N0_E(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_E) == RPT_E) {
-		function_RPT_E(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_PR) == RPT_PR) {
-		function_RPT_PR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_GRW) == RPT_GRW) {
-		function_RPT_GRW(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_NOISESOURCES) == RPT_NOISESOURCES) {
-		function_RPT_NOISESOURCES(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_NOISESOURCESD) == RPT_NOISESOURCESD) {
-		function_RPT_NOISESOURCESD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_NOISETOTALD) == RPT_NOISETOTALD) {
-		function_RPT_NOISETOTALD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_NOISETOTAL) == RPT_NOISETOTAL) {
-		function_RPT_NOISETOTAL(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_SNR) == RPT_SNR) {
-		function_RPT_SNR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_SNRD) == RPT_SNRD) {
-		function_RPT_SNRD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_SNRXX) == RPT_SNRXX) {
-		function_RPT_SNRXX(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_SIR) == RPT_SIR) {
-		function_RPT_SIR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_SIRD) == RPT_SIRD) {
-		function_RPT_SIRD(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_RSN) == RPT_RSN) {
-		function_RPT_RSN(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_BCR) == RPT_BCR) {
-		function_RPT_BCR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_OCR) == RPT_OCR) {
-		function_RPT_OCR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_OCRS) ==RPT_OCRS ) {
-		function_RPT_OCRS(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_MIR) == RPT_MIR) {
-		function_RPT_MIR(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_DOMMODE) == RPT_DOMMODE) {
-		function_RPT_DOMMODE(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_ESL) == RPT_ESL) {
-		function_RPT_ESL(path, option, &col);
-	}
-    if((ITURHFP.RptFileFormat & RPT_LONG) == RPT_LONG) {
-		function_RPT_LONG(path, option, &col);
-	}
+    // Walk the column table in order; a row with a fn is one of the six
+    // columns that needs its own code.
+    for (int n = 0; n < NRPTCOLS; n++) {
+        if ((ITURHFP.RptFileFormat & RptCols[n].flag) != RptCols[n].flag) continue;
+        if (RptCols[n].fn != NULL) RptCols[n].fn(path, option, &col);
+        else                       EmitCol(&RptCols[n], path, option, &col);
+    }
 
     // If the data format header is being printed, put the tail on.
 	if(option == PRINT_HEADER) {
@@ -434,176 +485,12 @@ void PrintLastRecord(struct PathData path, struct ITURHFProp ITURHFP) {
 
 }
 
-void function_RPT_D(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: D - Path distance (km)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",distance");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD2, path.distance);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD2, path.distance);
-			break;
-	}
-    return;
-}
 
-void function_RPT_DMAX(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: dmax - Path maximum hop distance (km)\n", ++*col);
-			fprintf(fp, "Column %02d: ptick - Slant Path distance (km)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",dmax,ptick");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.dmax);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD2, path.ptick);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.dmax);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD2, path.ptick);
-			break;
-	}
-    return;
-}
 
-void function_RPT_ELE(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: ele - Path minimum Rx elevation angle (deg)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",ele");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.ele*R2D);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.ele*R2D);
-			break;
-	}
-    return;
-}
 
-void function_RPT_BMUF(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: BMUF - Path basic MUF (MHz)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",BMUF");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.BMUF);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.BMUF);
-			break;
-	}
-    return;
-}
 
-void function_RPT_BMUFD(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: MUF50 - 50%% Path basic MUF (MHz)\n", ++*col);
-			fprintf(fp, "Column %02d: MUF90 - 90%% Path basic MUF (MHz)\n", ++*col);
-			fprintf(fp, "Column %02d: MUF10 - 10%% Path basic MUF (MHz)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",MUF50,MUF90,MUF10");
-			*col = *col + 3;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.MUF50);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.MUF90);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.MUF10);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.MUF50);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.MUF90);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.MUF10);
-			break;
-	}
 
-    return;
-}
 
-void function_RPT_OPMUF(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: OPMUF - Operation MUF (MHz)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",OPMUF");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.OPMUF);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.OPMUF);
-			break;
-	}
-
-    return;
-
-}
-
-void function_RPT_OPMUFD(struct PathData path, int option, int *col) {
-
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: OPMUF90 - 90%% Operation MUF (MHz)\n", ++*col);
-			fprintf(fp, "Column %02d: OPMUF10 - 10%% Operation MUF (MHz)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",OPMUF90,OPMUF10");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.OPMUF90);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.OPMUF10);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.OPMUF90);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.OPMUF10);
-			break;
-	}
-    return;
-}
 
 void function_RPT_N0_F2(struct PathData path, int option, int *col) {
 	switch(option) {
@@ -671,239 +558,14 @@ void function_RPT_N0_E(struct PathData path, int option, int *col) {
     return;
 }
 
-void function_RPT_E(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: E - Path Field Strength (dB(1uV/m))\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",Ep");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.Ep);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.Ep);
-			break;
-	}
-    return;
-}
 
-void function_RPT_GRW(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: Grw - Receive Antenna Gain (dbi)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",Grw");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.Grw);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.Grw);
-			break;
-	}
-    return;
-}
 
-void function_RPT_PR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: Pr - Median receiver power (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",PR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.Pr);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.Pr);
-			break;
-	}
-    return;
-}
 
-void function_RPT_NOISESOURCES(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: FaA - Atmospheric noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: FaM - Man-made noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: FaG - Galactic noise (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",FaA,FaM,FaG");
-			*col = *col + 3;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.FaA);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.FaM);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.FaG);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.FaA);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.FaM);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.FaG);
-			break;
-	}
-    return;
-}
 
-void function_RPT_NOISESOURCESD(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: DuA - Upper decile deviation of atmospheric noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlA - Lower decile deviation of atmospheric noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DuM - Upper decile deviation of man-made noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlM - Lower decile deviation of man-made noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DuG - Upper decile deviation of atmospheric noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlG - Lower decile deviation of atmospheric noise (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",DuA,DlA,DuM,DlM,DuG,DlG");
-			*col = *col + 6;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DuA);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DlA);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DuM);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DlM);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DuG);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DlG);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DuA);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DlA);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DuM);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DlM);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DuG);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DlG);
-			break;
-	}
-    return;
-}
 
-void function_RPT_NOISETOTALD(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: DuT - Upper decile deviation of total noise (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlT - Lower decile deviation of total noise (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",DuT,DlT");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DuT);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.DlT);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DuT);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.DlT);
-			break;
-	}
-    return;
-}
 
-void function_RPT_NOISETOTAL(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: FamT - Total noise (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",FamT");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.noiseP.FamT);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.noiseP.FamT);
-			break;
-	}
-    return;
-}
 
-void function_RPT_SNR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: SNR - Median signal-to-noise ratio (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",SNR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.SNR);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.SNR);
-			break;
-	}
-    return;
-}
 
-void function_RPT_SNRD(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: DuSN - Upper decile deviation of signal-to-noise ratio (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlSN - Lower decile deviation of signal-to-noise ratio (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",DuSN,DlSN");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.DuSN);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.DlSN);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.DuSN);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.DlSN);
-			break;
-	}
-    return;
-}
 
 void function_RPT_SNRXX(struct PathData path, int option, int *col) {
 	switch(option) {
@@ -926,125 +588,10 @@ void function_RPT_SNRXX(struct PathData path, int option, int *col) {
     return;
 }
 
-void function_RPT_SIR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: SIR - Signal-to-interference ratio (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",SIR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.SIR);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.SIR);
-			break;
-	}
-    return;
-}
 
-void function_RPT_SIRD(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: DuSI - Upper decile deviation of signal-to-interference ratio (dB)\n", ++*col);
-			fprintf(fp, "Column %02d: DlSI - Lower decile deviation of signal-to-interference ratio (dB)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",DuSI,DlSI");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.DuSI);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.DlSI);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.DuSI);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.DlSI);
-			break;
-	}
-    return;
-}
 
-void function_RPT_RSN(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: RSN - Probability that the required SNR is achieved (%%)\n", ++*col);
-			fprintf(fp, "Column %02d: RT - Probability that the required time spread T0 is not exceeded (%%)\n", ++*col);
-			fprintf(fp, "Column %02d: RF - Probability that the required frequency spread f0 is not exceeded (%%)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",RSN,RT,RF");
-			*col = *col + 3;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.RSN);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.RT);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.RF);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.RSN);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.RT);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.RF);
-			break;
-	}
-    return;
-}
 
-void function_RPT_BCR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: BCR - Basic circuit reliability (%%)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-		  fprintf(fp, ",BCR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.BCR);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.BCR);
-			break;
-	}
-    return;
-}
 
-void function_RPT_OCR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: OCR - Overall circuit reliability not considering scattering (%%)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",OCR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.OCR);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.OCR);
-			break;
-	}
-    return;
-}
 
 void function_RPT_OCRS(struct PathData path, int option, int *col) {
 
@@ -1073,26 +620,6 @@ void function_RPT_OCRS(struct PathData path, int option, int *col) {
     return;
 }
 
-void function_RPT_MIR(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: MIR - Multimode Interference (%%)\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",MIR");
-			++*col;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD, path.MIR);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD, path.MIR);
-			break;
-	}
-    return;
-}
 
 void function_RPT_RXLOCATION(struct PathData path, int option, int *col) {
 	switch(option) {
@@ -1120,31 +647,6 @@ void function_RPT_RXLOCATION(struct PathData path, int option, int *col) {
     return;
 }
 
-void function_RPT_ESL(struct PathData path, int option, int *col) {
-	switch(option) {
-		case PRINT_HEADER:
-			fprintf(fp, "Column %02d: Short Path (<=7000 km) Field Strength (dB(1uV/m))\n", ++*col);
-			fprintf(fp, "Column %02d: Long Path (>9000km) Field Strength (dB(1uV/m))\n", ++*col);
-			break;
-		case PRINT_RFC4180_HEADER:
-			fprintf(fp, ",Es,El");
-			*col = *col + 2;
-			break;
-		case PRINT_DATA:
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD1, path.Es);
-			fprintf(fp,",");
-			fprintf(fp, DBLFIELD1, path.El);
-			break;
-		case PRINT_RFC4180_DATA:
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD1, path.Es);
-			fprintf(fp,",");
-			fprintf(fp, RFC4180_DBLFIELD1, path.El);
-			break;
-	}
-    return;
-}
 
 void function_RPT_LONG(struct PathData path, int option, int *col) {
 	switch(option) {
