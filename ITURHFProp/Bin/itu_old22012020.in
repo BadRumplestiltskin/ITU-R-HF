@@ -11,7 +11,7 @@ PathRXName "BEIJING     "
 Path.L_rx.lat   39.95
 Path.L_rx.lng  116.45
 //RXAntFilePath "ISOTROPIC"
-RXAntFilePath "../Data/Antenna/T13 Files/201-6_0.T13"
+RXAntFilePath "../Data/Antenna/T13 Files/201-6_0.t13"
 RXGOS 0.0
 AntennaOrientation "TX2RX"
 
