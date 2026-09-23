@@ -6,6 +6,7 @@
 // Local includes
 #include "Common.h"
 #include "P533.h"
+#include "LoadLib.h"
 #include "ITURHFProp.h"
 
 /*
@@ -133,76 +134,35 @@ int main(int argc, char *argv[]) {
 	// Load P533 DLL ***************************************************************************
 	//******************************************************************************************
 
-#ifdef _WIN32
-	// Get the handle to the P533 DLL.
-	hLib=LoadLibrary("P533.dll");
-	if(hLib==NULL) {
-		printf("Main: Error %d p533.dll Not Found\n", RTN_ERRP533DLL);
-		return RTN_ERRP533DLL;
-	}
+	// One row per entry point; hfLibBind() resolves them and names the first
+	// missing one. This used to be two hand-written #ifdef blocks that bound 15
+	// symbols and checked none of them.
+	{
+		static const struct hfSymbol p533syms[] = {
+			{ "P533Version",           (void **)&dllP533Version },
+			{ "P533CompileTime",       (void **)&dllP533CompileTime },
+			{ "P533",                  (void **)&dllP533 },
+			{ "AllocatePathMemory",    (void **)&dllAllocatePathMemory },
+			{ "FreePathMemory",        (void **)&dllFreePathMemory },
+			{ "InputDump",             (void **)&dllInputDump },
+			{ "Bearing",               (void **)&dllBearing },
+			{ "ReadType11",            (void **)&dllReadType11Func },
+			{ "ReadType13",            (void **)&dllReadType13Func },
+			{ "ReadType14",            (void **)&dllReadType14Func },
+			{ "IsotropicPattern",      (void **)&dllIsotropicPatternFunc },
+			{ "ReadIonParametersBin",  (void **)&dllReadIonParametersBinFunc },
+			{ "ReadIonParametersTxt",  (void **)&dllReadIonParametersTxtFunc },
+			{ "ReadP1239",             (void **)&dllReadP1239Func },
+		};
 
-    // Get the handle to the DLL library, hLib.
-	GetModuleFileName((HMODULE)hLib, (LPTSTR)mod, 512);
-	// Get the P533Version() process from the DLL.
-	dllP533Version = (cP533Info)GetProcAddress((HMODULE)hLib, "P533Version");
-	// Get the P533CompileTime() process from the DLL.
-	dllP533CompileTime = (cP533Info)GetProcAddress((HMODULE)hLib, "P533CompileTime");
-	// Get the function P533() from the DLL.
-	dllP533 = (iP533)GetProcAddress((HMODULE)hLib, "P533");
-	// Get the function AllocatePathMemory() from the DLL.
-	dllAllocatePathMemory = (iPathMemory)GetProcAddress((HMODULE)hLib, "AllocatePathMemory");
-	// Get the function FreePathMemory() from the DLL.
-	dllFreePathMemory = (iPathMemory)GetProcAddress((HMODULE)hLib, "FreePathMemory");
-	// Get the function Bearing() from the DLL.
-	dllBearing = (dBearing)GetProcAddress((HMODULE)hLib, "Bearing");
-	// Get the function InputDump() from the DLL.
-	dllInputDump = (iInputDump)GetProcAddress((HMODULE)hLib, "InputDump");
-	// Get functions that have been moved into DLL as utility for PMW integration
-	dllReadType11Func = (iReadType11Func)GetProcAddress((HMODULE)hLib,"ReadType11");
-	dllReadType13Func = (iReadType13Func)GetProcAddress((HMODULE)hLib,"ReadType13");
-	dllReadType14Func = (iReadType14Func)GetProcAddress((HMODULE)hLib,"ReadType14");
-	dllIsotropicPatternFunc = (vIsotropicPatternFunc)GetProcAddress((HMODULE)hLib,"IsotropicPattern");
-//	dllReadFamDudFunc = (ReadFamDudFunc)GetProcAddress((HMODULE)hLib,"ReadFamDud");
-	dllReadIonParametersBinFunc = (iReadIonParametersBinFunc)GetProcAddress((HMODULE)hLib,"ReadIonParametersBin");
-	dllReadIonParametersTxtFunc = (iReadIonParametersTxtFunc)GetProcAddress((HMODULE)hLib,"ReadIonParametersTxt");
-	dllReadP1239Func = (iReadP1239Func)GetProcAddress((HMODULE)hLib,"ReadP1239");
-
-#elif __linux__ || __APPLE__
-	void * hLib;
-	hLib = dlopen("libp533.so", RTLD_NOW);
-	if (!hLib) {
-		printf("Couldn't load libp533.so, exiting.\n");
-		exit(1);
-	}
-	dllP533Version = dlsym(hLib,"P533Version");
-	dllP533CompileTime = dlsym(hLib,"P533CompileTime");
-	dllP533 = dlsym(hLib,"P533");
-	dllAllocatePathMemory = dlsym(hLib,"AllocatePathMemory");
-	dllFreePathMemory = dlsym(hLib,"FreePathMemory");
-	dllInputDump = dlsym(hLib, "InputDump");
-	dllBearing = dlsym(hLib,"Bearing");
-	dllReadType11Func = dlsym(hLib,"ReadType11");
-	dllReadType13Func = dlsym(hLib,"ReadType13");
-	dllReadType14Func = dlsym(hLib,"ReadType14");
-	dllIsotropicPatternFunc = dlsym(hLib,"IsotropicPattern");
-	dllReadIonParametersBinFunc = dlsym(hLib,"ReadIonParametersBin");
-	dllReadIonParametersTxtFunc = dlsym(hLib,"ReadIonParametersTxt");
-	dllReadP1239Func = dlsym(hLib,"ReadP1239");
-	//printf("%s\n",dllP533Version());
-#endif
-
-	// Every entry point is checked before the first call below. Without this a
-	// renamed or missing export in the library is a call through a NULL pointer
-	// rather than a diagnostic; the loaders in P533.c, CircuitCSV.c and
-	// ITURNoise.c all check, this one did not.
-	if (dllP533Version == NULL || dllP533CompileTime == NULL || dllP533 == NULL ||
-		dllAllocatePathMemory == NULL || dllFreePathMemory == NULL ||
-		dllInputDump == NULL || dllBearing == NULL ||
-		dllReadType11Func == NULL || dllReadType13Func == NULL || dllReadType14Func == NULL ||
-		dllIsotropicPatternFunc == NULL || dllReadIonParametersBinFunc == NULL ||
-		dllReadIonParametersTxtFunc == NULL || dllReadP1239Func == NULL) {
-		printf("Main: Error %d P533 entry point not found\n", RTN_ERRP533DLL);
-		return RTN_ERRP533DLL;
+		hLib = hfLibOpen(HFLIB_P533);
+		if (hLib == NULL) {
+			printf("Main: Error %d %s not found (%s)\n", RTN_ERRP533DLL, HFLIB_P533, hfLibError());
+			return RTN_ERRP533DLL;
+		}
+		if (hfLibBind(hLib, p533syms, (int)(sizeof(p533syms)/sizeof(p533syms[0])), "Main") == 0) {
+			return RTN_ERRP533DLL;
+		}
 	}
 
 	//********************************************************************************************

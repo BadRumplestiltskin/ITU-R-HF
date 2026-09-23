@@ -9,6 +9,7 @@
 #include "Common.h"
 #include "P533.h"
 #include "ITURHFProp.h"
+#include "LoadLib.h"
 #include "CircuitCSV.h"
 // End local includes
 
@@ -37,21 +38,9 @@
 			LoadP533(), LoadAntennas(), ReadCircuit(), RunCircuit(), WriteRow()
 */
 
-// The P533 library, loaded the same way ITURHFProp() loads it.
-#ifdef _WIN32
-	#include <windows.h>
-	#define CSVLIBCLOSE(h)	FreeLibrary((HMODULE)(h))
-	#define CSVP533LIB		"P533.dll"
-	#define CSVP372LIB		"P372.dll"
-#else
-	#include <dlfcn.h>
-	#define CSVLIBCLOSE(h)	dlclose(h)
-	#define CSVP533LIB		"libp533.so"
-	#define CSVP372LIB		"libp372.so"
-#endif
-
-static void  *P533Lib = NULL;
-static void  *P372Lib = NULL;
+// Library loading goes through the shared shim in LoadLib.h.
+static HFLIBHANDLE P533Lib = NULL;
+static HFLIBHANDLE P372Lib = NULL;
 
 static int    (*csvP533)(struct PathData *);
 static int    (*csvAllocatePathMemory)(struct PathData *);
@@ -122,68 +111,45 @@ static void PrintUsage(void);
 */
 static int LoadP533(void) {
 
-#ifdef _WIN32
-	P533Lib = (void *)LoadLibrary(CSVP533LIB);
-	P372Lib = (void *)LoadLibrary(CSVP372LIB);
-	if (P533Lib == NULL || P372Lib == NULL) {
-		printf("CircuitCSV: Error %d Can't load %s / %s\n", RTN_ERRCSVP533LIB, CSVP533LIB, CSVP372LIB);
-		return RTN_ERRCSVP533LIB;
-	}
-	csvP533                 = (void *)GetProcAddress((HMODULE)P533Lib, "P533");
-	csvAllocatePathMemory   = (void *)GetProcAddress((HMODULE)P533Lib, "AllocatePathMemory");
-	csvFreePathMemory       = (void *)GetProcAddress((HMODULE)P533Lib, "FreePathMemory");
-	csvBearing              = (void *)GetProcAddress((HMODULE)P533Lib, "Bearing");
-	csvReadIonParametersBin = (void *)GetProcAddress((HMODULE)P533Lib, "ReadIonParametersBin");
-	csvReadP1239            = (void *)GetProcAddress((HMODULE)P533Lib, "ReadP1239");
-	csvReadType13           = (void *)GetProcAddress((HMODULE)P533Lib, "ReadType13");
-	csvIsotropicPattern     = (void *)GetProcAddress((HMODULE)P533Lib, "IsotropicPattern");
-	csvReadFamDud           = (void *)GetProcAddress((HMODULE)P372Lib, "ReadFamDud");
-	csvIonMapGet            = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapGet");
-	csvIonMapFree           = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapFree");
-	csvFreeIonMaps          = (void *)GetProcAddress((HMODULE)P533Lib, "FreeIonMaps");
-	csvValidatePath         = (void *)GetProcAddress((HMODULE)P533Lib, "ValidatePath");
-	csvInitializePath       = (void *)GetProcAddress((HMODULE)P533Lib, "InitializePath");
-	csvMUFBasic             = (void *)GetProcAddress((HMODULE)P533Lib, "MUFBasic");
-	csvMUFVariability       = (void *)GetProcAddress((HMODULE)P533Lib, "MUFVariability");
-	csvMUFOperational       = (void *)GetProcAddress((HMODULE)P533Lib, "MUFOperational");
-#else
-	P533Lib = dlopen(CSVP533LIB, RTLD_NOW);
+	// One row per entry point; the shim binds them and names the first missing.
+	static const struct hfSymbol p533syms[] = {
+		{ "P533",                 (void **)&csvP533 },
+		{ "AllocatePathMemory",   (void **)&csvAllocatePathMemory },
+		{ "FreePathMemory",       (void **)&csvFreePathMemory },
+		{ "Bearing",              (void **)&csvBearing },
+		{ "ReadIonParametersBin", (void **)&csvReadIonParametersBin },
+		{ "ReadP1239",            (void **)&csvReadP1239 },
+		{ "ReadType13",           (void **)&csvReadType13 },
+		{ "IsotropicPattern",     (void **)&csvIsotropicPattern },
+		{ "IonMapGet",            (void **)&csvIonMapGet },
+		{ "IonMapFree",           (void **)&csvIonMapFree },
+		{ "FreeIonMaps",          (void **)&csvFreeIonMaps },
+		{ "ValidatePath",         (void **)&csvValidatePath },
+		{ "InitializePath",       (void **)&csvInitializePath },
+		{ "MUFBasic",             (void **)&csvMUFBasic },
+		{ "MUFVariability",       (void **)&csvMUFVariability },
+		{ "MUFOperational",       (void **)&csvMUFOperational },
+	};
+	static const struct hfSymbol p372syms[] = {
+		{ "ReadFamDud",           (void **)&csvReadFamDud },
+	};
+
+	P533Lib = hfLibOpen(HFLIB_P533);
 	if (P533Lib == NULL) {
-		printf("CircuitCSV: Error %d Can't load %s (%s)\n", RTN_ERRCSVP533LIB, CSVP533LIB, dlerror());
+		printf("CircuitCSV: Error %d Can't load %s (%s)\n",
+			RTN_ERRCSVP533LIB, HFLIB_P533, hfLibError());
 		return RTN_ERRCSVP533LIB;
 	}
-	P372Lib = dlopen(CSVP372LIB, RTLD_NOW);
+
+	P372Lib = hfLibOpen(HFLIB_P372);
 	if (P372Lib == NULL) {
-		printf("CircuitCSV: Error %d Can't load %s (%s)\n", RTN_ERRCSVP372LIB, CSVP372LIB, dlerror());
+		printf("CircuitCSV: Error %d Can't load %s (%s)\n",
+			RTN_ERRCSVP372LIB, HFLIB_P372, hfLibError());
 		return RTN_ERRCSVP372LIB;
 	}
-	csvP533                 = dlsym(P533Lib, "P533");
-	csvAllocatePathMemory   = dlsym(P533Lib, "AllocatePathMemory");
-	csvFreePathMemory       = dlsym(P533Lib, "FreePathMemory");
-	csvBearing              = dlsym(P533Lib, "Bearing");
-	csvReadIonParametersBin = dlsym(P533Lib, "ReadIonParametersBin");
-	csvReadP1239            = dlsym(P533Lib, "ReadP1239");
-	csvReadType13           = dlsym(P533Lib, "ReadType13");
-	csvIsotropicPattern     = dlsym(P533Lib, "IsotropicPattern");
-	csvReadFamDud           = dlsym(P372Lib, "ReadFamDud");
-	csvIonMapGet            = dlsym(P533Lib, "IonMapGet");
-	csvIonMapFree           = dlsym(P533Lib, "IonMapFree");
-	csvFreeIonMaps          = dlsym(P533Lib, "FreeIonMaps");
-	csvValidatePath         = dlsym(P533Lib, "ValidatePath");
-	csvInitializePath       = dlsym(P533Lib, "InitializePath");
-	csvMUFBasic             = dlsym(P533Lib, "MUFBasic");
-	csvMUFVariability       = dlsym(P533Lib, "MUFVariability");
-	csvMUFOperational       = dlsym(P533Lib, "MUFOperational");
-#endif
 
-	// A missing symbol would otherwise surface as a call through a NULL pointer.
-	if (csvP533 == NULL || csvAllocatePathMemory == NULL || csvFreePathMemory == NULL ||
-		csvBearing == NULL || csvReadIonParametersBin == NULL || csvReadP1239 == NULL ||
-		csvReadType13 == NULL || csvIsotropicPattern == NULL || csvReadFamDud == NULL ||
-		csvIonMapGet == NULL || csvIonMapFree == NULL || csvFreeIonMaps == NULL ||
-		csvValidatePath == NULL || csvInitializePath == NULL || csvMUFBasic == NULL ||
-		csvMUFVariability == NULL || csvMUFOperational == NULL) {
-		printf("CircuitCSV: Error %d P533/P372 entry point not found\n", RTN_ERRCSVP533LIB);
+	if (hfLibBind(P533Lib, p533syms, (int)(sizeof(p533syms)/sizeof(p533syms[0])), "CircuitCSV") == 0 ||
+		hfLibBind(P372Lib, p372syms, (int)(sizeof(p372syms)/sizeof(p372syms[0])), "CircuitCSV") == 0) {
 		return RTN_ERRCSVP533LIB;
 	}
 
@@ -1006,8 +972,8 @@ int main(int argc, char *argv[]) {
 	path.M3kF2 = NULL;
 	csvFreePathMemory(&path);
 	csvIonMapFree();
-	if (P533Lib != NULL) CSVLIBCLOSE(P533Lib);
-	if (P372Lib != NULL) CSVLIBCLOSE(P372Lib);
+	if (P533Lib != NULL) hfLibClose(P533Lib);
+	if (P372Lib != NULL) hfLibClose(P372Lib);
 
 	return RTN_CSVOK;
 
