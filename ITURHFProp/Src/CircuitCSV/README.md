@@ -132,16 +132,11 @@ frequency of interest, so a long circuit costs one run to find them plus one at
 each -- the same three as a short one.
 
 **What `-m` changes.** The frequency columns always report the true
-characteristic frequency. `-m` moves only the frequency the circuit is
-*evaluated* at, so with `-m 0.99` the `SN_` columns are the signal-to-noise
-ratio at 0.99 x the frequency printed beside them. It applies to BUF, MUF, OWF,
-fM and fL alike.
-
-**The step at the MUF.** A mode supported just below a MUF is screened just
-above it, and the engine's loss jumps by about 8 dB across that boundary. For
-one test circuit, 15.525567 MHz gives an SNR of 20.12 dB and 15.5256 MHz gives
-12.18 dB. Evaluating exactly at a MUF therefore sits on the step and the result
-depends on rounding. Use `-m 0.99` to sit clear of it.
+characteristic frequency; `-m` moves only the frequency the circuit is
+*evaluated* at, so the `SN_` columns are the ratio at that fraction of the
+frequency printed beside them. It applies to BUF, MUF, OWF, fM and fL alike.
+The default of 1.0 is correct: evaluating exactly at a MUF is well defined now
+that the above-the-MUF loss follows P.533-14 equations (24)-(26).
 
 **Group delay.** P.533 fills `Mode.tau` only on the digital-modulation branch of
 `CircuitReliability()`, so for an analogue circuit it is zero. This tool

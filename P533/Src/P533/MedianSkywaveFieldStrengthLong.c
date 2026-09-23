@@ -14,7 +14,9 @@
 // Testing
 
 // Local Define
-#define NOIL -0.17
+// P.533-14 section 5.3.3: "Ly: a term similar in concept to Lz. The present
+// recommended value is -0.14 dB". This read -0.17.
+#define NOIL -0.14
 // End Local Define
 
 // Control point array, CP, defines to enhance readability.

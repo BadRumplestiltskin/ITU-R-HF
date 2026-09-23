@@ -16,7 +16,10 @@
 // Testing
 
 // Local Defines
-#define NOIL			9.14
+// P.533-14 section 5.2: "Lz: term containing those effects in sky-wave
+// propagation not otherwise included in this method. The present recommended
+// value is 8.72 dB". This read 9.14.
+#define NOIL			8.72
 #define PEN				TRUE // Use penetration points for absorption
 //#define PEN			FALSE // Use the absorption method in P.533-12
 // End Local Defines
@@ -204,12 +207,17 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				// Absorption loss (dB) for an n-hop mode, Li
 				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
 
-				// "Above-the-MUF" loss
+				// "Above-the-MUF" loss, P.533-14 equations (24) and (25).
+				// Lm = 0 for f <= fb; for E modes above fb,
+				//     Lm = 130[(f/fb) - 1]^2 dB, or 81 dB whichever is smaller.
+				// This previously read 46[(f/fb) - 1]^0.5 + 5, capped at 58: the
+				// wrong coefficient and exponent, and an additive constant that
+				// made Lm step to 5 dB the instant f exceeded the basic MUF.
 				if(path->frequency <= path->Md_E[n].BMUF) {
 					Lm = 0.0;
 				}
 				else { // (path->frequency > path->Md_E[n].BMUF)
-					Lm = MIN(46.0*pow(((path->frequency/path->Md_E[n].BMUF) - 1.0), 0.5) + 5, 58.0);
+					Lm = MIN(130.0*pow(((path->frequency/path->Md_E[n].BMUF) - 1.0), 2.0), 81.0);
 				}
 
                 // Ground reflection loss
@@ -372,17 +380,18 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				// Absorption loss (dB) for an n-hop mode, Li.
 				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
 	
-				// "Above-the-MUF" loss
+				// "Above-the-MUF" loss, P.533-14 equations (24) and (26).
+				// Lm = 0 for f <= fb; for F2 modes above fb,
+				//     Lm = 36[(f/fb) - 1]^0.5 dB, or 62 dB whichever is smaller.
+				// The Recommendation gives one expression for all distances. This
+				// previously branched at 3000 km -- a split that appears nowhere
+				// in P.533-14 -- and added 5 dB below it and 8 dB above, so Lm
+				// stepped discontinuously as f crossed the basic MUF.
 				if(path->frequency <= path->Md_F2[n].BMUF) {
 					Lm = 0.0;
 				}
 				else { // (path->frequency > path->Md_F2[n].BMUF)
-					if(path->distance <= 3000) {
-						Lm = MIN(36.0*pow(((path->frequency/path->Md_F2[n].BMUF) - 1.0), 0.5) + 5.0, 60.0);
-					}
-					else {
-						Lm = MIN(70.0 * (path->frequency/path->Md_F2[n].BMUF - 1.0) + 8, 80.0);
-					}
+					Lm = MIN(36.0*pow(((path->frequency/path->Md_F2[n].BMUF) - 1.0), 0.5), 62.0);
 				}
 
                 // Ground reflection loss

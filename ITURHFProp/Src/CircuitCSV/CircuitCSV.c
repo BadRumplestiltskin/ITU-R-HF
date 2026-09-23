@@ -623,7 +623,11 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		*/
 		if (r->f[n] <= 0.0 || f < 1.0 || f > 30.0) continue;
 
-		// The loss steps at a MUF, so -m allows a margin below it.
+		// -m evaluates a fraction below each characteristic frequency. It was
+		// added to dodge an 8 dB step at the MUF that came from an incorrect
+		// above-the-MUF loss; with Lm corrected to P.533-14 equations (24)-(26)
+		// that step is gone, so the default of 1.0 is now the right choice and
+		// the option remains only for probing below a MUF deliberately.
 		SetPath(path, c, f);
 		retval = csvP533(path);
 		if (retval != RTN_P533OK) return retval;
@@ -1035,9 +1039,8 @@ static void PrintUsage(void) {
 	printf("  -r <file>   Receive antenna:  a Type 13 file, or ISOTROPIC (default)\n");
 	printf("  -g <dBi>    Gain of an isotropic pattern (default 0.0)\n");
 	printf("  -m <factor> Evaluate at factor x each characteristic frequency\n");
-	printf("              (default 1.0). The loss has an ~8 dB step at a MUF, so\n");
-	printf("              0.99 sits clear of it. The frequency columns still report\n");
-	printf("              the true MUF; only the SN_ columns move with the factor.\n");
+	printf("              (default 1.0). The frequency columns still report the\n");
+	printf("              true frequency; only the SN_ columns move with it.\n");
 	printf("  -s          Silent: suppress progress output\n");
 	printf("  -h          This help\n\n");
 	printf("Input columns (looked up by name, order and extra columns do not matter):\n");
