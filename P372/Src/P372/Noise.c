@@ -649,6 +649,95 @@ void GalacticNoise(
     noiseP->DlG = 2.0;
 }
 
+
+/*
+	Coefficient cache for ReadFamDud().
+
+	ReadFamDud() parses a 235 KB fixed-format COEFF text file to fill four
+	arrays totalling about 25 KB. A batch whose circuits are not grouped by
+	month calls it on every month change, so a 100,000-circuit file with mixed
+	months re-parsed the same twelve files tens of thousands of times.
+
+	The parsed arrays are small, so all twelve months cost 306 KB. They are
+	cached on first use and copied out thereafter, which keeps ReadFamDud()'s
+	contract of filling the caller's NoiseParams unchanged.
+
+	Not thread safe, in keeping with the rest of the engine.
+*/
+static struct {
+	double fakp[6][16][29];
+	double fakabp[6][2];
+	double dud[5][12][5];
+	double fam[12][14];
+	int    loaded;
+} FamDudCache[12];
+
+/*
+	FamDudCopyOut() - Fills a NoiseParams from a cached month.
+
+		INPUT
+			struct NoiseParams *noiseP, int month
+
+		OUTPUT
+			noiseP->fakp, fakabp, dud and fam
+
+		SUBROUTINES
+			None
+*/
+static void FamDudCopyOut(struct NoiseParams *noiseP, int month) {
+
+    int i, j, k;
+
+    for (i = 0; i < 6; i++)
+        for (j = 0; j < 16; j++)
+            for (k = 0; k < 29; k++) noiseP->fakp[i][j][k] = FamDudCache[month].fakp[i][j][k];
+
+    for (j = 0; j < 6; j++)
+        for (k = 0; k < 2; k++) noiseP->fakabp[j][k] = FamDudCache[month].fakabp[j][k];
+
+    for (i = 0; i < 5; i++)
+        for (j = 0; j < 12; j++)
+            for (k = 0; k < 5; k++) noiseP->dud[i][j][k] = FamDudCache[month].dud[i][j][k];
+
+    for (j = 0; j < 12; j++)
+        for (k = 0; k < 14; k++) noiseP->fam[j][k] = FamDudCache[month].fam[j][k];
+
+}
+
+/*
+	FamDudCopyIn() - Saves a freshly parsed month into the cache.
+
+		INPUT
+			struct NoiseParams *noiseP, int month
+
+		OUTPUT
+			FamDudCache[month]
+
+		SUBROUTINES
+			None
+*/
+static void FamDudCopyIn(struct NoiseParams *noiseP, int month) {
+
+    int i, j, k;
+
+    for (i = 0; i < 6; i++)
+        for (j = 0; j < 16; j++)
+            for (k = 0; k < 29; k++) FamDudCache[month].fakp[i][j][k] = noiseP->fakp[i][j][k];
+
+    for (j = 0; j < 6; j++)
+        for (k = 0; k < 2; k++) FamDudCache[month].fakabp[j][k] = noiseP->fakabp[j][k];
+
+    for (i = 0; i < 5; i++)
+        for (j = 0; j < 12; j++)
+            for (k = 0; k < 5; k++) FamDudCache[month].dud[i][j][k] = noiseP->dud[i][j][k];
+
+    for (j = 0; j < 12; j++)
+        for (k = 0; k < 14; k++) FamDudCache[month].fam[j][k] = noiseP->fam[j][k];
+
+    FamDudCache[month].loaded = TRUE;
+
+}
+
 int ReadFamDud(
     struct NoiseParams *noiseP,
     const char* DataFilePath,
@@ -695,6 +784,14 @@ int ReadFamDud(
     char InFilePath[270];
 
     FILE *fp;
+
+    // Already parsed this month: copy it out and skip the file entirely.
+    if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE) {
+        FamDudCopyOut(noiseP, month);
+        if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month);
+
+    return RTN_READFAMDUDOK;
+    }
 
     // Bounded join. P372 is the lower layer and cannot call P533's
     // BuildDataPath(), so the same rule is applied inline here: insert the

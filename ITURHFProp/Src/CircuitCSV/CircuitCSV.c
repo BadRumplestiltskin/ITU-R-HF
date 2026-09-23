@@ -62,6 +62,9 @@ static int    (*csvReadP1239)(struct PathData *, const char *);
 static int    (*csvReadType13)(struct Antenna *, FILE *, double, int);
 static void   (*csvIsotropicPattern)(struct Antenna *, double, int);
 static int    (*csvReadFamDud)(struct NoiseParams *, const char *, int);
+static int    (*csvIonMapGet)(int, char *, int, float *****, float *****);
+static void   (*csvIonMapFree)(void);
+static void   (*csvFreeIonMaps)(struct PathData *);
 
 // The three characteristic frequencies each circuit is evaluated at.
 #define FRQBUF	0	// basic MUF of the dominant mode
@@ -125,6 +128,9 @@ static int LoadP533(void) {
 	csvReadType13           = (void *)GetProcAddress((HMODULE)P533Lib, "ReadType13");
 	csvIsotropicPattern     = (void *)GetProcAddress((HMODULE)P533Lib, "IsotropicPattern");
 	csvReadFamDud           = (void *)GetProcAddress((HMODULE)P372Lib, "ReadFamDud");
+	csvIonMapGet            = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapGet");
+	csvIonMapFree           = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapFree");
+	csvFreeIonMaps          = (void *)GetProcAddress((HMODULE)P533Lib, "FreeIonMaps");
 #else
 	P533Lib = dlopen(CSVP533LIB, RTLD_NOW);
 	if (P533Lib == NULL) {
@@ -145,12 +151,16 @@ static int LoadP533(void) {
 	csvReadType13           = dlsym(P533Lib, "ReadType13");
 	csvIsotropicPattern     = dlsym(P533Lib, "IsotropicPattern");
 	csvReadFamDud           = dlsym(P372Lib, "ReadFamDud");
+	csvIonMapGet            = dlsym(P533Lib, "IonMapGet");
+	csvIonMapFree           = dlsym(P533Lib, "IonMapFree");
+	csvFreeIonMaps          = dlsym(P533Lib, "FreeIonMaps");
 #endif
 
 	// A missing symbol would otherwise surface as a call through a NULL pointer.
 	if (csvP533 == NULL || csvAllocatePathMemory == NULL || csvFreePathMemory == NULL ||
 		csvBearing == NULL || csvReadIonParametersBin == NULL || csvReadP1239 == NULL ||
-		csvReadType13 == NULL || csvIsotropicPattern == NULL || csvReadFamDud == NULL) {
+		csvReadType13 == NULL || csvIsotropicPattern == NULL || csvReadFamDud == NULL ||
+		csvIonMapGet == NULL || csvIonMapFree == NULL || csvFreeIonMaps == NULL) {
 		printf("CircuitCSV: Error %d P533/P372 entry point not found\n", RTN_ERRCSVP533LIB);
 		return RTN_ERRCSVP533LIB;
 	}
@@ -679,9 +689,9 @@ int main(int argc, char *argv[]) {
 	char line[CSVMAXLINE];
 	char *field[CSVMAXFIELDS];
 	int col[NINPUTCOLUMNS];
-	struct Circuit *circ = NULL;
-	struct Result  *res  = NULL;
-	int ncirc = 0, ncircmax = 0, monthsloaded = 0, nrow = 0;
+	struct Circuit c;
+	struct Result  r;
+	int monthsused = 0, nrow = 0, loadedmonth = -1;
 	int nf, nhdr, retval, number = 0, failed = 0;
 	FILE *fin, *fout;
 	char dpath[256];
@@ -735,6 +745,10 @@ int main(int argc, char *argv[]) {
 	if (LoadAntenna(&path.A_tx, txant, gos, silent) != RTN_CSVOK) return RTN_ERRCSVANTENNA;
 	if (LoadAntenna(&path.A_rx, rxant, gos, silent) != RTN_CSVOK) return RTN_ERRCSVANTENNA;
 
+	// The path's own 10.7 MB maps are released immediately: from here on it
+	// borrows the library's month cache instead, so nothing is duplicated.
+	csvFreeIonMaps(&path);
+
 	retval = csvReadP1239(&path, dpath);
 	if (retval != RTN_READP1239OK) {
 		printf("CircuitCSV: Error %d from ReadP1239\n", retval);
@@ -772,106 +786,89 @@ int main(int argc, char *argv[]) {
 	}
 	PrintHeader(fout);
 
-	// Read every circuit before running any. The coefficients and ionospheric
-	// maps are per month and cost ~11 MB of I/O to load, so the circuits are
-	// grouped by month and each month is loaded once. Reading first is what
-	// makes that possible without imposing an ordering on the input file:
-	// results are written back in the order the rows arrived.
+	// Stream the input: one row read, calculated and written at a time. The
+	// ionospheric maps are held by the library's month cache, so a month is
+	// still read at most once however the file is ordered, while memory stays
+	// flat in the number of circuits. This is what lets the tool take batches
+	// of 100,000+ rows.
 	while (fgets(line, sizeof(line), fin) != NULL) {
 
 		if (Trim(line)[0] == '\0') continue;	// skip blank records
 
-		if (ncirc == ncircmax) {
-			int grown = (ncircmax == 0) ? 256 : ncircmax*2;
-			struct Circuit *nc = realloc(circ, grown*sizeof(*circ));
-			struct Result  *nr = realloc(res,  grown*sizeof(*res));
-			if (nc == NULL || nr == NULL) {
-				printf("CircuitCSV: Error %d Out of memory at %d circuits\n", RTN_ERRCSVFIELD, ncirc);
-				free(nc != NULL ? nc : circ); free(nr != NULL ? nr : res);
-				fclose(fin); fclose(fout);
-				return RTN_ERRCSVFIELD;
-			}
-			circ = nc; res = nr; ncircmax = grown;
-		}
-
 		nrow++;
 
 		nf = SplitCSV(line, field, CSVMAXFIELDS);
-		ReadCircuit(&circ[ncirc], field, nf, col);
-		circ[ncirc].row = nrow;
+		ReadCircuit(&c, field, nf, col);
+		c.row = nrow;
 
-		memset(&res[ncirc], 0, sizeof(res[ncirc]));
+		memset(&r, 0, sizeof(r));
 
-		// A row that is short, or carries a month outside 1-12, is kept so that
-		// it still appears in the output; it just never reaches the engine.
-		if (circ[ncirc].parsed != TRUE) {
-			res[ncirc].status = "BAD_RECORD";
+		// A row that is short, or carries a month outside 1-12, still appears in
+		// the output; it just never reaches the engine.
+		if (c.parsed != TRUE) {
+			r.status = "BAD_RECORD";
 			failed++;
 		}
-		else if (circ[ncirc].month < 1 || circ[ncirc].month > 12) {
-			res[ncirc].status = "BAD_MONTH";
+		else if (c.month < 1 || c.month > 12) {
+			r.status = "BAD_MONTH";
 			failed++;
 		}
+		else {
+			if (c.month - 1 != loadedmonth) {
 
-		ncirc++;
-	}
+				float ****foF2, ****M3kF2;
 
-	// One pass per month, in calendar order, so each month's data is read once
-	// however the input happened to be sorted.
-	for (int m = 1; m <= 12; m++) {
+				retval = csvIonMapGet(c.month - 1, dpath, silent, &foF2, &M3kF2);
+				if (retval != RTN_READIONPARAOK) {
+					printf("CircuitCSV: Error %d from IonMapGet for month %d\n", retval, c.month);
+					fclose(fin); fclose(fout);
+					return retval;
+				}
+				// Point at the cache rather than copying 10.7 MB per switch.
+				path.foF2  = foF2;
+				path.M3kF2 = M3kF2;
 
-		int any = FALSE;
-		for (int i = 0; i < ncirc; i++)
-			if (circ[i].month == m && res[i].status == NULL) { any = TRUE; break; }
-		if (any == FALSE) continue;
-
-		retval = csvReadIonParametersBin(m - 1, path.foF2, path.M3kF2, dpath, silent);
-		if (retval != RTN_READIONPARAOK) {
-			printf("CircuitCSV: Error %d from ReadIonParametersBin for month %d\n", retval, m);
-			free(circ); free(res); fclose(fin); fclose(fout);
-			return retval;
-		}
-		retval = csvReadFamDud(&path.noiseP, dpath, m - 1);
-		if (retval != RTN_READFAMDUDOK) {
-			printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, m);
-			free(circ); free(res); fclose(fin); fclose(fout);
-			return retval;
-		}
-		monthsloaded++;
-
-		for (int i = 0; i < ncirc; i++) {
-			if (circ[i].month != m || res[i].status != NULL) continue;
-			if (RunCircuit(&path, &circ[i], &res[i]) != RTN_CSVOK) {
-				printf("CircuitCSV: Warning: input row %d returned an error from P533\n", circ[i].row);
-				res[i].valid = FALSE;
-				res[i].status = "P533_ERROR";
-				failed++;
-				continue;
+				retval = csvReadFamDud(&path.noiseP, dpath, c.month - 1);
+				if (retval != RTN_READFAMDUDOK) {
+					printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
+					fclose(fin); fclose(fout);
+					return retval;
+				}
+				loadedmonth = c.month - 1;
+				monthsused++;
 			}
-			res[i].status = (res[i].valid == TRUE) ? "OK" : "NO_MODE";
-			number++;
-			if (silent == FALSE) printf("\rCircuit %d of %d", number, ncirc);
+
+			if (RunCircuit(&path, &c, &r) != RTN_CSVOK) {
+				printf("CircuitCSV: Warning: input row %d returned an error from P533\n", c.row);
+				r.valid = FALSE;
+				r.status = "P533_ERROR";
+				failed++;
+			}
+			else {
+				r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
+				number++;
+			}
 		}
-	}
 
-	// One output row per input row, in input order. Nothing is dropped: a row
-	// that could not be calculated still appears, with empty results and a
-	// Status saying why, so input and output line up one to one.
-	for (int i = 0; i < ncirc; i++) {
-		WriteRow(fout, &circ[i], &res[i], circ[i].row);
-	}
+		// One output row per input row, written as it is produced.
+		WriteRow(fout, &c, &r, c.row);
 
-	free(circ);
-	free(res);
+		if (silent == FALSE && (nrow % 1000) == 0) printf("\rCircuit %d", nrow);
+	}
 
 	if (silent == FALSE) {
-		printf("\rProcessed %d circuit(s), %d skipped, %d month(s) of data loaded\n",
-			number, failed, monthsloaded);
+		printf("\rProcessed %d circuit(s), %d skipped, %d month change(s)\n",
+			number, failed, monthsused);
 	}
 
 	fclose(fin);
 	fclose(fout);
+	// The maps the path points at belong to the cache, so FreePathMemory() must
+	// not see them; it skips NULL.
+	path.foF2  = NULL;
+	path.M3kF2 = NULL;
 	csvFreePathMemory(&path);
+	csvIonMapFree();
 	if (P533Lib != NULL) CSVLIBCLOSE(P533Lib);
 	if (P372Lib != NULL) CSVLIBCLOSE(P372Lib);
 

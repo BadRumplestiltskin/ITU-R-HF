@@ -154,6 +154,182 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 	#endif
 }
 
+
+/*
+	Ionospheric map cache.
+
+	Each month's maps are 24 x 241 x 121 x 2 floats for foF2 and the same again
+	for M(3000)F2 -- 10.7 MB a month -- and reading one costs about 6 ms. Once
+	parsed they are read-only: P533() only ever reads path->foF2 and
+	path->M3kF2. So one copy per month can be shared by every circuit needing it.
+
+	Holding all twelve months costs 128 MB, and that is the point: it is a fixed
+	ceiling, unlike buffering the input, which grows with the number of circuits.
+	A batch can therefore stream its input in file order and still read each
+	month at most once. Months load lazily, so a run touching three holds three.
+
+	Not thread safe, in keeping with the rest of the engine.
+*/
+static struct {
+	float ****foF2;
+	float ****M3kF2;
+	int   loaded;
+} IonMapCache[12];
+
+static float ****AllocIonMap(void) {
+
+	/*
+		One contiguous block for the 698,544 floats, plus three small blocks of
+		pointers indexing into it, rather than 700,000 separate allocations of
+		two floats each. The jagged form costs more in allocator headers than in
+		data: measured, it took 402 MB to cache twelve months where the data is
+		only 134 MB.
+
+		The [i][j][k][m] indexing the engine uses is unchanged.
+	*/
+
+	int i, j;
+	float ****m;
+	float *data;
+	float **lvl3;
+	float ***lvl2;
+
+	m    = (float ****)calloc(IONMAPHRS, sizeof(float ***));
+	lvl2 = (float ***) calloc((size_t)IONMAPHRS*IONMAPLNG, sizeof(float **));
+	lvl3 = (float **)  calloc((size_t)IONMAPHRS*IONMAPLNG*IONMAPLAT, sizeof(float *));
+	data = (float *)   calloc((size_t)IONMAPHRS*IONMAPLNG*IONMAPLAT*IONMAPSSN, sizeof(float));
+
+	if (m == NULL || lvl2 == NULL || lvl3 == NULL || data == NULL) {
+		free(m); free(lvl2); free(lvl3); free(data);
+		return NULL;
+	}
+
+	// Wire the pointer levels to their slices of the block.
+	for (i = 0; i < IONMAPHRS; i++) {
+		m[i] = lvl2 + (size_t)i*IONMAPLNG;
+		for (j = 0; j < IONMAPLNG; j++) {
+			m[i][j] = lvl3 + ((size_t)i*IONMAPLNG + j)*IONMAPLAT;
+		}
+	}
+	for (i = 0; i < IONMAPHRS; i++) {
+		for (j = 0; j < IONMAPLNG; j++) {
+			int k;
+			for (k = 0; k < IONMAPLAT; k++) {
+				m[i][j][k] = data + (((size_t)i*IONMAPLNG + j)*IONMAPLAT + k)*IONMAPSSN;
+			}
+		}
+	}
+
+	return m;
+
+}
+
+static void FreeIonMap(float ****m) {
+
+	/*
+		Mirrors AllocIonMap(). Four blocks were allocated and each is reachable
+		from the first entry of the level above, so they are released innermost
+		first: the float data, then the level-3, level-2 and level-1 pointers.
+	*/
+
+	if (m == NULL) return;
+
+	if (m[0] != NULL) {
+		if (m[0][0] != NULL) {
+			free(m[0][0][0]);	// the contiguous float data
+			free(m[0][0]);		// the level-3 pointer block
+		}
+		free(m[0]);				// the level-2 pointer block
+	}
+	free(m);					// the level-1 pointer block
+
+}
+
+/*
+	IonMapGet() - Returns a month's maps, reading them only on first request.
+
+		The arrays belong to the cache. A caller may point path->foF2 and
+		path->M3kF2 at them but must not free them; call IonMapFree() once at
+		the end of the run instead.
+
+		INPUT
+			int month (0 - 11), char *DataFilePath, int silent
+
+		OUTPUT
+			*foF2 and *M3kF2 point at the cached maps
+			returns RTN_READIONPARAOK, or an error
+
+		SUBROUTINES
+			AllocIonMap(), FreeIonMap(), ReadIonParametersBin()
+*/
+DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent,
+                        float *****foF2, float *****M3kF2) {
+
+	int retval;
+
+	if (month < 0 || month > 11 || foF2 == NULL || M3kF2 == NULL) {
+		return RTN_ERRREADIONPARAMETERS;
+	}
+
+	if (IonMapCache[month].loaded != TRUE) {
+
+		IonMapCache[month].foF2  = AllocIonMap();
+		IonMapCache[month].M3kF2 = AllocIonMap();
+		if (IonMapCache[month].foF2 == NULL || IonMapCache[month].M3kF2 == NULL) {
+			FreeIonMap(IonMapCache[month].foF2);
+			FreeIonMap(IonMapCache[month].M3kF2);
+			IonMapCache[month].foF2 = NULL;
+			IonMapCache[month].M3kF2 = NULL;
+			printf("IonMapGet: ERROR Out of memory caching month %d\n", month+1);
+			return RTN_ERRREADIONPARAMETERS;
+		}
+
+		retval = ReadIonParametersBin(month, IonMapCache[month].foF2,
+		                              IonMapCache[month].M3kF2, DataFilePath, silent);
+		if (retval != RTN_READIONPARAOK) {
+			FreeIonMap(IonMapCache[month].foF2);
+			FreeIonMap(IonMapCache[month].M3kF2);
+			IonMapCache[month].foF2 = NULL;
+			IonMapCache[month].M3kF2 = NULL;
+			return retval;
+		}
+
+		IonMapCache[month].loaded = TRUE;
+	}
+
+	*foF2  = IonMapCache[month].foF2;
+	*M3kF2 = IonMapCache[month].M3kF2;
+
+	return RTN_READIONPARAOK;
+
+}
+
+/*
+	IonMapFree() - Releases every cached month.
+
+		INPUT
+			None
+
+		OUTPUT
+			None
+
+		SUBROUTINES
+			FreeIonMap()
+*/
+DLLEXPORT void IonMapFree(void) {
+
+	int m;
+
+	for (m = 0; m < 12; m++) {
+		FreeIonMap(IonMapCache[m].foF2);
+		FreeIonMap(IonMapCache[m].M3kF2);
+		IonMapCache[m].foF2 = NULL;
+		IonMapCache[m].M3kF2 = NULL;
+		IonMapCache[m].loaded = FALSE;
+	}
+
+}
+
 int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent) {
 	/*
 	 * ReadIonParametersBin() is a routine to read ionospheric parameters from a file into arrays necessary for the ITU-R P.533 

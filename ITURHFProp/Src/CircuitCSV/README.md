@@ -84,11 +84,20 @@ Written in the engine's own units with `%.6g`, no fixed-point scaling.
 
 ## Notes on the calculation
 
-**Input order and months.** Every row is read before any is run, the circuits
-are then processed grouped by month, and the results are written back in the
-order the rows arrived. The coefficients and ionospheric maps cost about 11 MB
-of I/O per month, so grouping means each month is loaded once however the input
-happens to be sorted; you do not have to sort the file yourself.
+**Large batches.** The input is streamed: each row is read, calculated and
+written in turn, so memory does not grow with the number of circuits. Measured
+peak RSS is 299 MB for 1,000 rows and the same 299 MB for 100,000 rows, and
+100,000 circuits take about 46 seconds.
+
+That ceiling is the ionospheric map cache in the P533 library. Each month's maps
+are 10.7 MB and cost about 6 ms to read, so they are parsed once and shared by
+every circuit that needs them. A month is therefore read at most once per run no
+matter how the input is ordered -- a 100,000-row file with months shuffled across
+all twelve reads twelve map files. Months load lazily, so a run touching three
+months holds three. The P.372 noise coefficients are cached the same way, at
+306 KB for all twelve months.
+
+You do not need to sort the input by month.
 
 **Three runs per circuit.** The characteristic frequencies do not depend on the
 frequency of interest but the signal-to-noise ratio does, so the engine runs on

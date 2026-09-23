@@ -554,6 +554,16 @@ DLLEXPORT int ReadType13(struct Antenna *Ant, FILE *fp, double bearing, int sile
 DLLEXPORT int ReadType14(struct Antenna *Ant, FILE *fp, int silent);
 DLLEXPORT void IsotropicPattern(struct Antenna *Ant, double G, int silent);
 DLLEXPORT int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
+// Ionospheric map cache: one parsed copy per month, shared by every circuit.
+// The maps belong to the cache; release them with IonMapFree(), not free().
+#define IONMAPHRS	24		// hours
+#define IONMAPLNG	241		// longitudes at 1.5-degree increments
+#define IONMAPLAT	121		// latitudes at 1.5-degree increments
+#define IONMAPSSN	2		// sunspot numbers, high and low
+DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent, float *****foF2, float *****M3kF2);
+DLLEXPORT void IonMapFree(void);
+// Releases only path->foF2/M3kF2, so the path can instead point at the cache.
+DLLEXPORT void FreeIonMaps(struct PathData *path);
 DLLEXPORT int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int silent) ;
 DLLEXPORT int ReadP1239(struct PathData *path, const char * DataFilePath);
 DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value);

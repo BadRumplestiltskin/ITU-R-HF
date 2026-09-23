@@ -183,6 +183,55 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 }
 
 
+
+/*
+	FreeIonMaps() - Releases just the path's own ionospheric maps.
+
+		AllocatePathMemory() gives each path its own 10.7 MB pair of maps. A
+		caller that instead shares the library's month cache (IonMapGet()) calls
+		this first to release its private copy, then points path->foF2 and
+		path->M3kF2 at the cached arrays. FreePathMemory() skips NULL maps, so
+		the cached arrays are never freed through the path.
+
+		INPUT
+			struct PathData *path
+
+		OUTPUT
+			path->foF2 and path->M3kF2 are freed and set to NULL
+
+		SUBROUTINES
+			None
+*/
+DLLEXPORT void FreeIonMaps(struct PathData *path) {
+
+	int i, j, k;
+
+	if (path->foF2 != NULL) {
+		for (i=0; i<IONMAPHRS; i++) {
+			for (j=0; j<IONMAPLNG; j++) {
+				for (k=0; k<IONMAPLAT; k++) free(path->foF2[i][j][k]);
+				free(path->foF2[i][j]);
+			}
+			free(path->foF2[i]);
+		}
+		free(path->foF2);
+		path->foF2 = NULL;
+	}
+
+	if (path->M3kF2 != NULL) {
+		for (i=0; i<IONMAPHRS; i++) {
+			for (j=0; j<IONMAPLNG; j++) {
+				for (k=0; k<IONMAPLAT; k++) free(path->M3kF2[i][j][k]);
+				free(path->M3kF2[i][j]);
+			}
+			free(path->M3kF2[i]);
+		}
+		free(path->M3kF2);
+		path->M3kF2 = NULL;
+	}
+
+}
+
 DLLEXPORT int FreePathMemory(struct PathData *path) {	
 	/*
 
@@ -213,27 +262,35 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 	lat = 121;	// 121 latitudes at 1.5 degree increments
 	ssn = 2;	// 2 SSN (12-month smoothed sun spot numbers) high and low
 
-	for (i=0; i<hrs; i++) {
-		for (j=0; j<lng; j++) {
-			for (k=0; k<lat; k++) {
-				free(path->foF2[i][j][k]);
+	// NULL when the caller released its own maps with FreeIonMaps() and pointed
+	// the path at the shared month cache instead; those belong to IonMapFree().
+	if (path->foF2 != NULL) {
+		for (i=0; i<hrs; i++) {
+			for (j=0; j<lng; j++) {
+				for (k=0; k<lat; k++) {
+					free(path->foF2[i][j][k]);
+					}
+				free(path->foF2[i][j]);
 				}
-            free(path->foF2[i][j]);
-			}
-        free(path->foF2[i]);
-	}
-    free(path->foF2);
-
-	for (i=0; i<hrs; i++) {
-		for (j=0; j<lng; j++) {
-			for (k=0; k<lat; k++) {
-				free(path->M3kF2[i][j][k]);
-			}
-            free(path->M3kF2[i][j]);
+			free(path->foF2[i]);
 		}
-        free(path->M3kF2[i]);
+		free(path->foF2);
+		path->foF2 = NULL;
 	}
-    free(path->M3kF2);
+
+	if (path->M3kF2 != NULL) {
+		for (i=0; i<hrs; i++) {
+			for (j=0; j<lng; j++) {
+				for (k=0; k<lat; k++) {
+					free(path->M3kF2[i][j][k]);
+				}
+				free(path->M3kF2[i][j]);
+			}
+			free(path->M3kF2[i]);
+		}
+		free(path->M3kF2);
+		path->M3kF2 = NULL;
+	}
 
 	// Free the foF2 variability memory
 	season = 3;	 
