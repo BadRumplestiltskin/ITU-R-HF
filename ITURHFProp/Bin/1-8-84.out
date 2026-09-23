@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 01:19:16 2026
+     Analysis Prepared  Thu Sep 24 01:20:59 2026
 
 ---------------------------------------------------------------------------
 
@@ -74,8 +74,8 @@ Column 12: DuA - Upper decile deviation of atmospheric noise (dB)
 Column 13: DlA - Lower decile deviation of atmospheric noise (dB)
 Column 14: DuM - Upper decile deviation of man-made noise (dB)
 Column 15: DlM - Lower decile deviation of man-made noise (dB)
-Column 16: DuG - Upper decile deviation of atmospheric noise (dB)
-Column 17: DlG - Lower decile deviation of atmospheric noise (dB)
+Column 16: DuG - Upper decile deviation of galactic noise (dB)
+Column 17: DlG - Lower decile deviation of galactic noise (dB)
 Column 18: DuT - Upper decile deviation of total noise (dB)
 Column 19: DlT - Lower decile deviation of total noise (dB)
 Column 20: FamT - Total noise (dB)

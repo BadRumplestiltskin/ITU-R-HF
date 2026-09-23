@@ -34,10 +34,15 @@ int ValidatePath(struct PathData *path) {
 	//  2) if path->ManMadeNoise is negative 
 	//			Then the user desires to cancel the noise calculation and and value is valid
 	if (path->noiseP.ManMadeNoise > 0.0) {
+		// Note: the three clauses below were once ANDed together, which made the
+		// test unsatisfiable - no value is both under 100 and over 200 - so every
+		// out-of-range figure was accepted silently. Reject anything that is
+		// neither one of the named categories nor a figure in the open interval
+		// (100, 200).
 		if (((path->noiseP.ManMadeNoise != CITY) && (path->noiseP.ManMadeNoise != RESIDENTIAL) && (path->noiseP.ManMadeNoise != RURAL)
 			&& (path->noiseP.ManMadeNoise != QUIETRURAL) && (path->noiseP.ManMadeNoise != QUIET) && (path->noiseP.ManMadeNoise != NOISY))
-			&& ((path->noiseP.ManMadeNoise > 6.0) && (path->noiseP.ManMadeNoise < 100.0))
-			&& (path->noiseP.ManMadeNoise > 200.0))							return RTN_ERRMANMADENOISE;
+			&& ((path->noiseP.ManMadeNoise <= 100.0) || (path->noiseP.ManMadeNoise >= 200.0)))
+																			return RTN_ERRMANMADENOISE;
 	}
 
 	if (path->foF2 == NULL)												return RTN_ERRNOFOF2DATA;
