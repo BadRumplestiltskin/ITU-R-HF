@@ -231,6 +231,24 @@ https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-d
 Or please search the web for “Microsoft Visual Studio C++ Runtime Library”
 
 
+## MATLAB ports
+
+MATLAB implementations of P.533-14 and P.372 live in a separate repository,
+[p533-matlab](https://github.com/BadRumplestiltskin/p533-matlab). They were
+developed here under `P533/Matlab` and `P372/Matlab` and moved out so that the
+C reference implementation and the port can version independently.
+
+The port reads this repository's data rather than duplicating it - about 400 MB
+of coefficients, ionospheric maps and antenna patterns - so point it at a
+checkout of this tree:
+
+```sh
+export ITU_R_HF=/path/to/ITU-R-HF
+```
+
+The C tree remains the reference implementation; where the two disagree, the C
+engine is authoritative.
+
 ## CircuitCSV()
 
 A batch front end to P533(). Where ITURHFProp() describes one circuit in an
