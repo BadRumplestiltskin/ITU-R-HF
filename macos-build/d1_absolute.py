@@ -26,6 +26,16 @@ def dm(s):
         d, f = s.split("."); return sign * (abs(int(d)) + int(f) / 60.0)
     return sign * float(s)
 
+def sorl(c):
+    """D1 tabulates some circuits the long way round (their TX name ends "LP").
+    Pick the sense whose great-circle distance matches the tabulated one."""
+    import math
+    a, b, x, y = map(math.radians, (c['txlat'], c['txlng'], c['rxlat'], c['rxlng']))
+    cosd = math.sin(a)*math.sin(x) + math.cos(a)*math.cos(x)*math.cos(y-b)
+    short = 6371.009 * math.acos(max(-1.0, min(1.0, cosd)))
+    long_ = 2.0*math.pi*6371.009 - short
+    return "LONGPATH" if abs(c['dist']-long_) < abs(c['dist']-short) else "SHORTPATH"
+
 def geometry():
     g = {}
     with open(os.path.join(D1, "D1_Table1.csv")) as f:
@@ -83,7 +93,7 @@ Path.TW 0.0
 Path.FW 0.0
 Path.T0 0.0
 Path.F0 0.0
-Path.SorL "SHORTPATH"
+Path.SorL "{sorl(c)}"
 RptFilePath "{tmp}/"
 RptFileFormat "RPT_D | RPT_E"
 LL.lat {c['rxlat']}
