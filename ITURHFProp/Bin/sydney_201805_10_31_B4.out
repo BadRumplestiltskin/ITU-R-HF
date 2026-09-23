@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------
  International Telecommunications Union - Radiocommunication Sector (ITU-R)
-     ITURHFProp         Ver May 18 2024
+     ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Sat May 18 13:43:23 2024
+     Analysis Prepared  Thu Sep 24 01:19:16 2026
 
 ---------------------------------------------------------------------------
 
@@ -66,14 +66,14 @@
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -307.000
 	Field Strength (7000 km < D < 9000 km) = -307.000
-	Field Strength           (D > 9000 km) = -22.899
-	Median Rx power = -153.011
+	Field Strength           (D > 9000 km) = -22.929
+	Median Rx power = -153.041
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Long Path Parameters *******************
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  54.608
 	Increased Long Distance Field Strength due to Focusing (dB) =  7.736
-	"Not otherwise included loss" (dB) = -0.170
+	"Not otherwise included loss" (dB) = -0.140
 	Upper Reference Frequency (MHz)      =  17.628
 	Lower Reference Frequency (MHz)      =  8.295
 	Correction Factor at T + dM/2        =  1.557
@@ -96,16 +96,16 @@
 	Total noise lower decile       =  4.898
 	Total noise                    =  41.239
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  9.711
+	Monthly median resultant signal-to-noise ratio =  9.681
 	Upper decile deviation signal-to-noise ratio   =  14.879
 	Lower decile deviation signal-to-noise ratio   =  16.469
-	Signal-to-noise exceeded for 90% of the month  = -6.758
+	Signal-to-noise exceeded for 90% of the month  = -6.788
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.910
+	Basic Circuit Reliability                      =  2.883
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
