@@ -20,6 +20,7 @@
 // End ITURNoise return codes
 
 // ITURNoise Print Flag 
+#define PRINTALL	100 // Print the full report for a single run
 #define PRINTCSV	101 // Print just csv output line for single run
 #define PRINTCSVALL 102 // Print CSV header and line
 

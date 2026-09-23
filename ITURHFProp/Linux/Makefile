@@ -17,7 +17,7 @@ CFLAGS = -fPIC -Wall -Wextra $(OPTIMIZE)
 ifeq ($(UNAME_S),Darwin)
     LDFLAGS = -lm -ldl
 else
-    LDFLAGS = -lm -ldl -z muldefs
+    LDFLAGS = -lm -ldl
 endif
 
 RM = rm -f

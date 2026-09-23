@@ -88,6 +88,7 @@ struct Result {
 	double grange;			// group range of the dominant mode (km)
 	double noiseRx;			// total noise at the receiver (dB above kT0B)
 	int    valid;
+	int    failed;		// TRUE when P533 returned an error for this circuit
 };
 
 static void PrintUsage(void);
@@ -652,8 +653,6 @@ static void PrintUsage(void) {
 int main(int argc, char *argv[]) {
 
 	struct PathData path;
-	struct Circuit c;
-	struct Result r;
 
 	char *infile = NULL, *outfile = NULL, *datapath = NULL;
 	char *txant = NULL, *rxant = NULL;
@@ -663,8 +662,10 @@ int main(int argc, char *argv[]) {
 	char line[CSVMAXLINE];
 	char *field[CSVMAXFIELDS];
 	int col[NINPUTCOLUMNS];
+	struct Circuit *circ = NULL;
+	struct Result  *res  = NULL;
+	int ncirc = 0, ncircmax = 0, monthsloaded = 0;
 	int nf, nhdr, retval, number = 0, failed = 0;
-	int loadedmonth = -1;
 	FILE *fin, *fout;
 	char dpath[256];
 
@@ -691,21 +692,15 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVARGS;
 	}
 
-	// ReadIonParametersBin() and ReadFamDud() expect a path with a separator.
-	if ((size_t)snprintf(dpath, sizeof(dpath), "%s%s", datapath,
-			(datapath[strlen(datapath)-1] == '/' || datapath[strlen(datapath)-1] == '\\') ? "" : "/")
-		>= sizeof(dpath)) {
+	// The P533/P372 readers insert the separator themselves now, so this only
+	// has to bound the copy.
+	if ((size_t)snprintf(dpath, sizeof(dpath), "%s", datapath) >= sizeof(dpath)) {
 		printf("CircuitCSV: Error %d Data file path too long\n", RTN_ERRCSVARGS);
 		return RTN_ERRCSVARGS;
 	}
 
 	retval = LoadP533();
 	if (retval != RTN_CSVOK) return retval;
-
-	// PathData is large and P533() reads fields this program does not set.
-	// Clear it before AllocatePathMemory() fills in the pointers, so that no
-	// result depends on whatever was on the stack.
-	memset(&path, 0, sizeof(path));
 
 	// PathData is large and P533() reads fields this program does not set.
 	// Clear it before AllocatePathMemory() fills in the pointers, so that no
@@ -760,56 +755,92 @@ int main(int argc, char *argv[]) {
 	}
 	PrintHeader(fout);
 
+	// Read every circuit before running any. The coefficients and ionospheric
+	// maps are per month and cost ~11 MB of I/O to load, so the circuits are
+	// grouped by month and each month is loaded once. Reading first is what
+	// makes that possible without imposing an ordering on the input file:
+	// results are written back in the order the rows arrived.
 	while (fgets(line, sizeof(line), fin) != NULL) {
 
 		if (Trim(line)[0] == '\0') continue;	// skip blank records
 
+		if (ncirc == ncircmax) {
+			int grown = (ncircmax == 0) ? 256 : ncircmax*2;
+			struct Circuit *nc = realloc(circ, grown*sizeof(*circ));
+			struct Result  *nr = realloc(res,  grown*sizeof(*res));
+			if (nc == NULL || nr == NULL) {
+				printf("CircuitCSV: Error %d Out of memory at %d circuits\n", RTN_ERRCSVFIELD, ncirc);
+				free(nc != NULL ? nc : circ); free(nr != NULL ? nr : res);
+				fclose(fin); fclose(fout);
+				return RTN_ERRCSVFIELD;
+			}
+			circ = nc; res = nr; ncircmax = grown;
+		}
+
 		nf = SplitCSV(line, field, CSVMAXFIELDS);
-		if (ReadCircuit(&c, field, nf, col) != RTN_CSVOK) {
-			printf("CircuitCSV: Warning: skipping short record %d\n", number+1);
+		if (ReadCircuit(&circ[ncirc], field, nf, col) != RTN_CSVOK) {
+			printf("CircuitCSV: Warning: skipping short record %d\n", ncirc+1);
 			failed++;
 			continue;
 		}
 
-		number++;
-
-		if (c.month < 1 || c.month > 12) {
-			printf("CircuitCSV: Warning: circuit %d has month %d, skipping\n", number, c.month);
-			failed++;
-			continue;
-		}
-
-		// The coefficients and maps are per month, so they are re-read only
-		// when the month changes. A file sorted by month reads them once.
-		if (c.month - 1 != loadedmonth) {
-			retval = csvReadIonParametersBin(c.month - 1, path.foF2, path.M3kF2, dpath, silent);
-			if (retval != RTN_READIONPARAOK) {
-				printf("CircuitCSV: Error %d from ReadIonParametersBin for month %d\n", retval, c.month);
-				fclose(fin); fclose(fout);
-				return retval;
-			}
-			retval = csvReadFamDud(&path.noiseP, dpath, c.month - 1);
-			if (retval != RTN_READFAMDUDOK) {
-				printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
-				fclose(fin); fclose(fout);
-				return retval;
-			}
-			loadedmonth = c.month - 1;
-		}
-
-		retval = RunCircuit(&path, &c, &r);
-		if (retval != RTN_CSVOK) {
-			printf("CircuitCSV: Warning: circuit %d returned %d from P533, skipping\n", number, retval);
-			failed++;
-			continue;
-		}
-
-		WriteRow(fout, &c, &r, number);
-
-		if (silent == FALSE) printf("\rCircuit %d", number);
+		memset(&res[ncirc], 0, sizeof(res[ncirc]));
+		ncirc++;
 	}
 
-	if (silent == FALSE) printf("\rProcessed %d circuit(s), %d skipped\n", number, failed);
+	// One pass per month, in calendar order, so each month's data is read once
+	// however the input happened to be sorted.
+	for (int m = 1; m <= 12; m++) {
+
+		int any = FALSE;
+		for (int i = 0; i < ncirc; i++) if (circ[i].month == m) { any = TRUE; break; }
+		if (any == FALSE) continue;
+
+		retval = csvReadIonParametersBin(m - 1, path.foF2, path.M3kF2, dpath, silent);
+		if (retval != RTN_READIONPARAOK) {
+			printf("CircuitCSV: Error %d from ReadIonParametersBin for month %d\n", retval, m);
+			free(circ); free(res); fclose(fin); fclose(fout);
+			return retval;
+		}
+		retval = csvReadFamDud(&path.noiseP, dpath, m - 1);
+		if (retval != RTN_READFAMDUDOK) {
+			printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, m);
+			free(circ); free(res); fclose(fin); fclose(fout);
+			return retval;
+		}
+		monthsloaded++;
+
+		for (int i = 0; i < ncirc; i++) {
+			if (circ[i].month != m) continue;
+			if (RunCircuit(&path, &circ[i], &res[i]) != RTN_CSVOK) {
+				printf("CircuitCSV: Warning: circuit %d returned an error from P533, skipping\n", i+1);
+				res[i].valid = FALSE;
+				res[i].failed = TRUE;
+				failed++;
+				continue;
+			}
+			number++;
+			if (silent == FALSE) printf("\rCircuit %d of %d", number, ncirc);
+		}
+	}
+
+	// Write in input order, so the output rows line up with the input file.
+	for (int i = 0; i < ncirc; i++) {
+		if (circ[i].month < 1 || circ[i].month > 12) {
+			printf("CircuitCSV: Warning: circuit %d has month %d, skipping\n", i+1, circ[i].month);
+			continue;
+		}
+		if (res[i].failed == TRUE) continue;
+		WriteRow(fout, &circ[i], &res[i], i+1);
+	}
+
+	free(circ);
+	free(res);
+
+	if (silent == FALSE) {
+		printf("\rProcessed %d circuit(s), %d skipped, %d month(s) of data loaded\n",
+			number, failed, monthsloaded);
+	}
 
 	fclose(fin);
 	fclose(fout);

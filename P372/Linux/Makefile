@@ -20,7 +20,7 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
     LDFLAGS = -shared -lm -ldl
 else
-    LDFLAGS = -shared -lm -ldl -z muldefs
+    LDFLAGS = -shared -lm -ldl
 endif
 
 RM = rm -f

@@ -486,6 +486,8 @@ void InitializePath(struct PathData *path);
 DLLEXPORT int P533(struct PathData *path);
 // Resolves the P372 entry points once per process; see P533.c.
 int LoadP372(void);
+// Joins a data directory and a file name into a bounded buffer; see P533.c.
+DLLEXPORT int BuildDataPath(char *out, size_t n, const char *dir, const char *file);
 DLLEXPORT char const * P533Version(void);
 
 // Geometry.c Prototypes

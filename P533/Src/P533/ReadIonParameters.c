@@ -74,11 +74,11 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 	
 	// This may require error handling at some point.
 	// Eventually you want the file that is indicated by GUIConfig to be opened.
-	strcpy(InFilePath, DataFilePath);
-
-	//strcat(InFilePath, "ionmap/TXT/");
 	sprintf(MapFile, "ionos%02d.txt", path->month+1);
-	strcat(InFilePath, MapFile);
+	if (BuildDataPath(InFilePath, sizeof(InFilePath), DataFilePath, MapFile) != TRUE) {
+		printf("ReadIonParameters: ERROR Data file path too long\n");
+		return RTN_ERRREADIONPARAMETERS;
+	}
 	fp = fopen(InFilePath, "r"); 
 	//fp = fopen("..\\..\\ionmap\\ionos04.txt", "r"); 
 	if(fp == NULL) {
@@ -217,12 +217,11 @@ int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFi
 	numfoF2 = hrs * lng * lat * ssn;
 	// This may require error handling at some point.
 	// Eventually you want the file that is indicated by GUIConfig to be opened.
-	strcpy(InFilePath, DataFilePath);
-	// Glue on the ionmap/BIN directory to the InFilePath
-	//strcat(InFilePath, "ionmap/BIN/");
 	sprintf(MapFile, "ionos%02d.bin", month+1);
-	// Glue on the filenake of the coefficient file
-	strcat(InFilePath, MapFile);
+	if (BuildDataPath(InFilePath, sizeof(InFilePath), DataFilePath, MapFile) != TRUE) {
+		printf("ReadIonParameters: ERROR Data file path too long\n");
+		return RTN_ERRREADIONPARAMETERS;
+	}
 	fp = fopen(InFilePath, "rb"); 
 	if(fp == NULL) {
 		printf("ReadIonParameters: ERROR Can't find input file %s\n", InFilePath);

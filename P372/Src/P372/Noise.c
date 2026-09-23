@@ -8,6 +8,39 @@
 #include "Common.h"
 #include "Noise.h"
 
+/*
+	Definitions of the P372 handle and entry points that Noise.h declares extern.
+	This is the one translation unit in this artifact that defines them; every
+	other includer of Noise.h now merely declares them. Before this, each
+	includer defined its own copy and the link depended on -z muldefs.
+*/
+#ifdef _WIN32
+	HINSTANCE hLib;
+	cP372Info dllP372Version;
+	cP372Info dllP372CompileTime;
+	iNoise dllNoise;
+	iNoiseMemory dllAllocateNoiseMemory;
+	iNoiseMemory dllFreeNoiseMemory;
+	iReadFamDud dllReadFamDud;
+	vInitializeNoise dllInitializeNoise;
+	vAtmosphericNoise dllAtmosphericNoise;
+	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
+	iMakeNoise dllMakeNoise;
+#elif defined(__linux__) || defined(__APPLE__)
+	void *hLib;
+	char *(*dllP372Version)();
+	char *(*dllP372CompileTime)();
+	int (*dllNoise)(struct NoiseParams *, int, double, double, double);
+	int (*dllAllocateNoiseMemory)(struct NoiseParams *);
+	int (*dllFreeNoiseMemory)(struct NoiseParams *);
+	int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
+	void (*dllInitializeNoise)(struct NoiseParams *);
+	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
+	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
+	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+#endif
+
+
 // Local prototypes
 void GalacticNoise(
     struct NoiseParams *noiseP,
@@ -663,12 +696,20 @@ int ReadFamDud(
 
     FILE *fp;
 
-    strcpy(InFilePath, DataFilePath);
-
-    // We shouldn't modify the given path to the files,
-    // let the caller figure it out.
-    sprintf(CoeffFile, "COEFF%02dW.txt", month + 1);
-    strcat(InFilePath, CoeffFile);
+    // Bounded join. P372 is the lower layer and cannot call P533's
+    // BuildDataPath(), so the same rule is applied inline here: insert the
+    // separator only when the caller's directory does not already end in one.
+    {
+        size_t dirlen = strlen(DataFilePath);
+        const char *sep = (dirlen == 0 || DataFilePath[dirlen-1] == '/'
+                           || DataFilePath[dirlen-1] == '\\') ? "" : "/";
+        sprintf(CoeffFile, "COEFF%02dW.txt", month + 1);
+        if ((size_t)snprintf(InFilePath, sizeof(InFilePath), "%s%s%s",
+                             DataFilePath, sep, CoeffFile) >= sizeof(InFilePath)) {
+            printf("ReadFamDud: ERROR Data file path too long\n");
+            return RTN_ERROPENCOEFFFILE;
+        }
+    }
 
     fp = fopen(InFilePath, "r");
     if (fp == NULL) {

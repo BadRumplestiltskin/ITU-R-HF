@@ -65,6 +65,12 @@ geometry columns are still filled in.
 
 ## Notes on the calculation
 
+**Input order and months.** Every row is read before any is run, the circuits
+are then processed grouped by month, and the results are written back in the
+order the rows arrived. The coefficients and ionospheric maps cost about 11 MB
+of I/O per month, so grouping means each month is loaded once however the input
+happens to be sorted; you do not have to sort the file yourself.
+
 **Three runs per circuit.** The characteristic frequencies do not depend on the
 frequency of interest but the signal-to-noise ratio does, so the engine runs on
 a seed frequency to obtain the MUFs and then once at each of BUF, MUF and OWF.

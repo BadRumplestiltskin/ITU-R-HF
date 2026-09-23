@@ -33,8 +33,10 @@ int ReadP1239(struct PathData *path, const char * DataFilePath) {
 
 	FILE *fp;
 	
-	strcpy(InFilePath, DataFilePath);
-	strcat(InFilePath, "P1239-3 Decile Factors.txt");   
+	if (BuildDataPath(InFilePath, sizeof(InFilePath), DataFilePath, "P1239-3 Decile Factors.txt") != TRUE) {
+		printf("ReadP1239: ERROR Data file path too long\n");
+		return RTN_ERRCANTOPENP1239FILE;
+	}
 
 	fp = fopen (InFilePath, "r");  // Open the file. Home
 	if(fp == NULL) {

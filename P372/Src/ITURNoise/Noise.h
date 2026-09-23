@@ -275,33 +275,40 @@ DLLEXPORT int MakeNoise(
 /* End Prototypes */
 
 /* Operating system preprocessor */
+/*
+	These are declarations, not definitions. Every translation unit that includes
+	this header used to define its own copy of hLib and the dll* pointers, so the
+	link only succeeded because the Makefiles passed -z muldefs, which silently
+	keeps the first definition and discards the rest. The single definition of
+	each now lives in one .c file per built artifact.
+*/
 #ifdef _WIN32
-    HINSTANCE hLib;
-    cP372Info dllP372Version;
-    cP372Info dllP372CompileTime;
-    iNoise dllNoise;
-    iNoiseMemory dllAllocateNoiseMemory;
-    iNoiseMemory dllFreeNoiseMemory;
-    iReadFamDud dllReadFamDud;
-    vInitializeNoise dllInitializeNoise;
-    vAtmosphericNoise dllAtmosphericNoise;
-    vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-    iMakeNoise dllMakeNoise;
+    extern HINSTANCE hLib;
+    extern cP372Info dllP372Version;
+    extern cP372Info dllP372CompileTime;
+    extern iNoise dllNoise;
+    extern iNoiseMemory dllAllocateNoiseMemory;
+    extern iNoiseMemory dllFreeNoiseMemory;
+    extern iReadFamDud dllReadFamDud;
+    extern vInitializeNoise dllInitializeNoise;
+    extern vAtmosphericNoise dllAtmosphericNoise;
+    extern vAtmosphericNoise_LT dllAtmosphericNoise_LT;
+    extern iMakeNoise dllMakeNoise;
 #elif defined(__linux__) || defined(__APPLE__)
     #include <dlfcn.h>
-    void *hLib;
-    char *(*dllP372Version)();
-    char *(*dllP372CompileTime)();
-    int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-    int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-    int (*dllFreeNoiseMemory)(struct NoiseParams *);
-    int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-    void (*dllInitializeNoise)(struct NoiseParams *);
+    extern void *hLib;
+    extern char *(*dllP372Version)();
+    extern char *(*dllP372CompileTime)();
+    extern int (*dllNoise)(struct NoiseParams *, int, double, double, double);
+    extern int (*dllAllocateNoiseMemory)(struct NoiseParams *);
+    extern int (*dllFreeNoiseMemory)(struct NoiseParams *);
+    extern int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
+    extern void (*dllInitializeNoise)(struct NoiseParams *);
     /* These three were declared only in the _WIN32 block above, so ITURNoise
        could not be built on Linux or macOS. */
-    void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-    void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-    int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
+    extern void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
+    extern void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
+    extern int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
 #endif
 /* End operating system preprocessor */
 #endif // NOISE_H
