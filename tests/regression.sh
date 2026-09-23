@@ -1,0 +1,72 @@
+#!/bin/sh
+# Run every case in ITURHFProp/Bin and compare against its committed .out file.
+#
+# Two lines of each report are volatile and are filtered from both sides: the
+# "ITURHFProp Ver" line carries the compiler's __DATE__, and "Analysis Prepared"
+# carries the run time. Everything else - the echoed input parameters, the
+# column descriptions and every computed value - must match exactly. The column
+# descriptions matter: a report column was once silently dropped by a refactor
+# and only the descriptions would have caught it.
+#
+# Usage: tests/regression.sh [bindir] [libdir]
+#   bindir  directory holding the ITURHFProp executable (default ITURHFProp/Linux)
+#   libdir  directory holding libp533.so and libp372.so (default P533/Linux:P372/Linux)
+
+set -e
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+bindir=${1:-$root/ITURHFProp/Linux}
+libdir=${2:-$root/P533/Linux:$root/P372/Linux}
+exe=$bindir/ITURHFProp
+
+[ -x "$exe" ] || { echo "regression: no executable at $exe - run 'make -C Linux all' first" >&2; exit 2; }
+
+# The engine dlopen()s libp533.so and libp372.so by leaf name, so the loader
+# search path has to name the build directories. DYLD_LIBRARY_PATH cannot be
+# exported here: macOS System Integrity Protection strips DYLD_* when it starts
+# a protected binary such as /bin/sh, so the variable would never reach the
+# executable. Injecting it with env(1) at exec time does reach it, because the
+# engine itself is not protected. Getting this wrong makes the whole suite pass
+# against stale libraries.
+LD_LIBRARY_PATH=$libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH
+run="env DYLD_LIBRARY_PATH=$libdir"
+
+# The .in files name their data directory relative to ITURHFProp/Bin.
+cd "$root/ITURHFProp/Bin"
+
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+volatile='ITURHFProp *Ver|Analysis Prepared'
+pass=0
+fail=0
+
+for in_file in *.in; do
+	case_name=${in_file%.in}
+	ref=$case_name.out
+	if [ ! -f "$ref" ]; then
+		echo "SKIP $case_name (no reference output)"
+		continue
+	fi
+	if ! $run "$exe" -s "$in_file" "$work/$case_name.out" >"$work/$case_name.log" 2>&1; then
+		echo "FAIL $case_name (exit $?)"
+		sed 's/^/      /' "$work/$case_name.log"
+		fail=$((fail + 1))
+		continue
+	fi
+	grep -Ev "$volatile" "$ref"                 >"$work/$case_name.ref.f"
+	grep -Ev "$volatile" "$work/$case_name.out" >"$work/$case_name.new.f"
+	if diff -u "$work/$case_name.ref.f" "$work/$case_name.new.f" >"$work/$case_name.diff"; then
+		echo "PASS $case_name"
+		pass=$((pass + 1))
+	else
+		echo "FAIL $case_name"
+		head -40 "$work/$case_name.diff" | sed 's/^/      /'
+		fail=$((fail + 1))
+	fi
+done
+
+echo
+echo "$pass passed, $fail failed"
+[ "$fail" -eq 0 ]

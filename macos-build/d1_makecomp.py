@@ -14,7 +14,11 @@ Measurements are normalised for 1 kW EIRP, so circuits run at 0 dB(1kW) into
 isotropic antennas. Ten circuits are tabulated the long way round (TX name ends
 "LP"); their path sense is taken from the tabulated distance.
 
-Usage: d1_makecomp.py [exe] [libdir]
+Usage: d1_makecomp.py [exe] [libdir] [outfile]
+
+D1Comp.csv is a tracked file holding some other engine's predictions, so
+writing there replaces it; pass an explicit outfile to leave it alone, or
+restore it afterwards with git checkout.
 """
 import csv, math, os, subprocess, sys, tempfile
 
@@ -23,6 +27,7 @@ D1   = os.path.join(ROOT, "ITURHFProp/D1")
 DATA = os.path.join(ROOT, "ITURHFProp/Data/")
 EXE  = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "ITURHFProp/Linux/ITURHFProp")
 LIBS = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "P533/Linux") + ":" + os.path.join(ROOT, "P372/Linux")
+OUT  = sys.argv[3] if len(sys.argv) > 3 else os.path.join(D1, "D1Comp.csv")
 
 def dm(s):
     s = s.strip(); sign = -1.0 if s[-1] in "SW" else 1.0; s = s.rstrip("NSEW")
@@ -117,7 +122,6 @@ with tempfile.TemporaryDirectory() as tmp:
                 else: vals.append("-307.0"); missing += 1
             rows.append(f"{cid:3d},{yy:2d},{mm:02d}," + ",".join(vals))
 
-out = os.path.join(D1, "D1Comp.csv")
-with open(out, "w", newline="") as f:
+with open(OUT, "w", newline="") as f:
     f.write("\r".join(rows) + "\r")
-print(f"wrote {len(rows)} rows to {out} ({missing} hours had no prediction)")
+print(f"wrote {len(rows)} rows to {OUT} ({missing} hours had no prediction)")

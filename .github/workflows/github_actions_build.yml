@@ -11,7 +11,9 @@ jobs:
       run: |
         cd Linux
         make all
-        
+    - name: regression
+      run: ./tests/regression.sh
+
   buildOSX:
     runs-on: macOS-latest
     steps:
@@ -20,6 +22,8 @@ jobs:
       run: |
         cd Linux
         make all
+    - name: regression
+      run: ./tests/regression.sh
 
   buildWindows:
     runs-on: windows-latest
