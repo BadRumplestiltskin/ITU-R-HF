@@ -56,6 +56,7 @@ empty result fields and a `Status` saying why:
 | `BAD_RECORD` | the record was short, so some input columns were missing |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
+| `LONG_PATH` | over 9000 km, where P.533 uses the long model and defines no basic or operational MUF |
 
 `Circuit#` is the input file's **data row number** (1 for the first row after
 the header), so it is a direct index back into the input regardless of how many
@@ -99,10 +100,28 @@ months holds three. The P.372 noise coefficients are cached the same way, at
 
 You do not need to sort the input by month.
 
-**Three runs per circuit.** The characteristic frequencies do not depend on the
-frequency of interest but the signal-to-noise ratio does, so the engine runs on
-a seed frequency to obtain the MUFs and then once at each of BUF, MUF and OWF.
-The mode, take-off angle, loss, delay and noise are reported from the BUF run.
+**Three runs per circuit, not four.** BUF, MUF and OWF come from the MUF chain
+alone -- `MUFBasic`, `MUFVariability` and `MUFOperational` do not depend on the
+frequency of interest, since `MUFVariability` reads it only to form each mode's
+`Fprob` -- so no propagation run is needed to discover them. The engine then runs
+once at each of the three frequencies, which is irreducible: the signal-to-noise
+ratio depends on frequency through the field strength, the absorption and the
+noise, and `P533()` evaluates one frequency per call.
+
+**Paths without a dominant mode.** P.533 sets a dominant mode only under the
+short model. Between 7000 and 9000 km it interpolates and beyond 9000 km it uses
+the long model, leaving `path->DMptr` NULL while the MUFs and the SNR stay
+valid. So `Mode`, `TOA`, `Losses`, `Delay_BUF` and `Grange_BUF` are blank on
+those circuits, and the rest of the row is filled in as usual.
+
+**Frequencies outside 1-30 MHz.** P.533 is defined over 1 to 30 MHz. An
+operational MUF above 30 MHz is common at low latitudes near solar maximum; the
+frequency is still reported and only its SNR column is left empty.
+
+**Over 9000 km.** The long model characterises a circuit by the reference
+frequencies fM and fL rather than by a basic or operational MUF, so `BUF`, `MUF`
+and `OWF` do not exist for it. Those rows carry `Status` `LONG_PATH` with the
+frequency columns blank; the geometry columns are still filled in.
 
 **The step at the MUF.** A mode supported just below a MUF is screened just
 above it, and the engine's loss jumps by about 8 dB across that boundary. For

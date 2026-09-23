@@ -65,6 +65,11 @@ static int    (*csvReadFamDud)(struct NoiseParams *, const char *, int);
 static int    (*csvIonMapGet)(int, char *, int, float *****, float *****);
 static void   (*csvIonMapFree)(void);
 static void   (*csvFreeIonMaps)(struct PathData *);
+static int    (*csvValidatePath)(struct PathData *);
+static void   (*csvInitializePath)(struct PathData *);
+static void   (*csvMUFBasic)(struct PathData *);
+static void   (*csvMUFVariability)(struct PathData *);
+static void   (*csvMUFOperational)(struct PathData *);
 
 // The three characteristic frequencies each circuit is evaluated at.
 #define FRQBUF	0	// basic MUF of the dominant mode
@@ -84,6 +89,7 @@ struct Result {
 	char   layer;			// 'E' or 'F' for the dominant mode
 	double f[NFRQ];			// MHz: BUF, MUF, OWF
 	double sn[NFRQ];		// dB at each of the above
+	int    snok[NFRQ];		// FALSE when that frequency is outside P.533's 1-30 MHz
 	double prob;			// basic circuit reliability at the BUF (%)
 	double toa;				// take-off angle of the dominant mode (degrees)
 	double loss;			// basic transmission loss of the dominant mode (dB)
@@ -131,6 +137,11 @@ static int LoadP533(void) {
 	csvIonMapGet            = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapGet");
 	csvIonMapFree           = (void *)GetProcAddress((HMODULE)P533Lib, "IonMapFree");
 	csvFreeIonMaps          = (void *)GetProcAddress((HMODULE)P533Lib, "FreeIonMaps");
+	csvValidatePath         = (void *)GetProcAddress((HMODULE)P533Lib, "ValidatePath");
+	csvInitializePath       = (void *)GetProcAddress((HMODULE)P533Lib, "InitializePath");
+	csvMUFBasic             = (void *)GetProcAddress((HMODULE)P533Lib, "MUFBasic");
+	csvMUFVariability       = (void *)GetProcAddress((HMODULE)P533Lib, "MUFVariability");
+	csvMUFOperational       = (void *)GetProcAddress((HMODULE)P533Lib, "MUFOperational");
 #else
 	P533Lib = dlopen(CSVP533LIB, RTLD_NOW);
 	if (P533Lib == NULL) {
@@ -154,13 +165,20 @@ static int LoadP533(void) {
 	csvIonMapGet            = dlsym(P533Lib, "IonMapGet");
 	csvIonMapFree           = dlsym(P533Lib, "IonMapFree");
 	csvFreeIonMaps          = dlsym(P533Lib, "FreeIonMaps");
+	csvValidatePath         = dlsym(P533Lib, "ValidatePath");
+	csvInitializePath       = dlsym(P533Lib, "InitializePath");
+	csvMUFBasic             = dlsym(P533Lib, "MUFBasic");
+	csvMUFVariability       = dlsym(P533Lib, "MUFVariability");
+	csvMUFOperational       = dlsym(P533Lib, "MUFOperational");
 #endif
 
 	// A missing symbol would otherwise surface as a call through a NULL pointer.
 	if (csvP533 == NULL || csvAllocatePathMemory == NULL || csvFreePathMemory == NULL ||
 		csvBearing == NULL || csvReadIonParametersBin == NULL || csvReadP1239 == NULL ||
 		csvReadType13 == NULL || csvIsotropicPattern == NULL || csvReadFamDud == NULL ||
-		csvIonMapGet == NULL || csvIonMapFree == NULL || csvFreeIonMaps == NULL) {
+		csvIonMapGet == NULL || csvIonMapFree == NULL || csvFreeIonMaps == NULL ||
+		csvValidatePath == NULL || csvInitializePath == NULL || csvMUFBasic == NULL ||
+		csvMUFVariability == NULL || csvMUFOperational == NULL) {
 		printf("CircuitCSV: Error %d P533/P372 entry point not found\n", RTN_ERRCSVP533LIB);
 		return RTN_ERRCSVP533LIB;
 	}
@@ -459,68 +477,110 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 
 	memset(r, 0, sizeof(*r));
 
-	// Seed run. Any frequency yields the MUFs; 10 MHz sits mid-band.
+	/*
+		Step 1: the characteristic frequencies, without a propagation run.
+
+		MUFBasic(), MUFVariability() and MUFOperational() do not depend on the
+		frequency of interest -- MUFVariability() reads path->frequency only to
+		form each mode's Fprob, never to form a MUF -- so running the MUF chain
+		alone yields BUF, MUF and OWF. This replaces what used to be a full
+		P533() call on a seed frequency purely to discover them.
+	*/
 	SetPath(path, c, 10.0);
-	retval = csvP533(path);
-	if (retval != RTN_P533OK) return retval;
+
+	retval = csvValidatePath(path);
+	if (retval != RTN_VALIDDATAOK) return retval;
+
+	csvInitializePath(path);
+	csvMUFBasic(path);
+	csvMUFVariability(path);
+	csvMUFOperational(path);
 
 	r->dist      = path->distance;
 	r->txBearing = csvBearing(path->L_tx, path->L_rx, path->SorL) * R2D;
 	r->rxBearing = csvBearing(path->L_rx, path->L_tx, path->SorL) * R2D;
 
-	// A path with no supported mode has a zero basic MUF. Report it as blank
-	// rather than running the engine again on a meaningless frequency.
-	if (DominantMode(path, &hops, &layer) == FALSE || path->DMptr->BMUF <= 0.0) {
+	/*
+		The path-level MUFs, not the dominant mode's. P.533 sets a dominant mode
+		only for paths it treats with the short model; between 7000 and 9000 km
+		it interpolates, and beyond 9000 km it uses the long model, and in both
+		cases path->DMptr stays NULL while the MUFs and the signal-to-noise
+		ratio remain perfectly valid. Keying the whole circuit off the dominant
+		mode discarded every result for any path over about 7000 km.
+	*/
+	r->f[FRQBUF] = path->BMUF;
+	r->f[FRQMUF] = (path->OPMUF   > 0.0) ? path->OPMUF   : path->MUF50;
+	r->f[FRQOWF] = (path->OPMUF90 > 0.0) ? path->OPMUF90 : path->MUF90;
+
+	/*
+		InitializePath() seeds the MUFs with 99.9 meaning "not calculated", and
+		the basic-MUF chain only applies out to 9000 km. Beyond that P.533 uses
+		the long model, which characterises the circuit by the upper and lower
+		reference frequencies fM and fL instead, and leaves these at the
+		sentinel. Report that rather than letting 99.9 reach the file as though
+		it were a 99.9 MHz MUF.
+	*/
+	if (r->f[FRQBUF] >= 99.0 || path->distance > 9000.0) {
+		r->f[FRQBUF] = r->f[FRQMUF] = r->f[FRQOWF] = 0.0;
+		r->valid  = FALSE;
+		r->status = "LONG_PATH";
+		return RTN_CSVOK;
+	}
+
+	if (r->f[FRQBUF] <= 0.0) {
+		// No mode is supported at all: nothing propagates on this circuit.
 		r->valid = FALSE;
 		return RTN_CSVOK;
 	}
 
-	// BUF is the basic MUF of the dominant mode. MUF is the operational MUF,
-	// which is the basic MUF scaled by the P.1240 operational factor, and OWF is
-	// the operational MUF exceeded for 90% of days, the FOT.
-	r->f[FRQBUF] = path->DMptr->BMUF;
-	r->f[FRQMUF] = (path->OPMUF   > 0.0) ? path->OPMUF   : path->MUF50;
-	r->f[FRQOWF] = (path->OPMUF90 > 0.0) ? path->OPMUF90 : path->MUF90;
-
+	/*
+		Step 2: one propagation run per characteristic frequency. Three runs are
+		irreducible -- the signal-to-noise ratio depends on frequency through the
+		field strength, the absorption and the noise, and P533() evaluates one
+		frequency per call.
+	*/
 	for (int n = 0; n < NFRQ; n++) {
 
-		if (r->f[n] <= 0.0) continue;
+		double f = r->f[n] * FreqMargin;
 
-		// The engine's loss has a step at the MUF: a mode that is supported just
-		// below it is screened just above, which is worth about 8 dB. Evaluating
-		// exactly at the MUF therefore sits on that step, so -m allows a small
-		// margin below it for numbers that do not depend on rounding.
-		SetPath(path, c, r->f[n] * FreqMargin);
+		/*
+			P.533 is defined from 1 to 30 MHz and ValidatePath() enforces it. A
+			characteristic frequency can legitimately fall outside that -- an
+			operational MUF above 30 MHz is common at low latitudes near solar
+			maximum. The frequency is still a valid result, so it is reported
+			and only its signal-to-noise ratio is left empty. Returning the
+			engine's error here would have discarded the whole circuit.
+		*/
+		if (r->f[n] <= 0.0 || f < 1.0 || f > 30.0) continue;
+
+		// The loss steps at a MUF, so -m allows a margin below it.
+		SetPath(path, c, f);
 		retval = csvP533(path);
 		if (retval != RTN_P533OK) return retval;
 
-		r->sn[n] = path->SNR;
+		r->sn[n]   = path->SNR;
+		r->snok[n] = TRUE;
 
 		if (n == FRQBUF) {
-			// Everything that describes the mode is reported at the BUF.
+
+			r->prob    = path->BCR;
+			r->noiseRx = path->noiseP.FamT;
+
+			// Mode, take-off angle, loss, delay and group range describe the
+			// dominant mode, so they are reported only when there is one.
 			if (DominantMode(path, &hops, &layer) == TRUE) {
 				r->hops  = hops;
 				r->layer = layer;
-				// P.533 carries the elevation angle in radians and the group
-				// delay in seconds.
-				r->toa  = path->DMptr->ele * R2D;
-				r->loss = path->DMptr->Lb;
-
-				// P.533 fills Mode.tau only on the digital-modulation branch of
-				// CircuitReliability(), so for an analogue circuit it is still
-				// zero here. Reproduce the engine's own calculation instead: the
-				// slant range of one hop from its elevation angle, times the
-				// number of hops.
+				r->toa   = path->DMptr->ele * R2D;
+				r->loss  = path->DMptr->Lb;
 				{
-					double dh    = path->distance / hops;		// hop distance (km)
+					double dh    = path->distance / hops;
 					double psi   = dh / (2.0*R0);
 					double ptick = 2.0*R0*(sin(psi)/cos(path->DMptr->ele - psi));
-					r->grange = hops * ptick;					// group range (km)
-					r->delay  = r->grange * 1000.0 / VofL;		// group delay (s)
+					r->grange = hops * ptick;
+					r->delay  = r->grange * 1000.0 / VofL;
 				}
 			}
-			r->prob    = path->BCR;
-			r->noiseRx = path->noiseP.FamT;
 		}
 	}
 
@@ -597,15 +657,37 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 		return;
 	}
 
-	fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%s\n",
-		number, r->dist, r->txBearing, r->rxBearing,
-		r->hops, r->layer,
-		r->f[FRQBUF], r->prob, r->toa, r->loss, r->sn[FRQBUF],
-		r->delay, r->grange,
-		r->noiseRx, r->noiseRx,
-		r->f[FRQMUF], r->sn[FRQMUF],
-		r->f[FRQOWF], r->sn[FRQOWF],
-		(r->status != NULL) ? r->status : "OK");
+	// A path longer than about 7000 km has no dominant mode, so the columns that
+	// describe one are left empty while the frequencies, SNRs and noise are not.
+	// SNR columns are blank where the frequency fell outside P.533's 1-30 MHz.
+	char snbuf[3][32];
+	for (int n = 0; n < NFRQ; n++) {
+		if (r->snok[n] == TRUE) snprintf(snbuf[n], sizeof(snbuf[n]), "%.6g", r->sn[n]);
+		else                    snbuf[n][0] = '\0';
+	}
+
+	// A path longer than about 7000 km has no dominant mode, so the columns that
+	// describe one are left empty while the frequencies, SNRs and noise are not.
+	if (r->hops > 0) {
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%.6g,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%.6g,%s,%.6g,%s,%s\n",
+			number, r->dist, r->txBearing, r->rxBearing,
+			r->hops, r->layer,
+			r->f[FRQBUF], r->prob, r->toa, r->loss, snbuf[FRQBUF],
+			r->delay, r->grange,
+			r->noiseRx, r->noiseRx,
+			r->f[FRQMUF], snbuf[FRQMUF],
+			r->f[FRQOWF], snbuf[FRQOWF],
+			(r->status != NULL) ? r->status : "OK");
+	}
+	else {
+		fprintf(fp, "%d,%.6g,%.6g,%.6g,,%.6g,%.6g,,,%s,,,%.6g,%.6g,%.6g,%s,%.6g,%s,%s\n",
+			number, r->dist, r->txBearing, r->rxBearing,
+			r->f[FRQBUF], r->prob, snbuf[FRQBUF],
+			r->noiseRx, r->noiseRx,
+			r->f[FRQMUF], snbuf[FRQMUF],
+			r->f[FRQOWF], snbuf[FRQOWF],
+			(r->status != NULL) ? r->status : "OK");
+	}
 
 }
 
@@ -838,14 +920,16 @@ int main(int argc, char *argv[]) {
 				monthsused++;
 			}
 
-			if (RunCircuit(&path, &c, &r) != RTN_CSVOK) {
-				printf("CircuitCSV: Warning: input row %d returned an error from P533\n", c.row);
+			retval = RunCircuit(&path, &c, &r);
+			if (retval != RTN_CSVOK) {
+				printf("CircuitCSV: Warning: input row %d returned error %d from P533\n", c.row, retval);
 				r.valid = FALSE;
 				r.status = "P533_ERROR";
 				failed++;
 			}
 			else {
-				r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
+				// RunCircuit() may already have said why there are no results.
+				if (r.status == NULL) r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
 				number++;
 			}
 		}
