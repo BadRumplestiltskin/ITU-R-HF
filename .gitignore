@@ -360,3 +360,10 @@ MigrationBackup/
 FodyWeavers.xsd
 
 #P372/Src/AtmosPlots/P372_figures
+# In-source builds: the Linux/macOS makefiles compile objects and dependency
+# files next to the sources, and link the executables into the build dirs.
+*.o
+*.d
+!*.vcxproj.d
+ITURHFProp/Src/CircuitCSV/CircuitCSV
+P372/Src/ReadCoeff/FAKP.out

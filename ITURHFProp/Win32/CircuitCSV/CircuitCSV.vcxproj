@@ -18,60 +18,33 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\Src\P533\Between7000kmand9000km.c" />
-    <ClCompile Include="..\..\Src\P533\CalculateCPParameters.c" />
-    <ClCompile Include="..\..\Src\P533\CircuitReliability.c" />
-    <ClCompile Include="..\..\Src\P533\ELayerScreeningFrequency.c" />
-    <ClCompile Include="..\..\Src\P533\Geometry.c" />
-    <ClCompile Include="..\..\Src\P533\InitializePath.c" />
-    <ClCompile Include="..\..\Src\P533\InputDump.c" />
-    <ClCompile Include="..\..\Src\P533\Magfit.c" />
-    <ClCompile Include="..\..\Src\P533\MedianAvailableReceiverPower.c" />
-    <ClCompile Include="..\..\Src\P533\MedianSkywaveFieldStrengthLong.c" />
-    <ClCompile Include="..\..\Src\P533\MedianSkywaveFieldStrengthShort.c" />
-    <ClCompile Include="..\..\Src\P533\MUFBasic.c" />
-    <ClCompile Include="..\..\Src\P533\MUFOperational.c" />
-    <ClCompile Include="..\..\Src\P533\MUFVariability.c" />
-    <ClCompile Include="..\..\Src\P533\P533.c" />
-    <ClCompile Include="..\..\Src\P533\PathMemory.c" />
-    <ClCompile Include="..\..\Src\P533\ReadIonParameters.c" />
-    <ClCompile Include="..\..\Src\P533\ReadP1239.c" />
-    <ClCompile Include="..\..\Src\P533\ReadType13.c" />
-    <ClCompile Include="..\..\Src\P533\ValidatePath.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\Include\Common.h" />
-    <ClInclude Include="..\..\..\Include\Noise.h" />
-    <ClInclude Include="..\..\..\Include\P533.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D567A7CB-159C-419F-8217-F7BF5025E9BA}</ProjectGuid>
-    <RootNamespace>P533</RootNamespace>
+    <ProjectGuid>{7C3F1A04-2B8D-4E19-9C55-8A6D41F2B730}</ProjectGuid>
+    <RootNamespace>CircuitCSV</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -93,98 +66,109 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <TargetName>$(ProjectName)_x64</TargetName>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <TargetName>$(ProjectName)_x64</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\Include;..\..\Src\CircuitCSV;..\..\Src\ITURHFProp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>copy /y $(SolutionDir)..\..\..\P533\Bin\P533.dll $(SolutionDir)..\..\Bin\P533.dll
+copy /y $(SolutionDir)..\..\..\P372\Bin\P372.dll $(SolutionDir)..\..\Bin\P372.dll</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\bin\$(TargetFileName)
-copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\p533\bin\$(TargetFileName)</Command>
+      <Command>copy $(TargetDir)$(TargetFileName) $(SolutionDir)..\..\bin\$(TargetFileName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\Include;..\..\Src\CircuitCSV;..\..\Src\ITURHFProp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies />
-      <ShowProgress>NotSet</ShowProgress>
     </Link>
+    <PreBuildEvent>
+      <Command>copy /y $(SolutionDir)..\..\..\P533\Bin\P533.dll $(SolutionDir)..\..\Bin\P533.dll
+copy /y $(SolutionDir)..\..\..\P372\Bin\P372.dll $(SolutionDir)..\..\Bin\P372.dll</Command>
+    </PreBuildEvent>
     <PostBuildEvent>
-      <Command>copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\bin\$(TargetFileName)
-copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\..\p533\bin\$(TargetFileName)</Command>
+      <Command>copy $(TargetDir)$(TargetFileName) $(SolutionDir)..\..\bin\$(TargetFileName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\Include;..\..\Src\CircuitCSV;..\..\Src\ITURHFProp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\bin\$(TargetFileName)
-copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\p533\bin\$(TargetFileName)</Command>
+      <Command>copy $(TargetDir)$(TargetFileName) $(SolutionDir)..\..\bin\$(TargetFileName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\Include;..\..\Src\CircuitCSV;..\..\Src\ITURHFProp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AdditionalDependencies />
-      <ShowProgress>NotSet</ShowProgress>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\bin\$(TargetFileName)
-copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\..\p533\bin\$(TargetFileName)</Command>
+      <Command>copy $(TargetDir)$(TargetFileName) $(SolutionDir)..\..\bin\$(TargetFileName)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Src\CircuitCSV\CircuitCSV.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Include\Common.h" />
+    <ClInclude Include="..\..\..\Include\LoadLib.h" />
+    <ClInclude Include="..\..\..\Include\Noise.h" />
+    <ClInclude Include="..\..\..\Include\P533.h" />
+    <ClInclude Include="..\..\Src\CircuitCSV\CircuitCSV.h" />
+    <ClInclude Include="..\..\Src\ITURHFProp\ITURHFProp.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

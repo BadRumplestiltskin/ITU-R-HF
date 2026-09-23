@@ -13,6 +13,11 @@ CFLAGS = -std=gnu11 -Wall -Wextra $(OPTIMIZE) -I$(source_dir) -I$(shared_dir) -I
 LDFLAGS = -lm -ldl
 
 RM = rm -f
+
+prefix ?= /usr/local
+exec_prefix = $(prefix)
+bindir = $(exec_prefix)/bin
+
 TARGET = CircuitCSV
 SRCS = $(source_dir)CircuitCSV.c
 OBJS = $(SRCS:.c=.o)
@@ -26,3 +31,7 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	$(RM) $(OBJS) $(TARGET)
+
+install: all
+	install -d $(DESTDIR)$(bindir)/
+	install -m 755 $(TARGET) $(DESTDIR)$(bindir)/$(TARGET)

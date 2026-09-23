@@ -1,4 +1,4 @@
-﻿ITU-R P.1239-2
+ITU-R P.1239-2
 TABLE 2 and TABLE 3
 Lower and Upper decile factors for within-the-month variations of foF2
 a) foF2 variability: lower decile, winter, R12 < 50
