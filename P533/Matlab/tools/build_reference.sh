@@ -3,7 +3,8 @@
 # sources, then regenerate tests/reference/. See ../docs/VALIDATION.md.
 set -e
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/.." && pwd)"
-ITU="${ITU_R_HF:-/Users/warrensly/NetBeansProjects/ITU-R-HF}"
+# Default to the checkout this script lives in: tools/ is P533/Matlab/tools.
+ITU="${ITU_R_HF:-$(cd "$(dirname "$0")/../../.." && pwd)}"
 P372="$ITU/P372/Src/P372"; P533="$ITU/P533/Src/P533"
 DATA="$ITU/P533/Data/"; ANT="$ITU/ITURHFProp/Data/Antenna/T13 Files"
 BUILD="$HERE/build"; REF="$ROOT/tests/reference"

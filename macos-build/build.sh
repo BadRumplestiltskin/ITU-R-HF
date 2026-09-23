@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
-R=/Users/warrensly/NetBeansProjects/ITU-R-HF
+# The checkout this script lives in.
+R=$(cd "$(dirname "$0")/.." && pwd)
 cd /tmp/iturhf-cbuild
 
 # Lenient flags + force-include standard headers the old code relied on implicitly.

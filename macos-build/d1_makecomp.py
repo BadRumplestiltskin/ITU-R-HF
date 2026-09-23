@@ -22,7 +22,7 @@ restore it afterwards with git checkout.
 """
 import csv, math, os, subprocess, sys, tempfile
 
-ROOT = "/Users/warrensly/NetBeansProjects/ITU-R-HF"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D1   = os.path.join(ROOT, "ITURHFProp/D1")
 DATA = os.path.join(ROOT, "ITURHFProp/Data/")
 EXE  = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "ITURHFProp/Linux/ITURHFProp")

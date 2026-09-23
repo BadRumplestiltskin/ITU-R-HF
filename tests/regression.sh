@@ -1,5 +1,6 @@
 #!/bin/sh
-# Run every case in ITURHFProp/Bin and compare against its committed .out file.
+# Run every case in ITURHFProp/Bin and P533/Bin and compare against its
+# committed .out file.
 #
 # Two lines of each report are volatile and are filtered from both sides: the
 # "ITURHFProp Ver" line carries the compiler's __DATE__, and "Analysis Prepared"
@@ -32,9 +33,6 @@ LD_LIBRARY_PATH=$libdir${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 export LD_LIBRARY_PATH
 run="env DYLD_LIBRARY_PATH=$libdir"
 
-# The .in files name their data directory relative to ITURHFProp/Bin.
-cd "$root/ITURHFProp/Bin"
-
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
@@ -42,13 +40,18 @@ volatile='ITURHFProp *Ver|Analysis Prepared'
 pass=0
 fail=0
 
+# Each .in names its data directory relative to its own Bin directory, so every
+# case has to run with that directory as the working directory.
+for bin_dir in ITURHFProp/Bin P533/Bin; do
+cd "$root/$bin_dir"
 for in_file in *.in; do
-	case_name=${in_file%.in}
-	ref=$case_name.out
+	case_name=$bin_dir/${in_file%.in}
+	ref=${in_file%.in}.out
 	if [ ! -f "$ref" ]; then
 		echo "SKIP $case_name (no reference output)"
 		continue
 	fi
+	mkdir -p "$work/$bin_dir"
 	if ! $run "$exe" -s "$in_file" "$work/$case_name.out" >"$work/$case_name.log" 2>&1; then
 		echo "FAIL $case_name (exit $?)"
 		sed 's/^/      /' "$work/$case_name.log"
@@ -65,6 +68,7 @@ for in_file in *.in; do
 		head -40 "$work/$case_name.diff" | sed 's/^/      /'
 		fail=$((fail + 1))
 	fi
+done
 done
 
 echo

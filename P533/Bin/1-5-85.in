@@ -2,13 +2,13 @@ PathName "Test case ID 1: Year 85 Month 5"
 PathTXName "LUXEMBURG"
 Path.L_tx.lat 49.6666666667
 Path.L_tx.lng 6.31666666667
-TXAntFilePath "C:\Users\behm.NTIA-ITS\Documents\GitHub\GitHf\Data\Antenna\ASCUH5.T13"
+TXAntFilePath "../../ITURHFProp/Data/Antenna/T13 Files/201-6_0.t13"
 TXGOS 0.0
 TXBearing 106.868
 PathRXName "BOCKHACKEN"
 Path.L_rx.lat 51.1166666667
 Path.L_rx.lng 7.26666666667
-RXAntFilePath "C:\Users\behm.NTIA-ITS\Documents\GitHub\GitHf\Data\Antenna\ASCUH5.T13"
+RXAntFilePath "../../ITURHFProp/Data/Antenna/T13 Files/201-6_0.t13"
 RXGOS 0.0
 RXBearing 43.666
 AntennaOrientation "ARBITRARY"

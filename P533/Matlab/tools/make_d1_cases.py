@@ -8,7 +8,9 @@ Hours are 1..24 in the table (= UTC hour 0..23); every second hour is used
 to halve the run time. Field strengths are normalised to 1 kW e.i.r.p., so
 txpower = 0 dB(1 kW) with isotropic antennas (P.533 section 1)."""
 import csv, math, sys, os
-D1 = os.environ.get("ITU_R_HF", "/Users/warrensly/NetBeansProjects/ITU-R-HF") + "/ITURHFProp/D1"
+# Default to the checkout this script lives in: tools/ is P533/Matlab/tools.
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+D1 = os.environ.get("ITU_R_HF", _ROOT) + "/ITURHFProp/D1"
 out = sys.argv[1]
 def dm(s):
     s = s.strip(); sign = -1.0 if s[-1] in "SW" else 1.0; s = s.rstrip("NSEW")

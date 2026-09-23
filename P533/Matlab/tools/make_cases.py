@@ -9,7 +9,9 @@ DIST = [100, 500, 1500, 2500, 3500, 5000, 6999, 7000, 8000, 9000, 9001, 12000, 1
 BEAR = [0, 90, 225]
 MONTHS = [1, 4, 7, 10]; HOURS = [0, 6, 12, 18]; SSN = [10, 70, 150]; FREQ = [2, 5, 10, 20, 30]
 antdir = sys.argv[1] if len(sys.argv) > 1 else ""
-T13 = os.path.join(antdir, "141-10_0.t13") if antdir else "ISOTROPIC"
+# Antenna files are named, not pathed: setupCase.m resolves them against the
+# T13 directory that testPaths() finds, so the csv stays machine independent.
+T13 = "141-10_0.t13"
 
 def dest(lat, lng, brg, d):
     la, lo, b = map(math.radians, (lat, lng, brg)); dr = d / R0

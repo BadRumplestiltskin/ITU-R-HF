@@ -3,9 +3,10 @@
 (implementation fidelity) and to the CCIR D1 measured databank (absolute validation)."""
 import csv, math, os, subprocess, json, urllib.request, sys
 
-D1 = "/Users/warrensly/NetBeansProjects/ITU-R-HF/ITURHFProp/D1"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+D1 = os.path.join(ROOT, "ITURHFProp/D1")
 CBUILD = "/tmp/iturhf-cbuild"
-DATA = "/Users/warrensly/NetBeansProjects/ITU-R-HF/ITURHFProp/Data/"
+DATA = os.path.join(ROOT, "ITURHFProp/Data/")
 JAVA_URL = "http://localhost:8080/api/propagation/p533"
 N_ROWS = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 

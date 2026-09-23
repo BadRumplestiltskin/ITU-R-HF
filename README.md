@@ -231,6 +231,35 @@ https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-d
 Or please search the web for “Microsoft Visual Studio C++ Runtime Library”
 
 
+## CircuitCSV()
+
+A batch front end to P533(). Where ITURHFProp() describes one circuit in an
+`.in` file and sweeps it over a grid, CircuitCSV() reads a csv holding many
+different circuits, runs the engine on each and writes a csv of results. It is
+built for lists of 100 000 circuits and upwards: the ionospheric maps and noise
+coefficients are cached per month, and input is streamed rather than held in
+memory.
+
+```
+CircuitCSV -i circuits.csv -o results.csv -d /path/to/Data [options]
+    -i <file>   input csv
+    -o <file>   output csv
+    -d <path>   directory holding the CCIR coefficients and ionospheric maps
+    -t <file>   transmit antenna: a Type 13 file, or ISOTROPIC (default)
+    -r <file>   receive antenna:  a Type 13 file, or ISOTROPIC (default)
+    -g <dBi>    gain for an isotropic pattern (default 0.0)
+    -m <factor> evaluate at factor x each MUF (default 1.0)
+    -s          silent
+```
+
+Input columns are looked up by name, so their order does not matter. Every
+input row produces exactly one output row, in input order, with the input
+columns echoed ahead of the results. Values are written at P.533's own
+precision rather than scaled to fixed point.
+
+Full documentation, including the column list and the status codes, is in
+[ITURHFProp/Src/CircuitCSV/README.md](ITURHFProp/Src/CircuitCSV/README.md).
+
 ### A brief description of the interface to P533.dll:
 
 The program P533.dll has the following entry points:

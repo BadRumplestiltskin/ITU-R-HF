@@ -13,7 +13,7 @@ Usage: d1_absolute.py [n_cases] [path_to_ITURHFProp] [path_to_libdir]
 """
 import csv, math, os, subprocess, sys, tempfile
 
-ROOT = "/Users/warrensly/NetBeansProjects/ITU-R-HF"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D1   = os.path.join(ROOT, "ITURHFProp/D1")
 DATA = os.path.join(ROOT, "ITURHFProp/Data/")
 NCASE = int(sys.argv[1]) if len(sys.argv) > 1 else 40

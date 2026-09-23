@@ -1,6 +1,8 @@
 function path = setupCase(cases, i, path)
 %SETUPCASE Path structure for row i of cases.csv (reusing loaded data in path).
-[~, ~, antDir] = testPaths(); %#ok<ASGLU>
+[~, ~, antDir] = testPaths();
+% cases.csv names antenna files without a path so that it is machine
+% independent; resolveAnt below turns a bare name into a full one.
 if nargin < 3 || isempty(path), path = p533.newPath(); end
 D2R = pi / 180;
 path.year = cases.year(i); path.month = cases.month(i); path.hour = cases.hour(i); path.SSN = cases.ssn(i);
@@ -15,13 +17,24 @@ long = path.SorL == 1;
 if strcmp(cases.txant{i}, 'ISOTROPIC')
     path.A_tx = p533.isotropicPattern(cases.txgos(i));
 else
-    path.A_tx = p533.readAntenna(cases.txant{i}, p533.bearing(path.L_tx.lat, path.L_tx.lng, path.L_rx.lat, path.L_rx.lng, long));
+    path.A_tx = p533.readAntenna(resolveAnt(antDir, cases.txant{i}), p533.bearing(path.L_tx.lat, path.L_tx.lng, path.L_rx.lat, path.L_rx.lng, long));
 end
 if strcmp(cases.rxant{i}, 'ISOTROPIC')
     path.A_rx = p533.isotropicPattern(cases.rxgos(i));
 else
-    path.A_rx = p533.readAntenna(cases.rxant{i}, p533.bearing(path.L_rx.lat, path.L_rx.lng, path.L_tx.lat, path.L_tx.lng, long));
+    path.A_rx = p533.readAntenna(resolveAnt(antDir, cases.rxant{i}), p533.bearing(path.L_rx.lat, path.L_rx.lng, path.L_tx.lat, path.L_tx.lng, long));
 end
 path.sigmaRule = 'reference'; path.liRule = 'reference';
 path = p533.loadData(path);
+end
+
+function f = resolveAnt(antDir, name)
+%RESOLVEANT Full path for an antenna file named in cases.csv.
+%   Names are stored without a directory so the csv does not depend on where
+%   the repository sits. An absolute name is passed through unchanged.
+if ~isempty(name) && (name(1) == filesep || (ispc && numel(name) > 1 && name(2) == ':'))
+    f = name;
+else
+    f = fullfile(antDir, name);
+end
 end
