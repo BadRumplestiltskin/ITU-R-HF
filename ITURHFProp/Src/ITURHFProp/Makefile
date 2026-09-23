@@ -7,7 +7,7 @@ else
     CC = gcc
 endif
 
-CFLAGS = -fPIC -Wall -Wextra -O2 -g
+CFLAGS = -fPIC -Wall -Wextra -O2 -g -I../../../Include
 LDFLAGS = -lm -ldl
 RM = rm -f
 TARGET_LIB = ITURHFPROP 

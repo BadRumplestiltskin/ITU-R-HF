@@ -9,7 +9,7 @@ source_dir = ../CircuitCSV/
 shared_dir = ../ITURHFProp/
 
 OPTIMIZE ?= -O2
-CFLAGS = -std=gnu11 -Wall -Wextra $(OPTIMIZE) -I$(source_dir) -I$(shared_dir)
+CFLAGS = -std=gnu11 -Wall -Wextra $(OPTIMIZE) -I$(source_dir) -I$(shared_dir) -I../../../Include
 LDFLAGS = -lm -ldl
 
 RM = rm -f

@@ -41,9 +41,9 @@
     <ClCompile Include="..\..\Src\P533\ValidatePath.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Src\P533\Common.h" />
-    <ClInclude Include="..\..\Src\P533\Noise.h" />
-    <ClInclude Include="..\..\Src\P533\P533.h" />
+    <ClInclude Include="..\..\..\Include\Common.h" />
+    <ClInclude Include="..\..\..\Include\Noise.h" />
+    <ClInclude Include="..\..\..\Include\P533.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D567A7CB-159C-419F-8217-F7BF5025E9BA}</ProjectGuid>
@@ -109,6 +109,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
@@ -129,6 +130,7 @@ copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\p533\bin\$(TargetFile
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
@@ -152,6 +154,7 @@ copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\..\p533\bin\$(TargetF
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -176,6 +179,7 @@ copy $(TargetDir)$(TargetFileName) $(TargetDir)..\..\..\..\p533\bin\$(TargetFile
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <AdditionalIncludeDirectories>..\..\..\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>

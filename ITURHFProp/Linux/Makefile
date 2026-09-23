@@ -11,7 +11,7 @@ endif
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -fPIC -Wall -Wextra $(OPTIMIZE)
+CFLAGS = -fPIC -Wall -Wextra $(OPTIMIZE) -I../Src/ITURHFProp -I../../Include
 
 # Set linker flags based on the operating system
 ifeq ($(UNAME_S),Darwin)

@@ -13,7 +13,7 @@ bin_dir = ../Bin/
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g -I$(source_dir)
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -std=c99 -fPIC -Wall -Wextra $(OPTIMIZE) -I$(source_dir)
+CFLAGS = -std=c99 -fPIC -Wall -Wextra $(OPTIMIZE) -I$(source_dir) -I../../Include
 
 # Set linker flags based on the operating system
 UNAME_S := $(shell uname -s)
