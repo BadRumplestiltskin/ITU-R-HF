@@ -17,6 +17,7 @@
 	do { \
 		if (fgets((line), (int)sizeof(line), (fp)) == NULL) { \
 			printf("ReadCoeff: ERROR Unexpected end of coefficient file - %s\n", InFilePath); \
+			free(A); \
 			fclose(fp); \
 			return; \
 		} \
@@ -26,6 +27,7 @@
 	do { \
 		if ((call) != (nexpected)) { \
 			printf("ReadCoeff: ERROR Malformed record in coefficient file - %s\n", InFilePath); \
+			free(A); \
 			fclose(fp); \
 			return; \
 		} \
@@ -59,7 +61,9 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 	// A is the array that is read into from the file and aids in reshaping the target arrays
 	// in the Coeff structure
-	double *A;
+	// Initialised, and reset after every free below, so that the RCGETS/RCSCAN
+	// abort paths can free it unconditionally.
+	double *A = NULL;
 	
 	char line[256];
 
@@ -80,9 +84,9 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 	fp = fopen(InFilePath, "r"); 
 	if(fp == NULL) {
+		// No interactive prompt here: this is library code and may run
+		// without a console attached.
 		printf("ReadCoeff: ERROR Can't find input file - %s\n", InFilePath);
-		printf("Press Enter...");
-		getchar();
 		return;
 	};
 	
@@ -146,6 +150,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -206,6 +211,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -264,6 +270,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -320,6 +327,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -378,6 +386,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 	}
 	else { // This data is not desired
 		// Move to the next block
@@ -432,6 +441,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -490,6 +500,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -545,6 +556,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 	}
 	else { // This data is not desired
 		// Move to the next block
@@ -602,6 +614,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else { // This data is not desired
@@ -648,6 +661,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -690,6 +704,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -733,6 +748,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -774,6 +790,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -820,6 +837,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -866,6 +884,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -912,6 +931,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -958,6 +978,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -1004,6 +1025,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -1050,6 +1072,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired
@@ -1096,6 +1119,7 @@ void ReadCoeff(struct IonoCoeff *Coeff, int month, long What2Read) {
 
 		// Free A
 		free(A);
+		A = NULL;
 
 	}
 	else {// This data is not desired

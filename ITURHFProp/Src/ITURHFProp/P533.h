@@ -484,6 +484,8 @@ void InitializePath(struct PathData *path);
 
 // P533.c Prototype for the P533 propagation model engine
 DLLEXPORT int P533(struct PathData *path);
+// Resolves the P372 entry points once per process; see P533.c.
+int LoadP372(void);
 DLLEXPORT char const * P533Version(void);
 
 // Geometry.c Prototypes

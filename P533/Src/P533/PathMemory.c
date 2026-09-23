@@ -163,33 +163,13 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 
 	// P372.dll **********************************************************
     
-	// Load the Noise routines in P372.dll ******************************
-#ifdef _WIN32
-	
-	int mod[512];
-
-	// Get the handle to the P372 DLL.
-	hLib = LoadLibrary("P372.dll");
-	if (hLib == NULL) {
-		printf("P533: AllocatePathMemory: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
-		return RTN_ERRP372DLL;
-	}
-
-    // Get the handle to the DLL library, hLib.
-	GetModuleFileName((HMODULE)hLib, (LPTSTR)mod, 512);
-	//
-	dllAllocateNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)hLib, "AllocateNoiseMemory");
-#elif __linux__ || __APPLE__
-	void * hLib;
-	hLib = dlopen("libp372.so", RTLD_NOW);
-	if (!hLib) {
-		printf("Couldn't load libp372.so, exiting.\n");
-		exit(1);
-	};
-	dllAllocateNoiseMemory = dlsym(hLib, "AllocateNoiseMemory");
-#endif	
-
-	// End P372.DLL Load ************************************************
+	// Load the Noise routines in P372 ********************************
+	// This used to open the library itself, with a local hLib that shadowed the
+	// global, no matching close, and exit() on failure. LoadP372() does it once
+	// per process and returns an error instead of killing the host program.
+	retval = LoadP372();
+	if (retval != RTN_P372LOADOK) return RTN_ERRP372DLL;
+	// End P372 Load ****************************************************
 	
 	// Allocate the memory in the noise structure
 	retval = dllAllocateNoiseMemory(&path->noiseP);

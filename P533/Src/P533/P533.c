@@ -27,48 +27,58 @@
 		SUBROUTINES
 			None
 */
-static int LoadP372(void) {
+int LoadP372(void) {
 
+	// P372Lib is private to this file, unlike the hLib that Noise.h defines at
+	// file scope in every translation unit that includes it. Nothing outside
+	// LoadP372() needs the handle.
+	static void *P372Lib = NULL;
 	static int P372Loaded = FALSE;
 
 	if (P372Loaded == TRUE) return RTN_P372LOADOK;
 
 	#ifdef _WIN32
 		// Get the handle to the P372 DLL.
-		hLib = LoadLibrary("P372.dll");
-		if (hLib == NULL) {
+		P372Lib = (void *)LoadLibrary("P372.dll");
+		if (P372Lib == NULL) {
 			printf("P533: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
 			return RTN_ERRP372DLL;
 		}
 		// Get the P372Version() process from the DLL.
-		dllP372Version = (cP372Info)GetProcAddress((HMODULE)hLib, "P372Version");
+		dllP372Version = (cP372Info)GetProcAddress((HMODULE)P372Lib, "P372Version");
 		// Get the P372CompileTime() process from the DLL.
-		dllP372CompileTime = (cP372Info)GetProcAddress((HMODULE)hLib, "P372CompileTime");
+		dllP372CompileTime = (cP372Info)GetProcAddress((HMODULE)P372Lib, "P372CompileTime");
 
-		dllNoise = (iNoise)GetProcAddress((HMODULE)hLib, "Noise");
-		dllAllocateNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)hLib, "AllocateNoiseMemory");
-		dllFreeNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)hLib, "FreeNoiseMemory");
-		dllInitializeNoise = (vInitializeNoise)GetProcAddress((HMODULE)hLib, "InitializeNoise");
+		dllNoise = (iNoise)GetProcAddress((HMODULE)P372Lib, "Noise");
+		dllAllocateNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)P372Lib, "AllocateNoiseMemory");
+		dllFreeNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)P372Lib, "FreeNoiseMemory");
+		dllInitializeNoise = (vInitializeNoise)GetProcAddress((HMODULE)P372Lib, "InitializeNoise");
 	#elif defined(__linux__) || defined(__APPLE__)
-		hLib = dlopen("libp372.so", RTLD_NOW);
-		if (hLib == NULL) {
+		P372Lib = dlopen("libp372.so", RTLD_NOW);
+		if (P372Lib == NULL) {
 			// Return an error rather than exiting: P533 is a library and must not
 			// terminate the program that loaded it.
 			printf("P533: Error %d Couldn't load libp372.so\n", RTN_ERRP372DLL);
 			return RTN_ERRP372DLL;
 		}
-		dllP372Version = dlsym(hLib, "P372Version");
-		dllP372CompileTime = dlsym(hLib, "P372CompileTime");
-		dllNoise = dlsym(hLib, "Noise");
-		dllAllocateNoiseMemory = dlsym(hLib, "AllocateNoiseMemory");
-		dllFreeNoiseMemory = dlsym(hLib, "FreeNoiseMemory");
-		dllInitializeNoise = dlsym(hLib, "InitializeNoise");
+		dllP372Version = dlsym(P372Lib, "P372Version");
+		dllP372CompileTime = dlsym(P372Lib, "P372CompileTime");
+		dllNoise = dlsym(P372Lib, "Noise");
+		dllAllocateNoiseMemory = dlsym(P372Lib, "AllocateNoiseMemory");
+		dllFreeNoiseMemory = dlsym(P372Lib, "FreeNoiseMemory");
+		dllInitializeNoise = dlsym(P372Lib, "InitializeNoise");
 	#endif
 
 	// A missing symbol would otherwise surface as a call through a NULL pointer.
 	if (dllP372Version == NULL || dllP372CompileTime == NULL || dllNoise == NULL ||
 		dllAllocateNoiseMemory == NULL || dllFreeNoiseMemory == NULL || dllInitializeNoise == NULL) {
 		printf("P533: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
+		#ifdef _WIN32
+			FreeLibrary((HMODULE)P372Lib);
+		#else
+			dlclose(P372Lib);
+		#endif
+		P372Lib = NULL;
 		return RTN_ERRP372DLL;
 	}
 
