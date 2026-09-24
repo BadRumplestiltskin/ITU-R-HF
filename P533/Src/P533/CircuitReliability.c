@@ -978,7 +978,9 @@ double FindFTl(struct ControlPt CP) {
 	double Tl;
 
 	// Time parameter
-	Tl = CP.ltime;
+	// Attachment 1: "Tl: local time at the control point (h)". CP.ltime is the UTC
+	// hour, which is what this used.
+	Tl = LocalMeanTime(CP);
 	// FTl is 1 on both sides of midnight (20 < Tl < 24 and 00 < Tl < 03), so
 	// Tl = 0 exactly is 1 as well; it fell through to 0 here.
 	if((0.0 <= Tl) && (Tl <= 3.0)) {

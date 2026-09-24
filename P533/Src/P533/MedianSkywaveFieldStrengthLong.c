@@ -536,11 +536,11 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
         // Determine the MUF deciles
 		decile = DL; // Lower MUF decile
 		// Find the deltal in the foF2var array
-		deltal = FindfoF2var(*path, CP[smallerCP][path->hour].ltime, CP[smallerCP][path->hour].L.lat, decile);
+		deltal = FindfoF2var(*path, LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
 				
 		decile = DU; // Upper MUF decile
 		// Find the deltau in the foF2var array
-		deltau = FindfoF2var(*path, CP[smallerCP][path->hour].ltime, CP[smallerCP][path->hour].L.lat, decile);
+		deltau = FindfoF2var(*path, LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
 
 		// Determine the decile MUFs
 		path->MUF50 = path->BMUF;

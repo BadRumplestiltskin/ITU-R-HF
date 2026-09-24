@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 16:12:20 2026
+     Analysis Prepared  Thu Sep 24 16:22:53 2026
 
 ---------------------------------------------------------------------------
 
@@ -51,12 +51,12 @@
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  31.218
-	10% MUF         =  40.951
+	10% MUF         =  34.964
 	50% MUF         =  31.218
-	90% MUF         =  24.453
+	90% MUF         =  27.784
 	Operational MUF =  37.462
-	10% OPMUF       =  49.141
-	90% OPMUF       =  29.344
+	10% OPMUF       =  41.957
+	90% OPMUF       =  33.341
 ********* Lowest Order and Dominant Mode *****************
 	lowest order F2 layer mode =  2
 	lowest order E layer mode = No Mode
@@ -128,15 +128,15 @@
 *                      F2 Mode 2                         *
 **********************************************************
 	basic MUF  =  31.218 (MHz)
-	10% MUF    =  40.951 (MHz)
+	10% MUF    =  34.964 (MHz)
 	50% MUF    =  31.218 (MHz)
-	90% MUF    =  24.453 (MHz)
+	90% MUF    =  27.784 (MHz)
 	OPMUF      =  37.462 (MHz)
-	10% OPMUF  =  49.141 (MHz)
-	90% OPMUF  =  29.344 (MHz)
+	10% OPMUF  =  41.957 (MHz)
+	90% OPMUF  =  33.341 (MHz)
 	Fprob        =  1.000 (%)
-	Lower decile =  0.783
-	Upper decile =  1.312
+	Lower decile =  0.890
+	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  161.179 (dB)
 	Median Field Strength     = -8.731 (dB(1 uV/m))
@@ -149,15 +149,15 @@
 *                      F2 Mode 3                         *
 **********************************************************
 	basic MUF  =  24.339 (MHz)
-	10% MUF    =  31.927 (MHz)
+	10% MUF    =  27.260 (MHz)
 	50% MUF    =  24.339 (MHz)
-	90% MUF    =  19.065 (MHz)
+	90% MUF    =  21.662 (MHz)
 	OPMUF      =  29.207 (MHz)
-	10% OPMUF  =  38.312 (MHz)
-	90% OPMUF  =  22.878 (MHz)
+	10% OPMUF  =  32.712 (MHz)
+	90% OPMUF  =  25.994 (MHz)
 	Fprob        =  1.000 (%)
-	Lower decile =  0.783
-	Upper decile =  1.312
+	Lower decile =  0.890
+	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  177.648 (dB)
 	Median Field Strength     = -25.200 (dB(1 uV/m))
@@ -170,15 +170,15 @@
 *                      F2 Mode 4                         *
 **********************************************************
 	basic MUF  =  20.316 (MHz)
-	10% MUF    =  26.649 (MHz)
+	10% MUF    =  22.754 (MHz)
 	50% MUF    =  20.316 (MHz)
-	90% MUF    =  15.913 (MHz)
+	90% MUF    =  18.081 (MHz)
 	OPMUF      =  24.379 (MHz)
-	10% OPMUF  =  31.979 (MHz)
-	90% OPMUF  =  19.096 (MHz)
+	10% OPMUF  =  27.304 (MHz)
+	90% OPMUF  =  21.697 (MHz)
 	Fprob        =  1.000 (%)
-	Lower decile =  0.783
-	Upper decile =  1.312
+	Lower decile =  0.890
+	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  200.050 (dB)
 	Median Field Strength     = -47.602 (dB(1 uV/m))
@@ -191,15 +191,15 @@
 *                      F2 Mode 5                         *
 **********************************************************
 	basic MUF  =  17.904 (MHz)
-	10% MUF    =  23.485 (MHz)
+	10% MUF    =  20.052 (MHz)
 	50% MUF    =  17.904 (MHz)
-	90% MUF    =  14.024 (MHz)
+	90% MUF    =  15.934 (MHz)
 	OPMUF      =  21.484 (MHz)
-	10% OPMUF  =  28.182 (MHz)
-	90% OPMUF  =  16.829 (MHz)
+	10% OPMUF  =  24.063 (MHz)
+	90% OPMUF  =  19.121 (MHz)
 	Fprob        =  1.000 (%)
-	Lower decile =  0.783
-	Upper decile =  1.312
+	Lower decile =  0.890
+	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  202.395 (dB)
 	Median Field Strength     = -49.948 (dB(1 uV/m))
@@ -212,15 +212,15 @@
 *                      F2 Mode 6                         *
 **********************************************************
 	basic MUF  =  16.378 (MHz)
-	10% MUF    =  21.485 (MHz)
+	10% MUF    =  18.344 (MHz)
 	50% MUF    =  16.378 (MHz)
-	90% MUF    =  12.829 (MHz)
+	90% MUF    =  14.577 (MHz)
 	OPMUF      =  19.654 (MHz)
-	10% OPMUF  =  25.781 (MHz)
-	90% OPMUF  =  15.395 (MHz)
+	10% OPMUF  =  22.013 (MHz)
+	90% OPMUF  =  17.492 (MHz)
 	Fprob        =  1.000 (%)
-	Lower decile =  0.783
-	Upper decile =  1.312
+	Lower decile =  0.890
+	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  201.077 (dB)
 	Median Field Strength     = -48.629 (dB(1 uV/m))

@@ -145,3 +145,16 @@ DLLEXPORT double Bearing(struct Location here, struct Location there, int direct
 
 return bearing;
 }
+
+double LocalMeanTime(struct ControlPt CP) {
+
+	/*
+	  LocalMeanTime() - The local (mean solar) time at a control point, in hours 0 to 24:
+			the UTC hour held in CP.ltime plus the longitude at 15 degrees an hour.
+			P.533-14 and P.1239 index several quantities by local time -- the foF2
+			decile factors, F_T of Attachment 1 and the mid-path local time of Table 2 --
+			and CP.ltime itself carries the UTC hour (sunrise and sunset are in UTC).
+	 */
+
+	return fmod(fmod(CP.ltime + CP.L.lng*R2D/15.0, 24.0) + 24.0, 24.0);
+}

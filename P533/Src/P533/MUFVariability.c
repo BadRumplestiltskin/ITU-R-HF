@@ -60,14 +60,16 @@ void MUFVariability(struct PathData *path) {
 			// Section 3.6 P.533-12 indicates that the basic MUF and MUF(50) are the same.
 			path->Md_F2[i].MUF50 = path->Md_F2[i].BMUF;
 
+			// P.1239-4 Tables 2 and 3 give the decile factors as a function of local time;
+			// CP.ltime is the UTC hour, which is what was passed here.
 			// Determine the decile factors
 			decile = DL; // Lower decile
 			// Find the deltal in the foF2var array
-			path->Md_F2[i].deltal = FindfoF2var(*path, path->CP[MP].ltime, path->CP[MP].L.lat, decile);
+			path->Md_F2[i].deltal = FindfoF2var(*path, LocalMeanTime(path->CP[MP]), path->CP[MP].L.lat, decile);
 				
 			decile = DU; // Upper decile
 			// Find the deltau in the foF2var array
-			path->Md_F2[i].deltau = FindfoF2var(*path, path->CP[MP].ltime, path->CP[MP].L.lat, decile);
+			path->Md_F2[i].deltau = FindfoF2var(*path, LocalMeanTime(path->CP[MP]), path->CP[MP].L.lat, decile);
 
 			// Find the other MUFs
 			path->Md_F2[i].MUF10 = path->Md_F2[i].deltau*path->Md_F2[i].MUF50;

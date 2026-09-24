@@ -29,7 +29,7 @@ double DiurnalAbsorptionExponent(struct ControlPt CP, int month);
 double AbsorptionFactor(struct ControlPt CP, int month);
 double AbsorptionLayerPenetrationFactor(double T);
 double AbsorptionTerm(struct ControlPt CP, int month, double fv);
-double FindLh(struct ControlPt CP, double dh, int hour, int month);
+double FindLh(struct ControlPt CP, double dh, double hour, int month);
 double PenetrationPoints(struct PathData * path, double noh, double fv);
 int WhatSeasonforLh(struct Location L, int month); 
 int SmallestCPfoF2(struct PathData path);
@@ -87,8 +87,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	double SSN;			// Sun spot number
 
 	int n;	
-	int tz;				// Time zone at midpath
-	int mpltime;		// Midpath local time
+	double mpltime;		// Midpath local time (h)
 	// End Temp
 
 	// Only do this subroutine if the path is less than or equal to 9000 km if not exit
@@ -130,11 +129,9 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	/*******************************************************************************************************/
 
 	// Determine the local time at the midpath point
-	tz = (int)(path->CP[MP].L.lng/(15.0*D2R));
-	// Wrap into 0-23. fmod() keeps the sign of its argument, so west of
-	// 15 W this went negative for the first |tz| UTC hours, and FindLh()
-	// then filed every negative hour under the 22-01 h column of Table 2.
-	mpltime = (int)fmod(fmod(path->CP[MP].ltime+tz, 24.0) + 24.0, 24.0);
+	// Table 2 is indexed by "Mid-path local time, t". This used UTC plus the
+	// longitude's whole time zone, (int)(lng/15), which is up to an hour out.
+	mpltime = LocalMeanTime(path->CP[MP]);
 	
 	// Begin E modes median sky-wave field strength calculation
 	// Does a low order E mode exist?
@@ -966,7 +963,7 @@ double AbsorptionLayerPenetrationFactor(double T) {
 }
 
 
-double FindLh(struct ControlPt CP, double dh, int hour, int month) {
+double FindLh(struct ControlPt CP, double dh, double hour, int month) {
 
 	/*	
 	 *	FindLh() - Finds the value of Lh from Table 2 ITU-R P.533-12 "Values of Lh giving auroral and other signal losses".
@@ -1160,7 +1157,7 @@ double FindLh(struct ControlPt CP, double dh, int hour, int month) {
 	if(BARF) {
 		printf(  "\nMSFSS: Lh[%d][%d][%d][%d] %f CP.L.lat %f CP.L.lng %f \n", txrange, season, gmlat, mplt, Lh[txrange][season][gmlat][mplt], CP.L.lat, CP.L.lng);
 		printf("MSFSS: Geomag Lat %f (deg)\n", Gn.lat*R2D);
-		printf("MSFSS: MidPath hour %d\n", hour);
+		printf("MSFSS: MidPath hour %f\n", hour);
 	}
     // Testing
 

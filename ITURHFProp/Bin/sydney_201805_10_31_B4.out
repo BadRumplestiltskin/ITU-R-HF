@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 16:02:42 2026
+     Analysis Prepared  Thu Sep 24 16:22:53 2026
 
 ---------------------------------------------------------------------------
 
@@ -51,12 +51,12 @@
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  11.294
-	10% MUF         =  13.847
+	10% MUF         =  13.813
 	50% MUF         =  11.294
-	90% MUF         =  9.001
+	90% MUF         =  8.480
 	Operational MUF =  17.598
-	10% OPMUF       =  21.576
-	90% OPMUF       =  14.025
+	10% OPMUF       =  21.522
+	90% OPMUF       =  13.214
 ********* Lowest Order and Dominant Mode *****************
 	lowest order F2 layer mode = No Mode
 	lowest order E layer mode = No Mode
