@@ -1,0 +1,92 @@
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 24 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Thu Sep 24 15:50:33 2026
+
+---------------------------------------------------------------------------
+
+***************************** P533 Input Parameters ****************************
+
+	Southern high geomagnetic latitude: Hobart to Casey
+	Year          : 2018
+	Month         : January
+	Hour          : 1 (hour UTC)
+	SSN (R12)     : 60
+	Distance      : 3424.116947 (km)
+	dmax          : 4000.000000 (km)
+	Tx power      : 0.000000
+	Tx Location     Hobart
+	Tx latitude   :  42.880000 S
+	Tx longitude  : 147.330000 E
+	Rx Location     Casey
+	Rx latitude   :  66.280000 S
+	Rx longitude  : 110.530000 E
+	local time Rx : 8 (hour UTC)
+	local time Tx : 10 (hour UTC)
+	Frequency     : 9.000000
+	Bandwidth     : 3000.000000
+	Modulation : ANALOG
+	Required signal-to-noise ratio : 10.000000
+	Required % of month signal-to-noise ratio :  90
+	Required signal-to-interference ratio : 0.000000
+	Man-made noise : RURAL
+	Antenna configuration : Transmitter main beam to receiver main beam
+	Path Direction : SHORTPATH
+	Transmit antenna               ISOTROPIC
+	Transmit antenna bearing     : 208.078853
+	Transmit antenna gain offset : 0.000000
+	Receive antenna                ISOTROPIC
+	Receive antenna bearing      : 59.027461
+	Receive antenna gain offset  : 0.000000
+
+************************ End P533 Input Parameters *****************************
+
+************************** ITURHFP Input Parameters *****************************
+
+	Upper left (North West) latitude   :  66.280000 S
+	Upper left (North West) longitude  : 110.530000 E
+	Lower right (South East) latitude  :  66.280000 S
+	Lower right (South East) longitude : 110.530000 E
+	Number of frequencies : 1
+	Number of hours       : 12
+	Number of months      : 1
+	Latitude increment    : 1.000000 (deg)
+	Longitude increment   : 1.000000 (deg)
+
+************************** ITURHFP Input Parameters *****************************
+
+******************************** Data Format ***********************************
+
+Column 01: Month
+Column 02: Hour
+Column 03: Frequency (MHz)
+Column 04: D - Path distance (km)
+Column 05: BMUF - Path basic MUF (MHz)
+Column 06: E - Path Field Strength (dB(1uV/m))
+Column 07: Pr - Median receiver power (dB)
+Column 08: SNR - Median signal-to-noise ratio (dB)
+Column 09: DuSN - Upper decile deviation of signal-to-noise ratio (dB)
+Column 10: DlSN - Lower decile deviation of signal-to-noise ratio (dB)
+Column 11: BCR - Basic circuit reliability (%)
+
+************************** End Data Format ********************************
+
+************************ Calculated Parameters ****************************
+
+01, 01,    9.000,  3424.12,  16.47,  -2.54,-128.83,  -0.86,  11.19,  16.25,  10.60
+01, 03,    9.000,  3424.12,  16.79,  -2.85,-129.13,  -1.12,  11.18,  16.27,  10.12
+01, 05,    9.000,  3424.12,  17.09,  -2.71,-128.99,  -0.95,  11.18,  16.28,  10.41
+01, 07,    9.000,  3424.12,  17.15,  -0.01,-126.30,   1.65,  11.20,  16.32,  15.84
+01, 09,    9.000,  3424.12,  17.07,   1.28,-125.01,   2.75,  11.25,  16.33,  18.65
+01, 11,    9.000,  3424.12,  15.67,   7.16,-119.12,   8.55,  11.26,  16.26,  40.89
+01, 13,    9.000,  3424.12,  13.77,   9.98,-116.30,  11.40,  11.22,  16.17,  56.37
+01, 15,    9.000,  3424.12,  12.07,  18.38,-107.91,  19.84,  11.18,  16.14,  80.31
+01, 17,    9.000,  3424.12,   8.78,   7.50,-118.79,   9.06,  13.71,  20.73,  44.85
+01, 19,    9.000,  3424.12,   9.60,  14.16,-112.12,  15.76,  12.86,  19.94,  67.94
+01, 21,    9.000,  3424.12,  11.22,  10.68,-115.61,  12.27,  12.87,  19.95,  58.19
+01, 23,    9.000,  3424.12,  15.82,   4.32,-121.97,   5.94,  11.21,  16.24,  28.74
+
+**************************End Calculated Parameters ***********************
+

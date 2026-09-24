@@ -173,18 +173,25 @@ void CircuitReliability(struct PathData *path) {
 	// From note 1 Table 2 P.842.4
 	// If any point which "lies between control points located 1000 km from each end of the path" crosses 
 	// geomagnetic latitude 60 degrees then identify it. 
+	// P.842-5 Table 2 note (1): "If any point on that part of the great circle which
+	// passes through the transmitter and the receiver and which lies between control
+	// points located 1 000 km from each end of the path, reaches a geomagnetic
+	// latitude of 60 deg or more, the values of >= 60 deg have to be used (see
+	// Recommendation ITU-R P.1239, Fig. 2)." This tested only the mid-path and the two
+	// 1000 km points, compared the signed latitude (so no southern path qualified),
+	// and used the Lh dipole of P.533 (78.5 N, 68.2 W). The segment is now sampled
+	// every 50 km at most, the magnitude is tested, and the pole is P.1239's
+	// (78.3 N, 69.0 W). Paths of 2000 km or less have no such segment.
 	gt60deg = 0; // 0 means less than 60 degrees 
 	if(path->distance > 2000.0) {
-		// Note: There may be a degenerate case that looking at only three locations may not determine correctly
-		// Check the mid-path 
-		GeomagneticCoords(path->CP[MP].L, &Geomag);
-		if(Geomag.lat >= 60.0*D2R) gt60deg = 1; // 1 means a location is greater than 60 degrees 
-		// Check the control point 1000 km from the transmitter
-		GeomagneticCoords(path->CP[T1k].L, &Geomag);
-		if(Geomag.lat >= 60.0*D2R) gt60deg = 1; // 1 means a location is greater than 60 degrees
-		// Check the control point 1000 km from the receiver
-		GeomagneticCoords(path->CP[R1k].L, &Geomag);
-		if(Geomag.lat >= 60.0*D2R) gt60deg = 1; // 1 means a location is greater than 60 degrees 
+		int k, nk = (int)ceil((path->distance - 2000.0)/50.0);
+		struct ControlPt pt;
+		for(k=0; (k<=nk) && !gt60deg; k++) {
+			GreatCirclePoint(path->L_tx, path->L_rx, &pt, path->distance,
+							 (1000.0 + k*(path->distance - 2000.0)/nk)/path->distance);
+			Geomag.lat = asin(sin(pt.L.lat)*sin(78.3*D2R) + cos(pt.L.lat)*cos(78.3*D2R)*cos(pt.L.lng + 69.0*D2R));
+			if(fabs(Geomag.lat) >= 60.0*D2R) gt60deg = 1; // 1 means a point reaches 60 degrees
+		}
 	}
 
     // Find the basic MUF index to retrieve the values from P.842-4 Table 2
