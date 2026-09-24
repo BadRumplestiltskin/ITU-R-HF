@@ -43,8 +43,10 @@ all: ${TARGET}
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+# -MT names the object as it is built (../Src/.../x.o). Without it -MM wrote a
+# rule for a bare x.o in this directory, so no header change rebuilt anything.
 $(SRCS:.c=.d):%.d:%.c
-	$(CC) $(CFLAGS) -MM $< >$@
+	$(CC) $(CFLAGS) -MM -MT $(<:.c=.o) $< >$@
 include $(SRCS:.c=.d)
 
 .PHONY: clean
