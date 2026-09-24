@@ -190,11 +190,11 @@ void DumpPathData(struct PathData path, struct ITURHFProp ITURHFP) {
 	fprintf(fp, "\tlowest order E layer mode = %s\n", outstr);
 
 	// Print the dominant mode
-	if(path.DMidx < 3) {
+	if(path.DMidx < MAXEMDS) {
 		fprintf(fp, "\tDominant mode: E layer mode %d\n", path.DMidx+1);
 	}
-	else if((path.DMidx >= 3) && (path.DMidx <= 8)) {
-			fprintf(fp, "\tDominant mode: F2 layer mode %d\n", path.DMidx-2);
+	else if((path.DMidx >= MAXEMDS) && (path.DMidx < MAXMDS)) {
+			fprintf(fp, "\tDominant mode: F2 layer mode %d\n", path.DMidx-MAXEMDS+1);
 	}
 	else if(path.DMidx == NODOMINANTMODE) {
 		fprintf(fp, "\tNo Dominant mode for this path length\n");

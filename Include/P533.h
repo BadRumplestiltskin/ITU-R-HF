@@ -184,7 +184,7 @@
 #define MAXEMDS		3
 
 // Maximum number of modes
-#define MAXMDS	MAXEMDS+MAXF2MDS
+#define MAXMDS	(MAXEMDS+MAXF2MDS)
 
 // Direction of the AntennaGain()
 #define TXTORX	1

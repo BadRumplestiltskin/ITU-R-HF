@@ -742,7 +742,7 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 				sprintf(outstr,  "   %1dE ", path.DMidx+1);
 			}
 			else if((path.DMidx >= MAXEMDS) && (path.DMidx <= MAXMDS)) { // F2 mode dominant
-				sprintf(outstr, "  %1dF2 ", path.DMidx-2);
+				sprintf(outstr, "  %1dF2 ", path.DMidx-MAXEMDS+1);
 			}
 			else { // There is no dominant mode
 				sprintf(outstr, " NONE ");
@@ -798,7 +798,7 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 				sprintf(outstr,  "%dE", path.DMidx+1);
 			}
 			else if((path.DMidx >= MAXEMDS) && (path.DMidx <= MAXMDS)) { // F2 mode dominant
-				sprintf(outstr, "%dF2", path.DMidx-2);
+				sprintf(outstr, "%dF2", path.DMidx-MAXEMDS+1);
 			}
 			else { // There is no dominant mode
 				sprintf(outstr, "NONE");

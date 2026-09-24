@@ -218,7 +218,7 @@ double SumModePowers(struct PathData *path, int dominant) {
 				
 					// Point to the dominant mode and set the dominant mode index.
 					path->DMptr = &path->Md_F2[i];
-					path->DMidx = i + 3;
+					path->DMidx = i + MAXEMDS;
 
 				}
 
