@@ -740,7 +740,7 @@ double WinterAnomaly(double lat, int month) {
 						{0.00, 0.30},  // June
 						{0.00, 0.30},  // July
 						{0.00, 0.15},  // August
-						{0.00, 0.03},  // September
+						{0.01, 0.03},  // September: P.533-14 Table 5, Northern 0.01 (this read 0.00)
 						{0.03, 0.00},  // October
 						{0.15, 0.00},  // November
 						{0.30, 0.00}}; // December
