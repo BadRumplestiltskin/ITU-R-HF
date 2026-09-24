@@ -9,6 +9,7 @@
 
 // Local prototypes
 void DominantMode(struct PathData *path);
+double SumModePowers(struct PathData *path, int dominant);
 // End local prototypes
 
 void MedianAvailableReceiverPower(struct PathData *path) {
@@ -35,14 +36,12 @@ void MedianAvailableReceiverPower(struct PathData *path) {
 	
 	double SumPr;	// Summation of individual mode powers
 	double Grw;		// Mode gain paths < 9000 km and the overall receiver gain paths > 9000 km
-	double Prw;		// Greatest receive mode power
-
-	int i;			// Temp
+	double Ps, Pl;	// Short- and long-model powers for 7000 - 9000 km (dBW)
+	double Xs, Xl;	// Their equation (42) terms
 	
 	double elevation;	// Antenna elevation
 
 	// Intialize 
-	Prw = TINYDB;
 	elevation = 2.0*PI;
 
 	// In each case the receiver gain, Grw, must be determined. Grw is calculated at the receiver elevation angles for 
@@ -52,74 +51,7 @@ void MedianAvailableReceiverPower(struct PathData *path) {
 		
 		// For each mode power to the total received power sum as given in Eqn (38) P.533-12
 		// This can be done as each mode power is calculated
-		SumPr = 0.0;
-
-		// Calculate the available signal power Prw (dBW) for each mode from 
-		// sky-wave field strength Ew (dB(1 µV/m)), frequency f (MHz) and Grw
-		// lossless receiving antenna of gain.
-
-		// Do any E-layer modes exist if so proceed
-		// See "Modes considered" Section 5.2.1 P.533-12
-
-		if(path->n0_E != NOLOWESTMODE) {
-			for(i=path->n0_E; i<MAXEMDS; i++) {
-				if(((i == path->n0_E) && (path->distance/(path->n0_E+1) <= 2000.0))
-					                             ||
-				   ((i != path->n0_E) && (path->Md_E[i].BMUF != 0.0))) {
-
-					// Find the receiver gain for this mode.
-					path->Md_E[i].Grw = AntennaGain(*path, path->A_rx, path->Md_E[i].ele, RXTOTX);
-
-					path->Md_E[i].Prw = path->Md_E[i].Ew + path->Md_E[i].Grw 
-										- 20.0*log10(path->frequency) - 107.2;
-
-					// Determine if this is the greatest received power
-					// If this is first time in the loop i == path->n0_E then initialize Prw
-					if(Prw < path->Md_E[i].Prw){
-						// Prw is the greatest power
-						Prw = path->Md_E[i].Prw;
-
-						// Point to the dominant mode and set the dominant mode index.
-						path->DMptr = &path->Md_E[i];
-						path->DMidx = i;
-
-					}
-
-                    // Add this mode to the sum.
-					SumPr += pow(10.0, path->Md_E[i].Prw/10.0); 
-				}
-            }
-        }
-        // F2 modes
-		// Do any F2-layer modes exist if so proceed
-		if(path->n0_F2 != NOLOWESTMODE) {
-			for(i=path->n0_F2; i<MAXF2MDS; i++) {
-				if(((i == path->n0_F2) && (path->distance/(path->n0_F2+1) <= path->dmax) && (path->Md_F2[i].fs < path->frequency)) 
-													   ||
-				   ((i != path->n0_F2) && (path->Md_F2[i].BMUF != 0.0) && (path->Md_F2[i].fs < path->frequency))) {
-					// Find the receiver gain for this mode.
-					path->Md_F2[i].Grw = AntennaGain(*path, path->A_rx, path->Md_F2[i].ele, RXTOTX);
-
-					path->Md_F2[i].Prw = path->Md_F2[i].Ew + path->Md_F2[i].Grw 
-										- 20.0*log10(path->frequency) - 107.2;
-
-					// Determine if this is the greatest received power.
-					// If there was an E mode then Prw is already set to that power
-					if(Prw < path->Md_F2[i].Prw) {
-						// Prw is the greatest power.
-						Prw = path->Md_F2[i].Prw;
-					
-						// Point to the dominant mode and set the dominant mode index.
-						path->DMptr = &path->Md_F2[i];
-						path->DMidx = i + 3;
-
-					}
-
-                    // Add this mode to the sum.
-					SumPr += pow(10.0, path->Md_F2[i].Prw/10.0); 
-				}
-            }
-        }
+		SumPr = SumModePowers(path, TRUE);
 
         // Now that the modes are calculated, set the path parameters. 
 		// Find the total received power. 
@@ -142,8 +74,20 @@ void MedianAvailableReceiverPower(struct PathData *path) {
 		// Determine the receiver gain.
 		Grw = AntennaGain08(*path, path->A_rx, RXTOTX, &elevation);
 
-		// Use the interpolated power, Ei.
-		path->Pr = path->Ei + Grw - 20.0*log10(path->frequency) - 107.2;
+		// P.533-14 section 6: "In the intermediate range 7 000 to 9 000 km, the power
+		// is determined from equation (42) using the powers corresponding to Es and
+		// El": the power sum of the short-path modes, each with its own receive gain
+		// (equation (44)), and El with the largest 0-8 degree gain (equation (43)),
+		// interpolated as equation (42) interpolates Es and El. This interpolated
+		// the field strengths and then applied the single 0-8 degree gain, so the
+		// short-path end never saw the receive gains of its own modes. No dominant
+		// mode is set here, as before.
+		SumPr = SumModePowers(path, FALSE);
+		Ps = (SumPr > 0.0) ? 10.0*log10(SumPr) : TINYDB;
+		Pl = path->El + Grw - 20.0*log10(path->frequency) - 107.2;
+		Xs = pow(10.0, Ps/100.0);
+		Xl = pow(10.0, Pl/100.0);
+		path->Pr = 100.0*log10(Xs + ((path->distance - 7000.0)/2000.0)*(Xl - Xs));
 
 		// The path receiver gain Grw.
 		path->Grw = Grw;
@@ -202,4 +146,87 @@ void DominantMode(struct PathData *path) {
 		// The path elevation angle is the dominant mode elevation angle.
 		path->ele = path->DMptr->ele;
 
+}
+
+double SumModePowers(struct PathData *path, int dominant) {
+
+	/*
+	  SumModePowers() - Sets the available power Prw of each mode considered in section 5.2.1
+			(equation (43)) and returns the sum of their powers, the argument of equation (44).
+			When dominant is TRUE it also points path->DMptr at the strongest mode.
+	 */
+
+	double SumPr = 0.0;	// Summation of individual mode powers
+	double Prw = TINYDB;	// Greatest receive mode power
+	int i;
+
+
+	// Calculate the available signal power Prw (dBW) for each mode from 
+	// sky-wave field strength Ew (dB(1 µV/m)), frequency f (MHz) and Grw
+	// lossless receiving antenna of gain.
+
+	// Do any E-layer modes exist if so proceed
+	// See "Modes considered" Section 5.2.1 P.533-12
+
+	if(path->n0_E != NOLOWESTMODE) {
+		for(i=path->n0_E; i<MAXEMDS; i++) {
+			if(((i == path->n0_E) && (path->distance/(path->n0_E+1) <= 2000.0))
+				                             ||
+			   ((i != path->n0_E) && (path->Md_E[i].BMUF != 0.0))) {
+
+				// Find the receiver gain for this mode.
+				path->Md_E[i].Grw = AntennaGain(*path, path->A_rx, path->Md_E[i].ele, RXTOTX);
+
+				path->Md_E[i].Prw = path->Md_E[i].Ew + path->Md_E[i].Grw 
+									- 20.0*log10(path->frequency) - 107.2;
+
+				// Determine if this is the greatest received power
+				// If this is first time in the loop i == path->n0_E then initialize Prw
+				if(dominant && (Prw < path->Md_E[i].Prw)){
+					// Prw is the greatest power
+					Prw = path->Md_E[i].Prw;
+
+					// Point to the dominant mode and set the dominant mode index.
+					path->DMptr = &path->Md_E[i];
+					path->DMidx = i;
+
+				}
+
+                    // Add this mode to the sum.
+				SumPr += pow(10.0, path->Md_E[i].Prw/10.0); 
+			}
+            }
+        }
+        // F2 modes
+	// Do any F2-layer modes exist if so proceed
+	if(path->n0_F2 != NOLOWESTMODE) {
+		for(i=path->n0_F2; i<MAXF2MDS; i++) {
+			if(((i == path->n0_F2) && (path->distance/(path->n0_F2+1) <= path->dmax) && (path->Md_F2[i].fs < path->frequency)) 
+												   ||
+			   ((i != path->n0_F2) && (path->Md_F2[i].BMUF != 0.0) && (path->Md_F2[i].fs < path->frequency))) {
+				// Find the receiver gain for this mode.
+				path->Md_F2[i].Grw = AntennaGain(*path, path->A_rx, path->Md_F2[i].ele, RXTOTX);
+
+				path->Md_F2[i].Prw = path->Md_F2[i].Ew + path->Md_F2[i].Grw 
+									- 20.0*log10(path->frequency) - 107.2;
+
+				// Determine if this is the greatest received power.
+				// If there was an E mode then Prw is already set to that power
+				if(dominant && (Prw < path->Md_F2[i].Prw)) {
+					// Prw is the greatest power.
+					Prw = path->Md_F2[i].Prw;
+				
+					// Point to the dominant mode and set the dominant mode index.
+					path->DMptr = &path->Md_F2[i];
+					path->DMidx = i + 3;
+
+				}
+
+                    // Add this mode to the sum.
+				SumPr += pow(10.0, path->Md_F2[i].Prw/10.0); 
+			}
+            }
+        }
+
+	return SumPr;
 }
