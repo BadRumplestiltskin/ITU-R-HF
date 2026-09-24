@@ -906,7 +906,12 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
 				}
             }
 
-            path->probocc = biggest; 
+            // Attachment 1 gives probocc as a probability, 0 to 1. It is kept
+			// in percent, like BCR and MIR and as the report labels it, so that
+			// the line below is equation (48), OCRs = BCR MIR (1 - probocc)/100.
+			// This stored the bare probability, which that line then read as a
+			// percentage: scattering reduced OCRs 100 times too little.
+			path->probocc = 100.0*biggest;
 
 			// Find the overall circuit reliabilty with scattering
 			path->OCRs = path->BCR*path->MIR*(100.0 - path->probocc)/10000.0;

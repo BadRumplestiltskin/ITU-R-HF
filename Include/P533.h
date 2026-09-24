@@ -413,7 +413,7 @@ struct PathData {
 	double OCR;		// Overall circuit reliability without scattering
 	double OCRs;	// Overall circuit reliability with scattering
 	double MIR;		// Multimode interference
-	double probocc; // Probability of scattering occuring
+	double probocc; // Probability of scattering occuring (%)
 
 	// Antenna related parameters
 
