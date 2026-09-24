@@ -25,9 +25,9 @@ Path.SNRXXp 90
 Path.ManMadeNoise "RESIDENTIAL"
 Path.Modulation "DIGITAL"
 Path.SIRr 10.0
-Path.A 3.0
+Path.A 20.0
 Path.TW 1.0
-Path.FW 10.0
+Path.FW 1.0
 Path.T0 0.5
 Path.F0 1.0
 Path.SorL "SHORTPATH"

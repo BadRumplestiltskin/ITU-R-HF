@@ -733,225 +733,132 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
 
 	/* 
 	  EquatorialScattering() - Determines the equatorial scattering by the method described 
-	 		in P.533-12 Section 10.3 "Equatorial Scattering"
+	 		in P.533-14 Section 10.3 "Equatorial scattering" and Attachment 1 to Annex 1
 	 
 	 		INPUT
 	 			struct PathData *path
-	 			int iS[MAXMDS] - Index array of the modes identified as interference
+	 			int iS[MAXMDS] - Index array of the signal modes (0-2 E, 3-8 F2), from
+	 				DigitalModulationSignalandInterferers(), NOTINDEX-terminated
 	 
 	 		OUTPUT
-	 			path->OCRs - Overall circuit reliability with scattering
+	 			path->probocc - Probability of scattering occurrence (%)
+	 			path->OCRs - Overall circuit reliability with scattering, equation (48)
 	 
 			SUBROUTINES
 				FindFlambdad()
 				FindFTl()
 
+		Attachment 1 gives the scattered power as a fraction 0.056 of the specular
+		power of a mode (about -12.5 dB), falling off as a half-normal in delay
+		(Tspread = 1 ms) and a normal in frequency (Fspread = 3 Hz). Every level
+		here is in dBW, compared with the dominant mode's available power.
+
+		This routine was rewritten because none of its steps worked: the time
+		spread was evaluated at tau = Tw (ms, absolute) against mode delays in
+		seconds, included E modes and read Md_F2[] without the offset of 3; pm was
+		a field strength in dB multiplied by 0.056; the frequency spread was
+		evaluated at FW - f (Hz, with f the carrier) and so was always 0; the
+		step 9 test was reversed; and the control point was chosen by comparing
+		time-spread values indexed by control point constants.
+
 	 */
 
-	double pm;				// Mode within the amplitude ratio and time window
-	double PTspread[MAXMDS];		// Time spread of the mode which satisfies the amplitude and time criteria
-	double Tspread = 1.0;	// Standard deviation of the time spread, taken as 1 mS
-	double tau;				// Time delay being considered
-	double taum;			// Time delay of the mode
-	double PFspread[2];		// Frequency spreading of the dominant mode
-	double Fspread = 3.0;	// Standard deviation of the frequency spread, taken as 3 Hz
-	double f;				// Frequency being considered
-	double fm;				// Transmitted center frequency
-	double probocc[MAXMDS];		// Probability of the occurrence of scattering 
-	double biggest;			// Temp
-	double FR;				// Temp			 
-	double FS;				// Temp
-	double Flambdad;		// Temp
-	double FTl;				// Temp
+	double Tspread = 1.0e-3;	// Standard deviation of the time spread, 1 ms, in seconds as tau is
+	double Fspread = 3.0;		// Standard deviation of the frequency spread (Hz)
+	double k = 10.0*log10(0.056);	// The 0.056 scattered fraction, in dB
+	double e = 10.0*log10(exp(1.0));	// dB per neper of power
+	double tfirst, tedge;		// First arrival among the signal modes, and the window edge (s)
+	double Pdom;				// Available power of the dominant mode (dBW)
+	double level;				// Largest scattered level at a window edge (dBW)
+	double pdomF;				// Available power of the dominant F region mode (dBW)
+	double p, pmax;				// Probability of occurrence at a control point, and the largest
+	double FR, FS;
+	struct Mode *Md;
+	int n, i, domF, ncp;
+	int cps[2];
 
-	int n;					// Temp
-	int useCP;				// Flag
+	path->probocc = 0.0;
+	path->OCRs = path->OCR;
 
-	// P.533-12 Section 10.3 "Equatorial Scattering"
-	// Step 7: Find the time spread for the modes that are within the amplitude ratio, A, and time 
-	// window, Tw. The index for these modes can be found in the array iS[9] which was determined 
-	// by the routine DigitalModulationSignalandInterferers().
+	if((path->distance > 9000.0) || (iS[0] == NOTINDEX)) return;
 
-	if((path->distance <= 9000.0) && (iS[0] != NOTINDEX)) {
+	// The window opens on the first arriving signal mode (section 10.2.3 step 3),
+	// and the dominant mode is the strongest one (step 1).
+	tfirst = DBL_MAX;
+	Pdom = TINYDB;
+	for(n=0; (n<MAXMDS) && (iS[n] != NOTINDEX); n++) {
+		Md = (iS[n] < MAXEMDS) ? &path->Md_E[iS[n]] : &path->Md_F2[iS[n]-MAXEMDS];
+		if(Md->tau < tfirst) tfirst = Md->tau;
+		if(Md->Prw > Pdom) Pdom = Md->Prw;
+	}
+	tedge = tfirst + path->TW/1000.0;
 
-		tau = path->TW; 
-
-		for(n=0; n<MAXMDS; n++) {
-			// Initialize PTspread to something tiny, DBL_MIN 
-			PTspread[n] = DBL_MIN;
-			if(iS[n] != NOTINDEX) {
-				if(iS[n] < MAXEMDS) { 
-					// The mode is an E mode
-					pm = path->Md_E[iS[n]].Ew;
-					taum = path->Md_E[iS[n]].tau;
-				}
-				else { 
-					// The mode is a F2 mode
-					pm = path->Md_F2[iS[n]].Ew;
-					taum = path->Md_F2[iS[n]].tau;
-				}
-
-                PTspread[n] = 0.056*pm*exp(-(pow((tau - taum), 2))/(2.0*pow(Tspread, 2))); 
-
-			}
-        }
-
-        // Step 8: Determine the frequency spreading of the dominant mode
-		// Find the dominant mode
-		if(iS[0] < MAXEMDS) { 
-			// The mode is an E mode
-			pm = path->Md_E[iS[0]].Ew;
+	// Step 7: the time scattering function "applied to each F region mode within
+	// the time window and the scattering strength pTspread, found at the edge of
+	// the time window, Tw" (for tau greater than tau_m).
+	level = TINYDB;
+	domF = NOTINDEX;
+	pdomF = TINYDB;
+	for(n=0; (n<MAXMDS) && (iS[n] != NOTINDEX); n++) {
+		if(iS[n] < MAXEMDS) continue; // F region modes only
+		Md = &path->Md_F2[iS[n]-MAXEMDS];
+		if(tedge > Md->tau) {
+			level = max(level, Md->Prw + k - e*pow(tedge - Md->tau, 2)/(2.0*pow(Tspread, 2)));
 		}
-		else { 
-			// The mode is a F2 mode
-			pm = path->Md_F2[iS[0]].Ew;
+		if(Md->Prw > pdomF) {
+			pdomF = Md->Prw;
+			domF = iS[n];
 		}
+	}
 
-        // Center frequency
-		fm = path->frequency*1e6; // (Hz)
+	// Step 8: the frequency scattering function "applied to the dominant F region
+	// mode and the frequency scattering strength is found symmetrically at the edges
+	// of the frequency window, Fw". The edges are taken at +/- FW from the carrier,
+	// as this routine always has; the function is symmetric, so one value serves.
+	if(domF != NOTINDEX) {
+		level = max(level, pdomF + k - e*pow(path->FW, 2)/(2.0*pow(Fspread, 2)));
+	}
 
-		// Frequency window
-		f = path->FW; // (Hz)
+	// Step 9: "If the value of any pTspread and/or pFspread at the edges of the
+	// windows exceeds (Ew - A) the probability of occurrence of scattering should
+	// be determined at the control points for the F region modes ... Where more
+	// than one control point is considered for a propagation mode, the largest
+	// probability should be taken."
+	if(level <= Pdom - path->A) return;
 
-		PFspread[0] = 0.056*pm*exp(-(pow((+f - fm), 2))/(2.0*pow(Fspread, 2))); 
-		PFspread[1] = 0.056*pm*exp(-(pow((-f - fm), 2))/(2.0*pow(Fspread, 2))); 
+	// F2 modes use the control points of Table 1a): mid-path up to dmax, otherwise
+	// T + d0/2 and R - d0/2, for every mode.
+	if(path->distance <= path->dmax) {
+		cps[0] = MP;
+		ncp = 1;
+	}
+	else {
+		cps[0] = Td02;
+		cps[1] = Rd02;
+		ncp = 2;
+	}
 
-		// Step 9: Determine the probability of scattering occuring
-		useCP = FALSE;
-		// Determine if the time spread component is within the amplitude ratio, A, of the 
-		// dominant mode power level 
-		for(n=0; n<MAXMDS; n++) {
-			if(PTspread[n] != DBL_MIN) {
-				// Note: At this point pm is the dominant mode 
-				if((pm - PTspread[n]) >= path->A) {
-					useCP = TRUE;
-				}
-            }
-        }
-        // Determine is the frequency spread components are within the amplitude ratio, A, of the 
-		// dominant mode power level 
-		for(n=0; n<2; n++) {
-			if((pm - PFspread[n]) >= path->A) {
-					useCP = TRUE;
-				}
-        }
+	// P.533-14 Attachment 1: "FR = (0.1 + 0.008R12) or 1, whichever is
+	// the smaller". This read 0.1 + 0.008*max(SSN, 160), so FR was never
+	// below 1.38 and probocc was overstated for every circuit.
+	FR = min(0.1 + 0.008*path->SSN, 1.0);
+	FS = 0.55 + 0.45*sin(60.0*D2R*((path->month+1.0) - 1.5));
 
-        // Determine the coefficients for the probocc calculation that are independant of the control point
-		// P.533-14 Attachment 1: "FR = (0.1 + 0.008R12) or 1, whichever is
-		// the smaller". This read 0.1 + 0.008*max(SSN, 160), so FR was never
-		// below 1.38 and probocc was overstated for every circuit.
-		FR = min(0.1 + 0.008*path->SSN, 1.0);
-		FS = 0.55 + 0.45*sin(60.0*D2R*((path->month+1.0) - 1.5));
+	pmax = 0.0;
+	for(i=0; i<ncp; i++) {
+		p = FindFlambdad(path->CP[cps[i]])*FindFTl(path->CP[cps[i]])*FR*FS;
+		if(p > pmax) pmax = p;
+	}
 
-		if(useCP == TRUE) { // Use the control points
-			for(n=0; n<MAXMDS; n++) { // Examine all modes
+	// Attachment 1 gives probocc as a probability, 0 to 1. It is kept in percent,
+	// like BCR and MIR and as the report labels it, so that the line below is
+	// equation (48), OCRs = BCR MIR (1 - probocc)/100.
+	path->probocc = 100.0*pmax;
 
-				// Initialize variables for each mode
-				probocc[n] = 0.0;
-				Flambdad = 0.0;
-				FTl = 0.0;
+	// Find the overall circuit reliabilty with scattering
+	path->OCRs = path->BCR*path->MIR*(100.0 - path->probocc)/10000.0;
 
-				if((iS[n] != NOTINDEX) && (iS[n] >= MAXEMDS)) { // Does the mode exist and is it an F2 layer mode?
-					if(iS[n] == path->n0_F2) { // Lowest order F2 mode
-						if(path->distance <= path->dmax) {
-							Flambdad = FindFlambdad(path->CP[MP]);
-							FTl = FindFTl(path->CP[MP]);							
-						}
-						else {
-							if(PTspread[Td02] >= PTspread[Rd02]) {
-								Flambdad = FindFlambdad(path->CP[Td02]);
-								FTl = FindFTl(path->CP[Td02]);
-							}
-							else {
-								Flambdad = FindFlambdad(path->CP[Rd02]);
-								FTl = FindFTl(path->CP[Rd02]);
-							}
-                        }
-                    }
-					else { // Higher order F2 modes
-						if(path->distance <= path->dmax) { 
-							// Find the largest time scattering by brute force
-							if((PTspread[T1k] >= PTspread[R1k]) && (PTspread[T1k] >= PTspread[MP])) {
-								Flambdad = FindFlambdad(path->CP[T1k]);
-								FTl = FindFTl(path->CP[T1k]);
-							} else if ((PTspread[R1k] >= PTspread[T1k]) && (PTspread[R1k] >= PTspread[MP])) {
-								Flambdad = FindFlambdad(path->CP[R1k]);
-								FTl = FindFTl(path->CP[R1k]);
-							} else if ((PTspread[MP] >= PTspread[R1k]) && (PTspread[MP] >= PTspread[T1k])) {
-								Flambdad = FindFlambdad(path->CP[MP]);
-								FTl = FindFTl(path->CP[MP]);
-							}
-                        }
-						else {
-							if((PTspread[T1k] >= PTspread[R1k]) &&
-							   (PTspread[T1k] >= PTspread[Td02]) &&
-							   (PTspread[T1k] >= PTspread[MP]) &&
-							   (PTspread[T1k] >= PTspread[Rd02])) {
-								Flambdad = FindFlambdad(path->CP[T1k]);
-								FTl = FindFTl(path->CP[T1k]);
-							} 
-							else if ((PTspread[R1k] >= PTspread[T1k]) && 
-								     (PTspread[R1k] >= PTspread[MP]) &&
-									 (PTspread[R1k] >= PTspread[Td02]) &&
-									 (PTspread[R1k] >= PTspread[Rd02])) {
-								Flambdad = FindFlambdad(path->CP[R1k]);
-								FTl = FindFTl(path->CP[R1k]);
-							} 
-							else if ((PTspread[MP] >= PTspread[R1k]) && 
-								     (PTspread[MP] >= PTspread[T1k]) &&
-									 (PTspread[MP] >= PTspread[Td02]) &&
-									 (PTspread[MP] >= PTspread[Rd02]))	{
-								Flambdad = FindFlambdad(path->CP[MP]);
-								FTl = FindFTl(path->CP[MP]);
-							} 
-							else if((PTspread[Td02] >= PTspread[Rd02]) && 
-								    (PTspread[Td02] >= PTspread[MP]) &&
-									(PTspread[Td02] >= PTspread[T1k]) &&
-									(PTspread[Td02] >= PTspread[R1k]))	{
-								Flambdad = FindFlambdad(path->CP[Td02]);
-								FTl = FindFTl(path->CP[Td02]);
-							} 
-							else if ((PTspread[Rd02] >= PTspread[T1k]) && 
-								     (PTspread[Rd02] >= PTspread[MP]) &&
-									 (PTspread[Rd02] >= PTspread[R1k]) &&
-									 (PTspread[Rd02] >= PTspread[Td02])) {
-								Flambdad = FindFlambdad(path->CP[Rd02]);
-								FTl = FindFTl(path->CP[Rd02]);							
-							}
-                        }
-                    } // Higher order F2 modes
-				} // Does mode exist
-
-				probocc[n] = Flambdad*FTl*FR*FS;
-
-			} // for(n=0; n<9; n++)
-
-			// Find the biggest probocc
-			biggest = 0.0;
-			for(n=0; n<MAXMDS; n++) {
-				if(probocc[n] > biggest) {
-					biggest =  probocc[n];
-				}
-            }
-
-            // Attachment 1 gives probocc as a probability, 0 to 1. It is kept
-			// in percent, like BCR and MIR and as the report labels it, so that
-			// the line below is equation (48), OCRs = BCR MIR (1 - probocc)/100.
-			// This stored the bare probability, which that line then read as a
-			// percentage: scattering reduced OCRs 100 times too little.
-			path->probocc = 100.0*biggest;
-
-			// Find the overall circuit reliabilty with scattering
-			path->OCRs = path->BCR*path->MIR*(100.0 - path->probocc)/10000.0;
-
-		} // useCP == TRUE
-		else { // useCP == FALSE
-
-			path->OCRs = path->BCR*path->MIR/100.0;
-		}
-    }
-
-    return;
+	return;
 
 }
 
@@ -975,15 +882,17 @@ double FindFlambdad(struct ControlPt CP) {
 
 	double lambdad;
 
-	// Magnetic dip parameter 
-	lambdad = fabs(CP.dip[HR100km]);
-	if((0.0 <= lambdad) && (lambdad < 15.0*D2R)) {
+	// Magnetic dip parameter, in degrees as Attachment 1 states the bands and
+	// the formula. The dip is held in radians; it was used unconverted in the
+	// 15-25 degree formula, which then returned about -11.7 across the band.
+	lambdad = fabs(CP.dip[HR100km])*R2D;
+	if((0.0 <= lambdad) && (lambdad < 15.0)) {
 		return 1.0;
 	}
-	else if((15.0*D2R <= lambdad) && (lambdad < 25.0*D2R)) {
+	else if((15.0 <= lambdad) && (lambdad < 25.0)) {
 		return pow(((25.0 - lambdad)/10.0), 2) * ((lambdad - 10.0)/5.0);
 	}
-	else if((25.0*D2R <= lambdad) && (lambdad <= 90.0*D2R)) {
+	else if((25.0 <= lambdad) && (lambdad <= 90.0)) {
 		return 0.0;
 	}
 
@@ -1014,7 +923,9 @@ double FindFTl(struct ControlPt CP) {
 
 	// Time parameter
 	Tl = CP.ltime;
-	if((0.0 < Tl) && (Tl <= 3.0)) {
+	// FTl is 1 on both sides of midnight (20 < Tl < 24 and 00 < Tl < 03), so
+	// Tl = 0 exactly is 1 as well; it fell through to 0 here.
+	if((0.0 <= Tl) && (Tl <= 3.0)) {
 		return 1.0;
 	}
 	else if((3.0 < Tl) && (Tl <= 7.0)) {
