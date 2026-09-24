@@ -109,6 +109,7 @@ void CircuitReliability(struct PathData *path) {
 	double Isum;	// Interference sum
 	double Isuml;	// Interference sum lower decile
 	double Isumu;	// Interference sum upper decile
+	double ICR;		// Circuit reliability in the presence of interference only (%)
 
 	// NORM is an array of independent variables that give 
 	// the normal cdf from 0.5 to 0.99 in 0.01 increments
@@ -387,14 +388,20 @@ void CircuitReliability(struct PathData *path) {
 
 		// Step 12: Circuit reliability in the presence of interference only for S/I >= or < S/Ir
 		if(path->SIR >= path->SIRr) {
-			path->MIR = min(130.0 - 80.0/(1.0 + ((path->SIR-path->SIRr)/path->DlSI)), 100.0);
+			ICR = min(130.0 - 80.0/(1.0 + ((path->SIR-path->SIRr)/path->DlSI)), 100.0);
 		}
 		else { // (SIR < path->SIRr)
-			path->MIR = max((80.0/(1.0 + ((path->SIRr-path->SIR)/path->DuSI))) - 30.0, 0.0);
+			ICR = max((80.0/(1.0 + ((path->SIRr-path->SIR)/path->DuSI))) - 30.0, 0.0);
 		}
 
-        // Overall Circuit reliability in the absence of scattering
-		path->OCR = path->BCR*path->MIR/100.0;
+        // Steps 13 and 14: P.842-5 Table 3 gives OCR = Min(ICR, BCR), and
+		// P.533-14 section 10.2.3 step 5 takes that as the digital circuit
+		// reliability, with MIR "the ratio of the values obtained for Step 14
+		// to Step 13", so that DCR = BCR MIR / 100. This used to store ICR as
+		// MIR and multiply, OCR = BCR ICR / 100, which is below the minimum
+		// whenever both are under 100 % (BCR = ICR = 80 % gave 64 %).
+		path->OCR = min(ICR, path->BCR);
+		path->MIR = (path->BCR > 0.0) ? 100.0*path->OCR/path->BCR : 100.0;
 
 		// Find the Overall Circuit reliability with scattering
 		EquatorialScattering(path, iS);
