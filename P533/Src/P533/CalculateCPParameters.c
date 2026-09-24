@@ -338,8 +338,10 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	}
 	else { // (here->sza >= 90.0*D2R )
 		// In this case local sunset and sunrise must be known.
-		// Find h the number of hours after sunset
-		hour = (hour + 1) % 24; // Adjust time and roll over
+		// Find h the number of hours after sunset, at the same time as the solar
+		// zenith angle used above (both at the run's hour, SolarParameters()).
+		// This advanced the hour by one first, so h was an hour later than chi
+		// (the MATLAB port's D28).
 		if((here->Sun.lss >= here->Sun.lsr) && (hour >= here->Sun.lss) && (hour >= here->Sun.lsr)) {
 			h = hour - here->Sun.lss;
 		}
