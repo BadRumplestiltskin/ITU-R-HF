@@ -89,7 +89,7 @@ void MUFBasic(struct PathData *path) {
 	// The hop distance cannot be longer than 4000 km.
 	dh = min(dh, 4000.0);
 	
-	for( n0 = 0; n0 < MAXF2MDS; n0++ ) {
+	for( n0 = 0; n0 <= MAXN0F2; n0++ ) {
 		if(dh > path->distance/(n0+1)) { // Is the mirror reflection height horizon less than the n0 hop distance?
 			// At this point lowest-order mode is known – store it.
 			path->n0_F2 = n0;
@@ -161,7 +161,7 @@ void MUFBasic(struct PathData *path) {
 
         // 3.5.2 Higher-order modes (paths up to 9 000 km)
 		if(path->distance <= 9000) {
-			for(n = n0+1; n < MAXF2MDS; n++) {
+			for(n = n0+1; (n < MAXF2MDS) && (n <= n0+NHIGHERF2); n++) { // the next five higher-order modes, section 5.2.1
 				if(path->distance <= path->dmax) { // 3.5.2.1 Paths up to dmax (km)
 					path->Md_F2[n].BMUF = CalcF2DMUF(&path->CP[MP], path->distance/(n+1.0), dmax, CalcB(&path->CP[MP]));
 				}
@@ -211,8 +211,8 @@ void MUFBasic(struct PathData *path) {
 
         // Is there a lowest order E mode?
 		if(path->n0_E != NOLOWESTMODE) {
-			// There are three E paths.
-			for(n=n0; n<MAXEMDS; n++) {
+			// The lowest-order E mode and the next two, section 5.2.1.
+			for(n=n0; (n<MAXEMDS) && (n <= n0+NHIGHERE); n++) {
 				// Save the reflection height, although for E layers it is always 110.0 km.
 				path->Md_E[n].hr = hr;
 				// Find the hop length for this mode.

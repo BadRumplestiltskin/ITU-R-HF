@@ -177,11 +177,23 @@
 // Maximum Sun Spot Number
 #define MAXSSN		160
 
-// Maximum number of F2 modes
-#define MAXF2MDS	6
+// Mode slots, indexed by hop count - 1. P.533-14 section 5.2.1 considers "up to
+// three E modes (for paths up to 4 000 km) and up to six F2 modes": the lowest-order
+// mode and the next two (E) or five (F2) higher-order modes. The lowest-order E mode is
+// 1E or 2E, so E needs four slots; the lowest-order F2 mode is searched up to 6F2, so
+// F2 needs eleven. MUFBasic() leaves the slots beyond those counts without a basic MUF.
+// These were 6 and 3, which dropped the top modes whenever the lowest order was not 1.
 
-// Maximum number of E modes
-#define MAXEMDS		3
+// Number of F2 mode slots
+#define MAXF2MDS	11
+// Highest lowest-order F2 mode searched (index), as before the slots were widened
+#define MAXN0F2		5
+// Number of higher-order modes considered above the lowest-order one
+#define NHIGHERF2	5
+#define NHIGHERE	2
+
+// Number of E mode slots
+#define MAXEMDS		4
 
 // Maximum number of modes
 #define MAXMDS	(MAXEMDS+MAXF2MDS)
