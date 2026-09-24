@@ -191,7 +191,10 @@ void MUFBasic(struct PathData *path) {
     // End calculation for F2 Layer Basic MUF
 
 	// E layer basic MUF calculation
-	if(path->distance < 4000.0) {
+	// P.533-14 section 5.2.1: E modes "for paths up to 4 000 km", and section 4
+	// screens F2 modes "for paths up to 4 000 km"; the rest of this block and
+	// ELayerScreeningFrequency() already include 4000 km. This test excluded it.
+	if(path->distance <= 4000.0) {
 
 		// Determine the lowest order E mode
 		hr = 110.0; // The mirror reflection height is 110 km for the E layer basic MUF calculation
@@ -249,8 +252,8 @@ void MUFBasic(struct PathData *path) {
 				}
             }
 		}
-		else { // path->distance >= 4000.0
-			// There are no E layer modes for path->distance >= 4000.0.
+		else { // path->n0_E == NOLOWESTMODE
+			// No E mode reaches this distance within the minimum elevation angle.
 		}
     }
     // End calculation for the E layer Basic MUF.
