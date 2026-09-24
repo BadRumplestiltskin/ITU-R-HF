@@ -865,6 +865,14 @@ double AbsorptionFactor(struct ControlPt CP, int month) {
 	 */
 	i = month;
 
+	// P.533-14 Fig. 1 has a second month axis for the Southern Hemisphere,
+	// shifted by six months (Southern July reads the Northern January column).
+	// DiurnalAbsorptionExponent() already applied this; this routine did not,
+	// so southern ATnoon was read from the wrong season.
+	if(CP.L.lat < 0.0) {
+		i = (i + 6) % 12;
+	}
+
 	switch(i) {
 		case JUL:
 			i = 5;
