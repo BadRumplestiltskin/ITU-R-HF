@@ -754,7 +754,7 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 				fprintf(fp,",");
 				fprintf(fp, DBLFIELD, path.DMptr->ele*R2D);
 				fprintf(fp,",");
-				fprintf(fp, DBLFIELD, path.DMptr->tau);
+				fprintf(fp, DBLFIELD, path.DMptr->tau*1000.0); // tau is held in seconds; the column is ms
 				fprintf(fp,",");
 				fprintf(fp, DBLFIELD, path.DMptr->Lb);
 				fprintf(fp,",");
@@ -810,7 +810,7 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 				fprintf(fp,",");
 				fprintf(fp, RFC4180_DBLFIELD, path.DMptr->ele*R2D);
 				fprintf(fp,",");
-				fprintf(fp, RFC4180_DBLFIELD, path.DMptr->tau);
+				fprintf(fp, RFC4180_DBLFIELD, path.DMptr->tau*1000.0); // tau is held in seconds; the column is ms
 				fprintf(fp,",");
 				fprintf(fp, RFC4180_DBLFIELD, path.DMptr->Lb);
 				fprintf(fp,",");
