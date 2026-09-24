@@ -59,15 +59,26 @@ void MUFOperational(struct PathData *path) {
 	// Only do this subroutine if the path is less than or equal to 9000 km if not exit
 	if(path->distance > 9000) return; 
 
-	// Determine if the time of interest is night or day. It is either Day, when Sunset is greater than Sunrise with local time in between
-	// and it is not Night, if not then it is Night. 
-	if(((path->CP[MP].ltime < path->CP[MP].Sun.lss) && (path->CP[MP].ltime > path->CP[MP].Sun.lsr))
-													&&
-		!((path->CP[MP].ltime > path->CP[MP].Sun.lss) && (path->CP[MP].ltime < path->CP[MP].Sun.lsr))) {
-		time = DAY;
-	}
-	else { // Night
-		time = NIGHT;
+	// Determine if the time of interest is night or day at the mid-path point.
+	// ltime, lsr and lss are all hours UTC folded into 0-24, so where sunset
+	// in UTC falls before sunrise -- roughly beyond 90 degrees of longitude --
+	// the day is the interval that wraps through midnight. The earlier test
+	// required lsr < ltime < lss and so classed every such hour as night,
+	// taking the night Rop by day. Without a sunrise at all (sha is NaN) the
+	// Sun is up all day when the point and the Sun share a hemisphere.
+	{
+		double t = path->CP[MP].ltime, sr = path->CP[MP].Sun.lsr, ss = path->CP[MP].Sun.lss;
+		int isday;
+		if(isnan(path->CP[MP].Sun.sha)) {
+			isday = (path->CP[MP].L.lat*path->CP[MP].Sun.decl > 0.0);
+		}
+		else if(sr < ss) {
+			isday = (sr < t) && (t < ss);
+		}
+		else {
+			isday = (t > sr) || (t < ss);
+		}
+		time = isday ? DAY : NIGHT;
 	}
 
     // Determine the EIRP index power

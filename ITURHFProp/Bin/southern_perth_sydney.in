@@ -26,7 +26,7 @@ Path.ManMadeNoise "RURAL"
 Path.Modulation "ANALOG"
 Path.SorL "SHORTPATH"
 RptFilePath "Reports/"
-RptFileFormat "RPT_D | RPT_BMUF | RPT_E | RPT_PR | RPT_SNR | RPT_BCR | RPT_DOMMODE"
+RptFileFormat "RPT_D | RPT_BMUF | RPT_OPMUF | RPT_OPMUFD | RPT_E | RPT_PR | RPT_SNR | RPT_BCR | RPT_DOMMODE"
 LL.lat -33.87
 LL.lng 151.21
 LR.lat -33.87
