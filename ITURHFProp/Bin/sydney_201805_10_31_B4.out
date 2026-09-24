@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 16:24:35 2026
+     Analysis Prepared  Thu Sep 24 20:36:06 2026
 
 ---------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@
 	Magnetic dip (300 km)  = -60.391 (deg)
 	Gyrofrequency (300 km) =  1.363 (MHz)
 	M(3000)F2 =  3.143
-	foE   =  0.457 (MHz)
+	foE   =  0.446 (MHz)
 	foF2  =  3.474 (MHz)
 	solar zenith angle =  136.161 (deg)
 	solar declination  =  18.660 (deg)

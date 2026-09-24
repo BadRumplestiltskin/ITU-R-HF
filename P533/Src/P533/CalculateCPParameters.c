@@ -257,6 +257,7 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	double X, Y;		// temps
 	double D;			// time-of-day factor
 	double dsza;		// delta solar zenith angle
+	int polarNight;		// the Sun does not rise (chi = 90 deg)
 	double p, h;		// coefficients
 	// End of Temporary Variables
 
@@ -338,31 +339,29 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	}
 	else { // (here->sza >= 90.0*D2R )
 		// In this case local sunset and sunrise must be known.
-		// Find h the number of hours after sunset, at the same time as the solar
-		// zenith angle used above (both at the run's hour, SolarParameters()).
-		// This advanced the hour by one first, so h was an hour later than chi
-		// (the MATLAB port's D28).
-		if((here->Sun.lss >= here->Sun.lsr) && (hour >= here->Sun.lss) && (hour >= here->Sun.lsr)) {
-			h = hour - here->Sun.lss;
-		}
-		else if((here->Sun.lss < here->Sun.lsr) && (hour >= here->Sun.lss) && (hour < here->Sun.lsr)) {
-			h = hour - here->Sun.lss;
-		}
-		else if((here->Sun.lss >= here->Sun.lsr) && (hour < here->Sun.lss) && (hour < here->Sun.lsr)) {
-			h = 24.0 - here->Sun.lss + hour;
-		}
-		else {
-			h = 0.0;
+		// P.1239-4 (17d): "h is the number of hours after sunset (chi = 90)", and
+		// "In polar winter conditions, when the Sun does not rise, equation (17e)
+		// should be used". Both are at chi = 90 deg exactly, the geometric horizon.
+		// This used Sun.lss and Sun.sha, which are for a 90.833 deg zenith angle
+		// (refraction and the solar disc): sunset 4-11 minutes later, h short by
+		// as much, night foE up to about 6 % off at 60 deg latitude. Those stay
+		// for the operational-MUF day/night test. h is at the run's hour, the
+		// same time as the solar zenith angle above.
+		{
+			double arg90 = -tan(here->L.lat)*tan(here->Sun.decl);
+			if(arg90 > 1.0) {
+				polarNight = TRUE;	// the Sun does not rise today
+				h = 0.0;
+			}
+			else {
+				double sha90 = acos(max(arg90, -1.0));
+				double lss90 = fmod((720.0 + (-here->L.lng + sha90)*R2D*4.0 - here->Sun.eot)/60.0 + 48.0, 24.0);
+				polarNight = FALSE;
+				h = fmod(hour - lss90 + 48.0, 24.0);
+			}
 		}
 
-        // P.1239-4: "In polar winter conditions, when the Sun does not rise, equation
-		// (17e) should be used." Here the Sun is below the horizon, so if there is no
-		// sunrise at all -- the sunrise hour angle is undefined -- it is polar night.
-		// This approximated that with a civil-twilight latitude of 72.5622 deg in
-		// November-January and May-July, and the southern test was written
-		// lat < 72.5622 deg instead of lat < -72.5622 deg, so from May to July almost
-		// every night-time point on Earth took (17e) alone.
-		if(isnan(here->Sun.sha)) {
+		if(polarNight) {
 			// Polar night
 			D = pow(0.072,p)*exp(25.2 - 0.28*here->Sun.sza*R2D);
 		}
