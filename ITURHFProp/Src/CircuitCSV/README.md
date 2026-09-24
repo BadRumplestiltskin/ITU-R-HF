@@ -18,6 +18,7 @@ different circuits in one pass.
       -m <factor> evaluate at factor x each MUF (default 1.0)
       -F <spec>   also scan every circuit over a set of frequencies (see below)
       -S <file>   with -F, write every scanned frequency's results to this csv
+      -j <n>      run in n worker processes, 0 for one per processor (not on Windows)
       -s          silent
 
 Antenna patterns are read once at startup and re-pointed along each circuit's
@@ -164,6 +165,39 @@ Cost: each frequency is one full `P533()` call, about 0.1 ms. 2,000 circuits on
 the 57-frequency grid `2:30:0.5` take 11 s (0.55 s without `-F`), so 100,000
 circuits take about 9 minutes, or 45 at 0.1 MHz steps. The `-S` file is about
 4.4 KB per circuit at 57 frequencies. Without `-F` the output is unchanged.
+
+## Parallel runs (`-j`)
+
+    CircuitCSV -i circuits.csv -o results.csv -d Data -F 2:30:0.5 -S scan.csv -j 0
+
+`-j n` runs the rows in `n` worker processes; `-j 0` uses one per online
+processor. The output, `-S` file included, is byte-identical to a serial run:
+same rows, same order, same `Circuit#`.
+
+Workers take the rows in blocks of 32 from a shared counter, so a fast core
+simply takes more blocks than a slow one (this matters on machines that mix
+performance and efficiency cores). Each worker writes `<out>.part<k>` (and
+`<scan>.part<k>`) beside the output; the parent merges them back into input
+order when all have finished and deletes them, so allow about twice the output's
+size on disk during a run. Each worker loads the months it meets, so memory is
+up to about 300 MB per worker. A failing worker fails the whole run with error
+1009.
+
+Measured on an Apple M4 (4 performance + 6 efficiency cores), 10,000 circuits on
+the 57-frequency grid `2:30:0.5` with `-S`:
+
+| `-j` | time | speed-up |
+|---|---|---|
+| 1 | 58 s | 1.0x |
+| 4 | 16 s | 3.6x |
+| 10 (`-j 0`) | 11 s | 5.3x |
+
+So 1,000,000 such circuits take about 18 minutes with `-j 0`, against about 1.6
+hours serially.
+
+Processes rather than threads, because the engine keeps its month caches in
+library globals. Windows has no `fork()`, so there `-j` is ignored with a
+message and the run is serial.
 
 ## Notes on the calculation
 

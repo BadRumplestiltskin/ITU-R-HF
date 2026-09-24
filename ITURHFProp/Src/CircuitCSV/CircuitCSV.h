@@ -17,6 +17,7 @@
 #define RTN_ERRCSVP533LIB			1006	// ERROR: Can not load the P533 library
 #define RTN_ERRCSVP372LIB			1007	// ERROR: Can not load the P372 library
 #define RTN_ERRCSVANTENNA			1008	// ERROR: Can not read an antenna pattern
+#define RTN_ERRCSVWORKER			1009	// ERROR: A -j worker process failed
 
 /*
 	One row of the input file. The names match the csv header exactly.

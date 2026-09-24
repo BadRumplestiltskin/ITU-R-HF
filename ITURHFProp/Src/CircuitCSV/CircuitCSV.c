@@ -4,6 +4,12 @@
 #include <errno.h>
 #include <math.h>
 #include <time.h>
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
+#endif
 
 // Local includes
 #include "Common.h"
@@ -31,6 +37,7 @@
 			-g <dBi>	gain to use for an isotropic pattern (default 0.0)
 			-F <spec>	also scan each circuit over a list of frequencies
 			-S <file>	with -F, csv of every scanned frequency's results
+			-j <n>		run in n worker processes, 0 for one per processor
 
 		OUTPUT
 			A csv with the input columns echoed, followed by the calculated
@@ -518,6 +525,21 @@ static int DominantMode(struct PathData *path, int *hops, char *layer) {
 	per input row and gains summary columns.
 */
 #define SCANMAX 10000
+
+// -j: worker processes, 1 for a serial run. Workers claim the rows in blocks of
+// CSVBLOCK from a counter in shared memory, so a fast core takes more blocks than
+// a slow one; each records the blocks it took, in order, in BlockIdx.
+#define CSVMAXWORKERS 256
+#define CSVBLOCK      32
+static int Workers = 1;
+static int *NextBlock = NULL;
+static FILE *BlockIdx = NULL;
+
+struct Counts {
+	int number;			// circuits that ran
+	int failed;			// rows that never reached the engine
+	int monthsused;		// month switches
+};
 static double *ScanF = NULL;
 static int     NScan = 0;
 static FILE   *ScanOut = NULL;
@@ -1302,6 +1324,8 @@ static void PrintUsage(void) {
 	printf("              DlSN_Best and BCR_Best before Status.\n");
 	printf("  -S <file>   With -F, also write every scanned frequency's results to this\n");
 	printf("              csv, one row per circuit and frequency, keyed by Circuit#\n");
+	printf("  -j <n>      Run in n worker processes (0: one per processor). Output\n");
+	printf("              is identical to a serial run. Not on Windows.\n");
 	printf("  -s          Silent: suppress progress output\n");
 	printf("  -h          This help\n\n");
 	printf("Input columns (looked up by name, order and extra columns do not matter):\n");
@@ -1316,6 +1340,356 @@ static void PrintUsage(void) {
 
 }
 
+/*
+	PrintScanHeader() - Writes the header of the -S file.
+
+		SN0 is the S/N referred to 1 Hz, SNR + 10 log10(bandW), in dB-Hz; DuSN
+		and DlSN are its upper and lower decile deviations; BCR is for reqSN and
+		SNRXX the S/N exceeded on percDays of the days.
+*/
+static void PrintScanHeader(FILE *fp) {
+
+	fprintf(fp, "Circuit#,Freq,Mode,Pr,Noise,SNR,SN0,DuSN,DlSN,BCR,SNRXX,Status\n");
+
+}
+
+/*
+	ProcessRows() - Reads, calculates and writes the data rows.
+
+		Streams the input: one row read, calculated and written at a time. The
+		ionospheric maps are held by the library's month cache, so a month is
+		still read at most once however the file is ordered, while memory stays
+		flat in the number of circuits. This is what lets the tool take batches
+		of 100,000+ rows.
+
+		Every non-blank data row is numbered. A serial run (nworkers 1)
+		calculates them all. A worker process claims blocks of CSVBLOCK rows from
+		the shared NextBlock counter and calculates only those, skipping the
+		rows between, and writes each block number it takes to BlockIdx so that
+		the parent can put the blocks back in order.
+
+		INPUT
+			FILE *fin, positioned after the header; FILE *fout
+			struct PathData *path, int *col, const char *dpath, int silent
+			int worker, int nworkers
+
+		OUTPUT
+			returns RTN_CSVOK, or the error that stopped the run
+			cnt, the circuits processed and skipped and the month changes
+
+		SUBROUTINES
+			SplitCSV(), ReadCircuit(), RunCircuit(), ScanCircuit(), WriteRow()
+*/
+static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, const char *dpath,
+					   int silent, int worker, int nworkers, struct Counts *cnt) {
+
+	char line[CSVMAXLINE];
+	char *field[CSVMAXFIELDS];
+	struct Circuit c;
+	struct Result  r;
+	int nrow = 0, loadedmonth = -1, nf, retval;
+	int mine = -1;			// the block this worker holds
+	char dp[256];
+
+	(void)worker;
+
+	snprintf(dp, sizeof(dp), "%s", dpath);
+
+	while (fgets(line, sizeof(line), fin) != NULL) {
+
+		// Test for a blank record without touching it: Trim() unquotes a FIELD
+		// in place, so running it on the whole record stripped the closing quote
+		// of the last field before SplitCSV() ever saw it.
+		{
+			const char *scan = line;
+			while (*scan == ' ' || *scan == '\t' || *scan == '\r' || *scan == '\n') scan++;
+			if (*scan == '\0') continue;	// skip blank records
+		}
+
+		nrow++;
+		if (nworkers > 1) {
+			int blk = (nrow - 1) / CSVBLOCK;
+			// Claims only increase, so a claim behind the reader is simply
+			// taken again; a claim ahead is skipped to.
+			while (blk > mine) mine = __atomic_fetch_add(NextBlock, 1, __ATOMIC_SEQ_CST);
+			if (blk < mine) continue;
+			if ((nrow - 1) % CSVBLOCK == 0) fprintf(BlockIdx, "%d\n", blk);
+		}
+
+		nf = SplitCSV(line, field, CSVMAXFIELDS);
+		ReadCircuit(&c, field, nf, col);
+		c.row = nrow;
+
+		memset(&r, 0, sizeof(r));
+
+		// A row that is short, or carries a month outside 1-12, still appears in
+		// the output; it just never reaches the engine.
+		if (c.parsed != TRUE) {
+			r.status = "BAD_RECORD";
+			cnt->failed++;
+		}
+		else if (c.month < 1 || c.month > 12) {
+			r.status = "BAD_MONTH";
+			cnt->failed++;
+		}
+		else {
+			if (c.month - 1 != loadedmonth) {
+
+				float ****foF2, ****M3kF2;
+
+				retval = csvIonMapGet(c.month - 1, dp, silent, &foF2, &M3kF2);
+				if (retval != RTN_READIONPARAOK) {
+					printf("CircuitCSV: Error %d from IonMapGet for month %d\n", retval, c.month);
+					return retval;
+				}
+				// Point at the cache rather than copying 10.7 MB per switch.
+				path->foF2  = foF2;
+				path->M3kF2 = M3kF2;
+
+				retval = csvReadFamDud(&path->noiseP, dp, c.month - 1);
+				if (retval != RTN_READFAMDUDOK) {
+					printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
+					return retval;
+				}
+				loadedmonth = c.month - 1;
+				cnt->monthsused++;
+			}
+
+			retval = RunCircuit(path, &c, &r);
+			if (retval != RTN_CSVOK) {
+				printf("CircuitCSV: Warning: input row %d returned error %d from P533\n", c.row, retval);
+				r.valid = FALSE;
+				r.status = "P533_ERROR";
+				cnt->failed++;
+			}
+			else {
+				// RunCircuit() may already have said why there are no results.
+				if (r.status == NULL) r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
+				cnt->number++;
+				// The path validated, so every circuit that reaches here is
+				// scanned, NO_MODE and LONG_PATH ones included: whether any
+				// scanned frequency propagates is what the scan is for.
+				if (NScan > 0) ScanCircuit(path, &c, &r, c.row);
+			}
+		}
+
+		// One output row per input row, written as it is produced.
+		WriteRow(fout, &c, &r, c.row);
+
+		if (silent == FALSE && nworkers == 1 && (nrow % 1000) == 0) printf("\rCircuit %d", nrow);
+	}
+
+	return RTN_CSVOK;
+
+}
+
+#ifndef _WIN32
+/*
+	CopyRecord() - Copies one line from in to out, of any length.
+
+		INPUT
+			FILE *in, FILE *out
+
+		OUTPUT
+			returns the line's last field (Status) in status, truncated to n,
+			and FALSE at end of file
+*/
+static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
+
+	int ch;
+	size_t j = 0;
+
+	ch = getc(in);
+	if (ch == EOF) return FALSE;
+	for (; ch != EOF && ch != '\n'; ch = getc(in)) {
+		putc(ch, out);
+		if (ch == ',') j = 0;
+		else if (j + 1 < n) status[j++] = (char)ch;
+	}
+	putc('\n', out);
+	status[j] = '\0';
+
+	return TRUE;
+
+}
+
+/*
+	RunParallel() - Runs the rows in Workers processes and merges their output.
+
+		The parent has read the header and loaded everything that is read once;
+		each forked child inherits that, reopens the input for its own file
+		position, and runs ProcessRows() on its share of the rows into
+		<out>.part<k> (and <scan>.part<k>). Once all have finished, the parent
+		puts the blocks back in order from the workers' block indexes -- every
+		data row gives exactly one output row, so a block is CSVBLOCK lines of
+		its worker's part -- and -S rows by their Circuit#, since a row gives
+		none or one per frequency.
+		The parts are then removed. Any worker failing fails the run.
+
+		INPUT
+			FILE *fin, const char *infile, *outfile, *scanfile
+			struct PathData *path, int *col, const char *dpath, int silent
+
+		OUTPUT
+			returns RTN_CSVOK, or an error
+
+		SUBROUTINES
+			ProcessRows(), CopyRecord(), PrintHeader(), PrintScanHeader()
+*/
+static int RunParallel(FILE *fin, const char *infile, const char *outfile, const char *scanfile,
+					   struct PathData *path, int *col, const char *dpath, int silent) {
+
+	char outpart[CSVMAXWORKERS][CSVMAXNAME + 16], scanpart[CSVMAXWORKERS][CSVMAXNAME + 16];
+	char idxpart[CSVMAXWORKERS][CSVMAXNAME + 16];
+	int nextidx[CSVMAXWORKERS];
+	pid_t pid[CSVMAXWORKERS];
+	int k, bad = 0, number = 0, failed = 0, nrow = 0;
+	FILE *fout, *fsout = NULL, *pin[CSVMAXWORKERS], *sin[CSVMAXWORKERS], *xin[CSVMAXWORKERS];
+	char pend[CSVMAXWORKERS][512];
+	int havepend[CSVMAXWORKERS];
+	time_t t0 = time(NULL);
+
+	for (k = 0; k < Workers; k++) {
+		snprintf(outpart[k], sizeof(outpart[k]), "%s.part%d", outfile, k);
+		snprintf(idxpart[k], sizeof(idxpart[k]), "%s.part%d.idx", outfile, k);
+		if (scanfile != NULL) snprintf(scanpart[k], sizeof(scanpart[k]), "%s.part%d", scanfile, k);
+	}
+
+	NextBlock = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+	if (NextBlock == MAP_FAILED) {
+		printf("CircuitCSV: Error %d Can't share memory with workers (%s)\n", RTN_ERRCSVWORKER, strerror(errno));
+		return RTN_ERRCSVWORKER;
+	}
+	*NextBlock = 0;
+
+	if (silent == FALSE) printf("CircuitCSV: %d workers\n", Workers);
+	fflush(stdout);
+
+	for (k = 0; k < Workers; k++) {
+		pid[k] = fork();
+		if (pid[k] < 0) {
+			printf("CircuitCSV: Error %d Can't start worker %d (%s)\n", RTN_ERRCSVWORKER, k, strerror(errno));
+			Workers = k;			// wait only for those started
+			bad = 1;
+			break;
+		}
+		if (pid[k] == 0) {
+			// The worker. It must not share the parent's FILE position, so it
+			// opens the input afresh and skips the header.
+			char hdr[CSVMAXLINE];
+			struct Counts cnt = { 0, 0, 0 };
+			FILE *in = fopen(infile, "r"), *out = fopen(outpart[k], "w");
+			int rv;
+
+			BlockIdx = fopen(idxpart[k], "w");
+			if (in == NULL || out == NULL || BlockIdx == NULL || fgets(hdr, sizeof(hdr), in) == NULL) _exit(2);
+			if (scanfile != NULL) {
+				ScanOut = fopen(scanpart[k], "w");
+				if (ScanOut == NULL) _exit(2);
+			}
+			rv = ProcessRows(in, out, path, col, dpath, TRUE, k, Workers, &cnt);
+			fclose(in);
+			if (fclose(out) != 0) rv = RTN_ERRCSVOPENOUT;
+			if (ScanOut != NULL && fclose(ScanOut) != 0) rv = RTN_ERRCSVOPENOUT;
+			if (fclose(BlockIdx) != 0) rv = RTN_ERRCSVOPENOUT;
+			fflush(stdout);
+			_exit(rv == RTN_CSVOK ? 0 : 1);
+		}
+	}
+
+	for (k = 0; k < Workers; k++) {
+		int st;
+		if (waitpid(pid[k], &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+			printf("CircuitCSV: Error %d worker %d failed\n", RTN_ERRCSVWORKER, k);
+			bad = 1;
+		}
+	}
+	(void)fin;
+
+	if (bad == 0) {
+		fout = fopen(outfile, "w");
+		if (fout == NULL) {
+			printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, outfile, strerror(errno));
+			bad = 1;
+		}
+		else {
+			PrintHeader(fout);
+			if (scanfile != NULL) {
+				fsout = fopen(scanfile, "w");
+				if (fsout == NULL) {
+					printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, scanfile, strerror(errno));
+					bad = 1;
+				}
+				else PrintScanHeader(fsout);
+			}
+			for (k = 0; k < Workers; k++) {
+				pin[k] = fopen(outpart[k], "r");
+				sin[k] = (fsout != NULL) ? fopen(scanpart[k], "r") : NULL;
+				havepend[k] = (sin[k] != NULL && fgets(pend[k], sizeof(pend[k]), sin[k]) != NULL);
+				xin[k] = fopen(idxpart[k], "r");
+				if (xin[k] == NULL || fscanf(xin[k], "%d", &nextidx[k]) != 1) nextidx[k] = -1;
+				if (pin[k] == NULL || (fsout != NULL && sin[k] == NULL)) bad = 1;
+			}
+
+			// Block b is held by the worker whose index lists it next. Its rows
+			// are the next CSVBLOCK lines of that worker's part (fewer for the
+			// last block), and each row's -S lines are the lines of the same
+			// worker's -S part that carry its Circuit#.
+			for (int b = 0; bad == 0; b++) {
+				for (k = 0; k < Workers && nextidx[k] != b; k++) ;
+				if (k == Workers) break;			// no such block: the end
+				for (int j = 0; j < CSVBLOCK; j++) {
+					char status[32];
+					if (CopyRecord(pin[k], fout, status, sizeof(status)) == FALSE) break;
+					nrow++;
+					if (strcmp(status, "BAD_RECORD") == 0 || strcmp(status, "BAD_MONTH") == 0 ||
+						strcmp(status, "P533_ERROR") == 0) failed++;
+					else number++;
+					while (fsout != NULL && havepend[k] && atoi(pend[k]) == nrow) {
+						fputs(pend[k], fsout);
+						havepend[k] = (fgets(pend[k], sizeof(pend[k]), sin[k]) != NULL);
+					}
+				}
+				if (fscanf(xin[k], "%d", &nextidx[k]) != 1) nextidx[k] = -1;
+			}
+
+			for (k = 0; k < Workers; k++) {
+				if (pin[k] != NULL) fclose(pin[k]);
+				if (sin[k] != NULL) fclose(sin[k]);
+				if (xin[k] != NULL) fclose(xin[k]);
+			}
+			if (fsout != NULL && fclose(fsout) != 0) bad = 1;
+			if (fclose(fout) != 0) bad = 1;
+		}
+	}
+
+	for (k = 0; k < Workers; k++) {
+		remove(outpart[k]);
+		remove(idxpart[k]);
+		if (scanfile != NULL) remove(scanpart[k]);
+	}
+
+	munmap(NextBlock, sizeof(int));
+	NextBlock = NULL;
+
+	if (bad != 0) return RTN_ERRCSVWORKER;
+
+	if (silent == FALSE) {
+		printf("Processed %d circuit(s), %d skipped, %d worker(s), %ld s\n",
+			number, failed, Workers, (long)(time(NULL) - t0));
+	}
+
+	return RTN_CSVOK;
+
+}
+#else
+static int RunParallel(FILE *fin, const char *infile, const char *outfile, const char *scanfile,
+					   struct PathData *path, int *col, const char *dpath, int silent) {
+	(void)fin; (void)infile; (void)outfile; (void)scanfile; (void)path; (void)col; (void)dpath; (void)silent;
+	return RTN_ERRCSVWORKER;	// unreachable: main() forces Workers = 1 on Windows
+}
+#endif
+
 int main(int argc, char *argv[]) {
 
 	struct PathData path;
@@ -1329,10 +1703,7 @@ int main(int argc, char *argv[]) {
 	char line[CSVMAXLINE];
 	char *field[CSVMAXFIELDS];
 	int col[NINPUTCOLUMNS];
-	struct Circuit c;
-	struct Result  r;
-	int monthsused = 0, nrow = 0, loadedmonth = -1;
-	int nf, nhdr, retval, number = 0, failed = 0;
+	int nhdr, retval;
 	FILE *fin, *fout;
 	char dpath[256];
 
@@ -1346,6 +1717,7 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(argv[i], "-m") == 0 && i+1 < argc) FreqMargin = atof(argv[++i]);
 		else if (strcmp(argv[i], "-F") == 0 && i+1 < argc) scanspec = argv[++i];
 		else if (strcmp(argv[i], "-S") == 0 && i+1 < argc) scanfile = argv[++i];
+		else if (strcmp(argv[i], "-j") == 0 && i+1 < argc) Workers  = atoi(argv[++i]);
 		else if (strcmp(argv[i], "-s") == 0) silent = TRUE;
 		else if (strcmp(argv[i], "-h") == 0) { PrintUsage(); return RTN_CSVOK; }
 		else {
@@ -1366,6 +1738,24 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVARGS;
 	}
 	if (scanspec != NULL && ParseScan(scanspec) != RTN_CSVOK) return RTN_ERRCSVARGS;
+
+	// -j 0 means one worker per online processor.
+	if (Workers < 0) {
+		printf("CircuitCSV: Error %d -j must be 0 (all processors) or a positive count\n", RTN_ERRCSVARGS);
+		return RTN_ERRCSVARGS;
+	}
+#ifdef _WIN32
+	if (Workers != 1) {
+		printf("CircuitCSV: -j is not supported on Windows; running one process\n");
+		Workers = 1;
+	}
+#else
+	if (Workers == 0) {
+		long ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+		Workers = (ncpu > 0) ? (int)ncpu : 1;
+	}
+	if (Workers > CSVMAXWORKERS) Workers = CSVMAXWORKERS;
+#endif
 
 	// The P533/P372 readers insert the separator themselves now, so this only
 	// has to bound the copy.
@@ -1444,118 +1834,52 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	fout = fopen(outfile, "w");
-	if (fout == NULL) {
-		printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, outfile, strerror(errno));
+	/*
+		With -j the rows go to worker processes in blocks of CSVBLOCK, each
+		worker taking the next block when it finishes one, so faster cores do
+		more. Each writes its own part files and the parent puts the blocks back
+		in input order, so the output is the same as a serial run's, row for
+		row. Processes rather than threads, because
+		the engine keeps its month caches in library globals; each worker loads
+		the months it meets, as a serial run does.
+	*/
+	if (Workers > 1) {
+		retval = RunParallel(fin, infile, outfile, scanfile, &path, col, dpath, silent);
 		fclose(fin);
-		return RTN_ERRCSVOPENOUT;
 	}
-	PrintHeader(fout);
+	else {
+		struct Counts cnt = { 0, 0, 0 };
 
-	if (scanfile != NULL) {
-		ScanOut = fopen(scanfile, "w");
-		if (ScanOut == NULL) {
-			printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, scanfile, strerror(errno));
-			fclose(fin); fclose(fout);
+		fout = fopen(outfile, "w");
+		if (fout == NULL) {
+			printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, outfile, strerror(errno));
+			fclose(fin);
 			return RTN_ERRCSVOPENOUT;
 		}
-		// SN0 is the S/N referred to 1 Hz, SNR + 10 log10(bandW), in dB-Hz; DuSN
-		// and DlSN are its upper and lower decile deviations; BCR is for reqSN
-		// and SNRXX the S/N exceeded on percDays of the days.
-		fprintf(ScanOut, "Circuit#,Freq,Mode,Pr,Noise,SNR,SN0,DuSN,DlSN,BCR,SNRXX,Status\n");
+		PrintHeader(fout);
+
+		if (scanfile != NULL) {
+			ScanOut = fopen(scanfile, "w");
+			if (ScanOut == NULL) {
+				printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, scanfile, strerror(errno));
+				fclose(fin); fclose(fout);
+				return RTN_ERRCSVOPENOUT;
+			}
+			PrintScanHeader(ScanOut);
+		}
+
+		retval = ProcessRows(fin, fout, &path, col, dpath, silent, 0, 1, &cnt);
+
+		if (retval == RTN_CSVOK && silent == FALSE) {
+			printf("\rProcessed %d circuit(s), %d skipped, %d month change(s)\n",
+				cnt.number, cnt.failed, cnt.monthsused);
+		}
+
+		fclose(fin);
+		fclose(fout);
+		if (ScanOut != NULL) fclose(ScanOut);
 	}
 
-	// Stream the input: one row read, calculated and written at a time. The
-	// ionospheric maps are held by the library's month cache, so a month is
-	// still read at most once however the file is ordered, while memory stays
-	// flat in the number of circuits. This is what lets the tool take batches
-	// of 100,000+ rows.
-	while (fgets(line, sizeof(line), fin) != NULL) {
-
-		// Test for a blank record without touching it: Trim() unquotes a FIELD
-		// in place, so running it on the whole record stripped the closing quote
-		// of the last field before SplitCSV() ever saw it.
-		{
-			const char *scan = line;
-			while (*scan == ' ' || *scan == '\t' || *scan == '\r' || *scan == '\n') scan++;
-			if (*scan == '\0') continue;	// skip blank records
-		}
-
-		nrow++;
-
-		nf = SplitCSV(line, field, CSVMAXFIELDS);
-		ReadCircuit(&c, field, nf, col);
-		c.row = nrow;
-
-		memset(&r, 0, sizeof(r));
-
-		// A row that is short, or carries a month outside 1-12, still appears in
-		// the output; it just never reaches the engine.
-		if (c.parsed != TRUE) {
-			r.status = "BAD_RECORD";
-			failed++;
-		}
-		else if (c.month < 1 || c.month > 12) {
-			r.status = "BAD_MONTH";
-			failed++;
-		}
-		else {
-			if (c.month - 1 != loadedmonth) {
-
-				float ****foF2, ****M3kF2;
-
-				retval = csvIonMapGet(c.month - 1, dpath, silent, &foF2, &M3kF2);
-				if (retval != RTN_READIONPARAOK) {
-					printf("CircuitCSV: Error %d from IonMapGet for month %d\n", retval, c.month);
-					fclose(fin); fclose(fout);
-					return retval;
-				}
-				// Point at the cache rather than copying 10.7 MB per switch.
-				path.foF2  = foF2;
-				path.M3kF2 = M3kF2;
-
-				retval = csvReadFamDud(&path.noiseP, dpath, c.month - 1);
-				if (retval != RTN_READFAMDUDOK) {
-					printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
-					fclose(fin); fclose(fout);
-					return retval;
-				}
-				loadedmonth = c.month - 1;
-				monthsused++;
-			}
-
-			retval = RunCircuit(&path, &c, &r);
-			if (retval != RTN_CSVOK) {
-				printf("CircuitCSV: Warning: input row %d returned error %d from P533\n", c.row, retval);
-				r.valid = FALSE;
-				r.status = "P533_ERROR";
-				failed++;
-			}
-			else {
-				// RunCircuit() may already have said why there are no results.
-				if (r.status == NULL) r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
-				number++;
-				// The path validated, so every circuit that reaches here is
-				// scanned, NO_MODE and LONG_PATH ones included: whether any
-				// scanned frequency propagates is what the scan is for.
-				if (NScan > 0) ScanCircuit(&path, &c, &r, c.row);
-			}
-		}
-
-		// One output row per input row, written as it is produced.
-		WriteRow(fout, &c, &r, c.row);
-
-		if (silent == FALSE && (nrow % 1000) == 0) printf("\rCircuit %d", nrow);
-	}
-
-	if (silent == FALSE) {
-		printf("\rProcessed %d circuit(s), %d skipped, %d month change(s)\n",
-			number, failed, monthsused);
-	}
-
-	fclose(fin);
-	fclose(fout);
-	if (ScanOut != NULL) fclose(ScanOut);
 	free(ScanF);
 	// The maps the path points at belong to the cache, so FreePathMemory() must
 	// not see them; it skips NULL.
@@ -1566,6 +1890,6 @@ int main(int argc, char *argv[]) {
 	if (P533Lib != NULL) hfLibClose(P533Lib);
 	if (P372Lib != NULL) hfLibClose(P372Lib);
 
-	return RTN_CSVOK;
+	return retval;
 
 }
