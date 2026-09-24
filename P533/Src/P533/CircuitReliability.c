@@ -422,6 +422,26 @@ void CircuitReliability(struct PathData *path) {
 		} // Isum != 0.0
 	}
 
+	else if(path->Modulation == DIGITAL) { // path->distance > 9000.0
+		// P.533-14 section 10.2.3, for path lengths beyond 9000 km: the modes making up
+		// the composite signal "are contained within a time delay spread of 3 ms at
+		// 7 000 km, increasing linearly to 5 ms at 20 000 km. If the time window
+		// specified for the system is smaller than this time delay spread, then it is
+		// predicted that the system will not meet its performance requirements."
+		// This range used to skip the OCR calculation altogether, leaving OCR = 0 and
+		// MIR undefined for every digital circuit beyond 9000 km.
+		double spread = 3.0 + 2.0*(path->distance - 7000.0)/13000.0; // ms
+		if(path->TW >= spread) {
+			path->MIR = 100.0;
+			path->OCR = path->BCR;
+		}
+		else {
+			path->MIR = 0.0;
+			path->OCR = 0.0;
+		}
+		path->OCRs = path->OCR;
+	}
+
     // End OCR Calculation ************************************************************************
 
 	// SNR for the required reliability

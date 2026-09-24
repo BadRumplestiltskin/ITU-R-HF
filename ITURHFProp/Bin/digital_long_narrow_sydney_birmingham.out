@@ -1,0 +1,89 @@
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 24 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Thu Sep 24 16:19:48 2026
+
+---------------------------------------------------------------------------
+
+***************************** P533 Input Parameters ****************************
+
+	Digital modulation beyond 9000 km, window below the delay spread: Sydney to Birmingham
+	Year          : 2018
+	Month         : May
+	Hour          : 2 (hour UTC)
+	SSN (R12)     : 10
+	Distance      : 17040.532792 (km)
+	dmax          : 4000.000000 (km)
+	Tx power      : 13.000000
+	Tx Location     Sydney
+	Tx latitude   :  33.870000 S
+	Tx longitude  : 151.210000 E
+	Rx Location     Birmingham
+	Rx latitude   :  52.486200 N
+	Rx longitude  :   1.890400 W
+	local time Rx : 2 (hour UTC)
+	local time Tx : 12 (hour UTC)
+	Frequency     : 14.000000
+	Bandwidth     : 3000.000000
+	Modulation : DIGITAL
+	Required signal-to-noise ratio : 17.000000
+	Required % of month signal-to-noise ratio :  90
+	Required signal-to-interference ratio : 10.000000
+	Man-made noise : RESIDENTIAL
+	Frequency dispersion for simple BCR (F0) : 1.000000
+	Time spread for simple BCR (T0) : 0.500000
+	Required Amplitude ratio (A) : 3.000000
+	Time window (usec) : 4.000000
+	Frequency window (Hz) : 10.000000
+	Antenna configuration : Transmitter main beam to receiver main beam
+	Path Direction : SHORTPATH
+	Transmit antenna               ISOTROPIC
+	Transmit antenna bearing     : 322.259715
+	Transmit antenna gain offset : 0.000000
+	Receive antenna                ISOTROPIC
+	Receive antenna bearing      : 56.571393
+	Receive antenna gain offset  : 0.000000
+
+************************ End P533 Input Parameters *****************************
+
+************************** ITURHFP Input Parameters *****************************
+
+	Upper left (North West) latitude   :  52.486200 N
+	Upper left (North West) longitude  :   1.890400 W
+	Lower right (South East) latitude  :  52.486200 N
+	Lower right (South East) longitude :   1.890400 W
+	Number of frequencies : 1
+	Number of hours       : 4
+	Number of months      : 1
+	Latitude increment    : 1.000000 (deg)
+	Longitude increment   : 1.000000 (deg)
+
+************************** ITURHFP Input Parameters *****************************
+
+******************************** Data Format ***********************************
+
+Column 01: Month
+Column 02: Hour
+Column 03: Frequency (MHz)
+Column 04: D - Path distance (km)
+Column 05: Pr - Median receiver power (dB)
+Column 06: SNR - Median signal-to-noise ratio (dB)
+Column 07: BCR - Basic circuit reliability (%)
+Column 08: OCR - Overall circuit reliability not considering scattering (%)
+Column 09: OCRs - Overall circuit reliability considering scattering (%)
+Column 10: Probocc - Probability of scattering (%)
+Column 11: MIR - Multimode Interference (%)
+
+************************** End Data Format ********************************
+
+************************ Calculated Parameters ****************************
+
+05, 02,   14.000, 17040.53,-139.07, -10.84,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 08,   14.000, 17040.53,-136.73,  -8.58,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 14,   14.000, 17040.53,-126.91,   0.91,   8.45,   0.00,   0.00,   0.00,   0.00
+05, 20,   14.000, 17040.53,-121.63,   6.25,  16.41,   0.00,   0.00,   0.00,   0.00
+
+**************************End Calculated Parameters ***********************
+
