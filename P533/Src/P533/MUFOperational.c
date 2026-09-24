@@ -42,11 +42,15 @@ void MUFOperational(struct PathData *path) {
             {1.10, 1.20}
         },
         {
-            {1.15, 1.25},
+            {1.25, 1.35},
             {1.20, 1.30},
-            {1.25, 1.35}
+            {1.15, 1.25}
         }
     };
+	// P.1240-2 Table 1, indexed [EIRP <= 30 or > 30 dBW][WINTER, EQUINOX, SUMMER][DAY, NIGHT]:
+	//     <= 30 dBW   summer 1.10/1.20, equinox 1.15/1.25, winter 1.20/1.30 (day/night)
+	//      > 30 dBW   summer 1.15/1.25, equinox 1.20/1.30, winter 1.25/1.35
+	// The > 30 dBW row had its winter and summer entries exchanged.
 	
 	double OPEMUF, OPEMUF10, OPEMUF90;		// E layer operational MUFs
 	double OPF2MUF, OPF2MUF10, OPF2MUF90;	// F2 layer operational MUFa
@@ -81,12 +85,23 @@ void MUFOperational(struct PathData *path) {
 		time = isday ? DAY : NIGHT;
 	}
 
-    // Determine the EIRP index power
+    // Determine the EIRP index power.
+	// path->EIRP was never computed (it stayed at its TINYDB initial value) and
+	// both branches here set power = 0, so the > 30 dBW row of P.1240 Table 1 was
+	// never used and the operational MUF was 5 % low above 30 dBW e.i.r.p. The
+	// e.i.r.p. is Pt (dB(1 kW) + 30 = dBW) plus the transmit antenna gain; P.1240
+	// names no elevation for that gain, so it is taken along the ray of the
+	// lowest-order F2 mode, the mode whose basic MUF Rop scales.
+	path->EIRP = path->txpower + 30.0;
+	if(path->n0_F2 != NOLOWESTMODE) {
+		path->EIRP += AntennaGain(*path, path->A_tx,
+					ElevationAngle(path->distance/(path->n0_F2 + 1.0), path->CP[MP].hr), TXTORX);
+	}
 	if(path->EIRP <= 30.0) {
 		power = 0;
 	}
 	else { // (path->EIRP > 30.0)
-		power = 0;
+		power = 1;
 	}
 
     // Initialize the OPMUF extrema for the F2 Layer

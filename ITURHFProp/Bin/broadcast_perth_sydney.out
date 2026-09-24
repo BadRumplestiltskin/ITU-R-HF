@@ -1,0 +1,89 @@
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 24 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Thu Sep 24 15:52:02 2026
+
+---------------------------------------------------------------------------
+
+***************************** P533 Input Parameters ****************************
+
+	Broadcast e.i.r.p. above 30 dBW: Perth to Sydney
+	Year          : 2018
+	Month         : January
+	Hour          : 1 (hour UTC)
+	SSN (R12)     : 60
+	Distance      : 3290.689244 (km)
+	dmax          : 4000.000000 (km)
+	Tx power      : 20.000000
+	Tx Location     Perth
+	Tx latitude   :  31.950000 S
+	Tx longitude  : 115.860000 E
+	Rx Location     Sydney
+	Rx latitude   :  33.870000 S
+	Rx longitude  : 151.210000 E
+	local time Rx : 11 (hour UTC)
+	local time Tx : 8 (hour UTC)
+	Frequency     : 7.000000
+	Bandwidth     : 3000.000000
+	Modulation : ANALOG
+	Required signal-to-noise ratio : 10.000000
+	Required % of month signal-to-noise ratio :  90
+	Required signal-to-interference ratio : 0.000000
+	Man-made noise : RURAL
+	Antenna configuration : Transmitter main beam to receiver main beam
+	Path Direction : SHORTPATH
+	Transmit antenna               ISOTROPIC
+	Transmit antenna bearing     : 103.407492
+	Transmit antenna gain offset : 0.000000
+	Receive antenna                ISOTROPIC
+	Receive antenna bearing      : 263.759763
+	Receive antenna gain offset  : 0.000000
+
+************************ End P533 Input Parameters *****************************
+
+************************** ITURHFP Input Parameters *****************************
+
+	Upper left (North West) latitude   :  33.870000 S
+	Upper left (North West) longitude  : 151.210000 E
+	Lower right (South East) latitude  :  33.870000 S
+	Lower right (South East) longitude : 151.210000 E
+	Number of frequencies : 1
+	Number of hours       : 12
+	Number of months      : 1
+	Latitude increment    : 1.000000 (deg)
+	Longitude increment   : 1.000000 (deg)
+
+************************** ITURHFP Input Parameters *****************************
+
+******************************** Data Format ***********************************
+
+Column 01: Month
+Column 02: Hour
+Column 03: Frequency (MHz)
+Column 04: D - Path distance (km)
+Column 05: BMUF - Path basic MUF (MHz)
+Column 06: OPMUF - Operation MUF (MHz)
+Column 07: OPMUF90 - 90% Operation MUF (MHz)
+Column 08: OPMUF10 - 10% Operation MUF (MHz)
+
+************************** End Data Format ********************************
+
+************************ Calculated Parameters ****************************
+
+01, 01,    7.000,  3290.69,  19.31,  22.20,  17.28,  26.27
+01, 03,    7.000,  3290.69,  19.35,  22.25,  17.61,  27.25
+01, 05,    7.000,  3290.69,  19.66,  22.61,  18.20,  28.63
+01, 07,    7.000,  3290.69,  19.55,  22.48,  17.57,  27.95
+01, 09,    7.000,  3290.69,  19.65,  22.60,  16.95,  27.58
+01, 11,    7.000,  3290.69,  18.22,  20.95,  15.95,  25.14
+01, 13,    7.000,  3290.69,  16.74,  20.92,  16.35,  24.72
+01, 15,    7.000,  3290.69,  15.92,  19.90,  15.52,  23.51
+01, 17,    7.000,  3290.69,  13.23,  16.54,  12.87,  19.54
+01, 19,    7.000,  3290.69,  12.40,  15.50,  11.91,  18.29
+01, 21,    7.000,  3290.69,  11.50,  14.37,  10.88,  16.96
+01, 23,    7.000,  3290.69,  18.48,  21.25,  16.33,  25.11
+
+**************************End Calculated Parameters ***********************
+
