@@ -209,9 +209,8 @@ int LoadP372(void) {
 				ii) Atmospheric data. Mixed coefficient files that were compiled by Dambolt and Suessman. These files contain the original spherical harmonic coefficients
 				for foF2 and M(3000)F2 in addition to other data related to atmospheric noise, layer thickness, MUF statistics, etc. for a particular month. Some  of this
 				data appears to be deprecated. For instance, much of the foE data has been replaced by the method found in Section 4 of ITU-R P.1239-2. In this
-				implementation only the atmospheric data will be used. The suplemental subroutine ReadCoeff() can be used to examine these coefficients in more detail.
-				Much of the detail about the arrays found in these coefficient files will be available in REC533() code. Refer to the file ReadCoeffExample() for an example
-				how to use these coefficient files in an external application.
+				implementation only the atmospheric data will be used. Much of the detail about the arrays found in these coefficient files will be available in
+				REC533() code; ReadFamDud() shows how the atmospheric arrays are read.
 
 				iii) MUF variability. The file "P1239-2 Decile Factors.txt" is read in to get the decile factors related to MUF variability. This file is read in by using
 				the subroutine ReadP1239(path);
