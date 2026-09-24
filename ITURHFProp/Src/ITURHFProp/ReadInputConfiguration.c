@@ -284,7 +284,11 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 					retval = 2;
 					ITURHFP->RptFileFormat = 0;
 					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2)) {
-						retval = sscanf(buf[count], "%s | %[a-z,A-Z _|]", optstr, buf[count^1]);
+						// The remainder scanset must admit digits: without them RPT_N0_F2 and
+						// RPT_N0_E ended the scan at their "0", and every option listed after
+						// one of them was silently dropped. Both conversions are bounded by
+						// the 256-byte buffers.
+						retval = sscanf(buf[count], "%255s | %255[a-zA-Z0-9 _|]", optstr, buf[count^1]);
 						ITURHFP->RptFileFormat = ITURHFP->RptFileFormat | OutputOption(optstr);
 						count ^= 1;
 					}
