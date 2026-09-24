@@ -644,10 +644,22 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 			// Step 2 gives an amplitude criteria and Step 3 gives a delay criteria and determine the modes which fulfill 
 			// both of these criteria. Step 4 details what to do with the modes that meet the criteria.
 
-			// The zeroth element in the itau[] array is the soonest arriving mode.
-			deltat = (M[itau[0]]->tau + path->TW/1000.0); // The tau for each mode is in seconds where the time window, TW, is in mS
 			// The zeroth element in the iEw[] array is the dominant mode.
 			deltaA = (M[iEw[0]]->Prw - path->A);
+
+			// Step 3: "Of the modes identified in Steps 1 or 2, the first arriving
+			// mode is identified". This took the earliest of every mode with a
+			// basic MUF (itau[0]), including E-screened modes that carry no signal
+			// (Prw = TINYDB) and modes below the amplitude ratio, so the window
+			// could open on a mode that is not there. Only active modes -- those
+			// summed into Es (MC) -- that pass the step 2 test are considered.
+			deltat = DBL_MAX;
+			for(n=0; n<MAXMDS; n++) {
+				if((M[n]->BMUF != 0.0) && M[n]->MC && (M[n]->Prw >= deltaA) && (M[n]->tau < deltat)) {
+					deltat = M[n]->tau;
+				}
+			}
+			deltat += path->TW/1000.0; // The tau for each mode is in seconds where the time window, TW, is in mS
 
 			// Initialize signal sum
 			Ssum = 0.0;
