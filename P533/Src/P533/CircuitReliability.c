@@ -809,7 +809,10 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
         }
 
         // Determine the coefficients for the probocc calculation that are independant of the control point
-		FR = (0.1 + 0.008*max(path->SSN, 160));
+		// P.533-14 Attachment 1: "FR = (0.1 + 0.008R12) or 1, whichever is
+		// the smaller". This read 0.1 + 0.008*max(SSN, 160), so FR was never
+		// below 1.38 and probocc was overstated for every circuit.
+		FR = min(0.1 + 0.008*path->SSN, 1.0);
 		FS = 0.55 + 0.45*sin(60.0*D2R*((path->month+1.0) - 1.5));
 
 		if(useCP == TRUE) { // Use the control points

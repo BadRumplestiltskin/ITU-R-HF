@@ -140,8 +140,11 @@ double MirrorReflectionHeight(struct PathData path, struct ControlPt CP, double 
 			F1 = 1.21 + 0.2*xr;
 		}
 
-        if(xr <= 3.7) {
-			G = -2.102*pow(xr, 4) + 19.50*pow(xr, 3) - 63.15*xr*xr - 44.73;
+        // P.533-14 equation (14). This lacked the 90.47 xr term, so G fell
+		// to about -315 at xr = 3.7 instead of meeting the constant 19.25
+		// used beyond it, and the skip distance ds was wrong throughout.
+		if(xr <= 3.7) {
+			G = -2.102*pow(xr, 4) + 19.50*pow(xr, 3) - 63.15*xr*xr + 90.47*xr - 44.73;
 		}
 		else {
 			G = 19.25;
