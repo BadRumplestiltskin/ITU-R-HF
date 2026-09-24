@@ -153,7 +153,12 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 		deltaM = ElevationAngle(dM, hr);
 
 		// Is the calculated elevation angle more than the minimum
-		if(deltaM < MINELEANGLEL*D2R) {
+		// P.533-14 section 5.3.1: "If the elevation angle is lower than 3.0
+		// degrees, one hop is added and the hop length and elevation angle are
+		// recalculated until the elevation angle exceeds 3.0 degrees." This was
+		// an if, adding at most one hop, which leaves the angle below 3 degrees
+		// for paths of about 19 350 - 20 015 km.
+		while(deltaM < MINELEANGLEL*D2R) {
 			nM += 1; // Add a hop
 
 			// Hop distance
