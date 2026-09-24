@@ -126,8 +126,6 @@ void IonosphericParameters(struct ControlPt *here, float ****foF2, float ****M3k
 	int		lng, lat;	// gridmap maxima
 
 	// For the gridpoint maps at an increment of 1.5 degrees in lat and long
-	int zerolat = 60;	// The max latitude is 121 
-	int zerolng = 120;	// The max longitude is 241
 	double inc;			// Increment for the gridpoint maps (1.5 * pi) / 180 = 0.0261799388
 	double fracj, frack;// Fractional "column" j and fractional "row" k
 
@@ -138,164 +136,33 @@ void IonosphericParameters(struct ControlPt *here, float ****foF2, float ****M3k
 	lat = 121;	// 121 lngitudes at 1.5 degree increments
 	 
 	/*
-	 * Find the neighborhood around the point of interest
-	 * The neighbors are determined differently for each quadrant so that the neighbors are in the correct order relative to the 
-	 * array indices. This is done to simplify the interpolation code. There are no quadrants in the foF2 and M3kF2 data array. In the 
-	 * foF2 and M3kF2 array the 0,0 point is the southwest corner and the indicies increase north and east. 
-	 * First determine the quadrant
+	 * Find the neighborhood around the point of interest.
+	 * In the foF2 and M3kF2 arrays the 0,0 point is the south-west corner (90 S, 180 W) and the
+	 * indices increase north (k) and east (j) in 1.5 degree steps. The lower-left neighbour is the
+	 * grid point at or below and west of the point, found with floor(), and the fractional row and
+	 * column are measured from it, as BilinearInterpolation() and P.1144 require.
+	 *
+	 * This used (int) truncation in four quadrant branches. Truncation rounds toward zero, so in the
+	 * southern and western hemispheres the grid line it found was the nearer-to-zero one -- the upper
+	 * or right neighbour -- while the fraction was still applied as if measured from the lower or left
+	 * one: the point was mirrored within its cell (the MATLAB port's D27). foF2 and M(3000)F2 were
+	 * wrong by up to the change across one 1.5 degree cell there; the NE quadrant was unaffected.
 	 */
-	if( here->L.lat >= 0.0 ) {
-		if (here->L.lng >= 0.0) { // NE quad
-			LL.k = zerolat+(int)(here->L.lat / inc); // North is positive
-			LL.j = zerolng+(int)(here->L.lng / inc); // East is positive
-			LR.k = LL.k;
-			LR.j = LL.j+1;
-			UR.k = LL.k+1;
-			UR.j = LL.j+1;
-			UL.k = LL.k+1;
-			UL.j = LL.j;
-			// Check the rollover conditions - corners and edges
-			if ( LL.j != lng-1 ) { // not on E edge
-				if ( LL.k != lat-1 ) { // not on N edge
-					// don't do anything
-				}
-				else { // N edge
-					// fix the N rollover - no rollover N to S
-					UR.k = LL.k;
-					UL.k = LL.k;
-				}
-            }
-			else { // E edge
-				if ( LL.k != lat-1 ) { // not on N edge
-					// fix the E rollover - rollover E to W
-					LR.j = 0;
-					UR.j = 0;
-				}
-				else { // NE corner
-					// Collapse to 1D
-					LR.k = LL.k;
-					LR.j = 0;
-					UR.k = LL.k;
-					UR.j = 0;
-					UL.k = LL.k;
-					UL.j = LL.j;
-				}
-            }
-        }
-		else {	// NW quad
-			LR.k = zerolat+(int)(here->L.lat / inc); // North is positive
-			LR.j = zerolng+(int)(here->L.lng / inc); // West is negative	
-			LL.k = LR.k;
-			LL.j = LR.j-1;
-			UL.k = LR.k+1;
-			UL.j = LR.j-1;
-			UR.k = LR.k+1;
-			UR.j = LR.j;
-			// Check the rollover conditions - corners and edges
-			if ( LR.j != 0.0 ) { // not on W edge
-				if ( LR.k != lat-1 ) { // not on N edge
-					// don't do anything
-				}
-				else { // N edge
-					// fix the N rollover - no rollover N to S
-					UR.k = LR.k;
-					UL.k = LR.k;
-				}
-            }
-			else { // W edge
-				if ( LR.k != lat-1 ) { // not on N edge
-					// fix the W rollover - rollover W to E
-					LL.j = lng-1;
-					UL.j = lng-1;
-				}
-				else { // NW corner
-					// Collapse to 1D
-					LL.k = LR.k;
-					LL.j = lng-1;
-					UR.k = LR.k;
-					UR.j = LR.j;
-					UL.k = LR.k;
-					UL.j = lng-1;
-				}
-            }
-        }
-    }
-	else { 
-		if (here->L.lng >= 0.0) { // SE quad
-			UL.k = zerolat+(int)(here->L.lat / inc); // South is negative
-			UL.j = zerolng+(int)(here->L.lng / inc); // East is positive
-			UR.k = UL.k;
-			UR.j = UL.j+1;
-			LL.k = UL.k-1;
-			LL.j = UL.j;
-			LR.k = UL.k-1;
-			LR.j = UL.j+1;
-			// Check the rollover conditions - corners and edges
-			if ( UL.j != lng-1 ) { // not on E edge
-				if ( UL.k != 0 ) { // not on SE corner
-					// don't do anything
-				}
-				else { // S edge
-					// fix the S rollover - no rollover S to N
-					LL.k = UL.k;
-					LR.k = UL.k;
-				}
-            }
-			else { // E edge
-				if ( UL.k != 0 ) { // not on SE corner
-					// fix the E rollover - rollover E to W
-					LR.j = 0;
-					UR.j = 0;
-				}
-				else { // SE corner
-					// Collapse to 1D
-					LR.k = UL.k;
-					LR.j = 0;
-					UR.k = UL.k;
-					UR.j = 0;
-					LL.k = UL.k;
-					LL.j = UL.j;
-				}
-            }
-        }
-		else { // SW quad
-			UR.k = zerolat+(int)(here->L.lat / inc); // South is negative
-			UR.j = zerolng+(int)(here->L.lng / inc); // West is negative
-			UL.k = UR.k;
-			UL.j = UR.j-1;
-			LL.k = UR.k-1;
-			LL.j = UR.j-1;
-			LR.k = UR.k-1;
-			LR.j = UR.j;
-			// Check the rollover conditions - corners and edges
-			if ( UR.j != 0.0 ) { // not on W edge
-				if ( UR.k != 0 ) { // not on SW corner
-					// don't do anything
-				}
-				else { // S edge
-					// fix the N rollover - no rollover N to S
-					LR.k = UR.k;
-					LL.k = UR.k;
-				}
-            }
-			else { // W edge
-				if ( UR.k != 0 ) { // not on SW corner
-					// fix the W rollover - rollover W to E
-					LL.j = lng-1;
-					UL.j = lng-1;
-				}
-				else { // SW corner
-					// Collapse to 1D
-					LR.k = UR.k;
-					LR.j = UR.j;
-					LL.k = UR.k;
-					LL.j = lng-1;
-					UL.k = UR.k;
-					UL.j = lng-1;
-				}
-            }
-        }
-    }
+	{
+		double jf = (here->L.lng + PI)/inc;		// fractional longitude index
+		double kf = (here->L.lat + PI/2.0)/inc;	// fractional latitude index
+		int j0 = (int)floor(jf), k0 = (int)floor(kf);
+		if(j0 < 0) j0 = 0;
+		if(j0 > lng-1) j0 = lng-1;
+		if(k0 < 0) k0 = 0;
+		if(k0 > lat-1) k0 = lat-1;
+		fracj = min(max(jf - j0, 0.0), 1.0);
+		frack = min(max(kf - k0, 0.0), 1.0);
+		LL.j = j0;							LL.k = k0;
+		LR.j = (j0 < lng-1) ? j0+1 : j0;	LR.k = k0;
+		UL.j = j0;							UL.k = (k0 < lat-1) ? k0+1 : k0;
+		UR.j = LR.j;						UR.k = UL.k;
+	}
 
     // Determine the lat and lng in degrees
 	UL.L.lat = UL.k*inc - PI/2.0;
@@ -330,8 +197,7 @@ void IonosphericParameters(struct ControlPt *here, float ****foF2, float ****M3k
 
     // Now you are ready to interpolate the value at the point of interest
 	// determine the fractional "column" j and fractional "row" k for the bilinear interpolation calculation
-	frack =  fabs(here->L.lat/inc) - (int)fabs(here->L.lat/inc); // Fractional row distance
-	fracj =  fabs(here->L.lng/inc) - (int)fabs(here->L.lng/inc); // Fractional column distance
+	// frack and fracj, the fractional row and column from the lower-left neighbour, were set above.
 	for(m=0; m<2; m++) {
 		ned.foF2[m] = BilinearInterpolation(LL.foF2[m], LR.foF2[m], UL.foF2[m], UR.foF2[m], frack, fracj);
 		ned.M3kF2[m] = BilinearInterpolation(LL.M3kF2[m], LR.M3kF2[m], UL.M3kF2[m], UR.M3kF2[m], frack, fracj);
