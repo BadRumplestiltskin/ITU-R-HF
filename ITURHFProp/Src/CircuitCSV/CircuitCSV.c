@@ -297,10 +297,48 @@ static int FindColumn(char **hdr, int nhdr, const char *name) {
 // the file does not matter.
 static const char *InputColumns[] = {
 	"txSite", "txLat", "txLon", "rxSite", "rxLat", "rxLon",
-	"year", "month", "day", "hour", "t_Index", "minTOA",
+	"year", "month", "day", "hour", "SSN", "minTOA",
 	"txPow", "reqSN", "rxNoise", "bandW", "percDays"
 };
 #define NINPUTCOLUMNS ((int)(sizeof(InputColumns)/sizeof(InputColumns[0])))
+
+// The solar index column, InputColumns[COLINDEX], may be given either as "SSN" --
+// the 12-month smoothed sunspot number R12 on the SIDC version 2 scale, used as
+// it is -- or as "t_Index", the IPS ionospheric T index, which is converted to
+// SSN with the SIDC version 2 relation T = 4.90 + 0.670 SSN. If both are present
+// SSN is used. P.533 takes SSN; IndexName records which column the file had, so
+// that the output echoes it under its own name.
+#define COLINDEX 10
+static int IndexIsT = FALSE;
+static const char *IndexName = "SSN";
+
+/*
+	SSNFromIndex() - The SSN P.533 is given for one row's solar index.
+
+		SSN, the SIDC version 2 R12, is rounded to the integer the engine holds.
+		A T index becomes SSN = (T - 4.90)/0.670, rounded. T falls below 4.90 at
+		deep solar minimum, which would make SSN negative; P.533 section 3.4 gives
+		the ionospheric maps for R12 from 0 upward and nothing below, so a negative
+		result is taken as 0.
+
+		INPUT
+			double index, int isT
+
+		OUTPUT
+			returns SSN
+
+		SUBROUTINES
+			None
+*/
+static int SSNFromIndex(double index, int isT) {
+
+	double ssn = isT ? (index - 4.90)/0.670 : index;
+
+	if (ssn < 0.0) ssn = 0.0;
+
+	return (int)floor(ssn + 0.5);
+
+}
 
 /*
 	ReadCircuit() - Fills a Circuit from one split record.
@@ -336,7 +374,8 @@ static int ReadCircuit(struct Circuit *c, char **f, int nf, int *col) {
 	c->month    = atoi(CSVFLD(7));
 	c->day      = atoi(CSVFLD(8));
 	c->hour     = atoi(CSVFLD(9));
-	c->t_Index  = atoi(CSVFLD(10));
+	c->index    = atof(CSVFLD(COLINDEX));
+	c->ssn      = SSNFromIndex(c->index, IndexIsT);
 	c->minTOA   = atof(CSVFLD(11));
 	c->txPow    = atof(CSVFLD(12));
 	c->reqSN    = atof(CSVFLD(13));
@@ -389,7 +428,7 @@ static void SetPath(struct PathData *path, struct Circuit *c, double frequency) 
 	path->year  = c->year;
 	path->month = c->month - 1;		// the file is 1-12, the engine is 0-11
 	path->hour  = c->hour;
-	path->SSN   = c->t_Index;		// t_Index is the smoothed sunspot number
+	path->SSN   = c->ssn;			// from SSN, or converted from t_Index
 
 	path->frequency = frequency;
 	path->BW        = c->bandW;
@@ -707,11 +746,11 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 static void PrintHeader(FILE *fp) {
 
 	fprintf(fp,
-		"txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,t_Index,"
+		"txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,%s,"
 		"minTOA,txPow,reqSN,rxNoise,bandW,percDays,"
-		"Circuit#,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,"
+		"Circuit#,SSN_used,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,"
 		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,"
-		"fM,SN_fM,fL,SN_fL,Status\n");
+		"fM,SN_fM,fL,SN_fL,Status\n", IndexName);
 
 }
 
@@ -800,17 +839,17 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 	// ones that can need quoting on the way out.
 	char txq[CSVMAXNAME*2+3], rxq[CSVMAXNAME*2+3];
 
-	fprintf(fp, "%s,%.6g,%.6g,%s,%.6g,%.6g,%d,%d,%d,%d,%d,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,",
+	fprintf(fp, "%s,%.6g,%.6g,%s,%.6g,%.6g,%d,%d,%d,%d,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,",
 		CsvQuote(txq, sizeof(txq), c->txSite), c->txLat, c->txLon,
 		CsvQuote(rxq, sizeof(rxq), c->rxSite), c->rxLat, c->rxLon,
-		c->year, c->month, c->day, c->hour, c->t_Index,
+		c->year, c->month, c->day, c->hour, c->index,
 		c->minTOA, c->txPow, c->reqSN, c->rxNoise, c->bandW, c->percDays);
 
 	if (r->valid == FALSE) {
 		// No results. Geometry is still meaningful when the circuit ran but no
 		// mode was supported; it is zero when the circuit never ran at all.
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,,,,,%s\n",
-			number, r->dist, r->txBearing, r->rxBearing,
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,,,,,%s\n",
+			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
 			(r->status != NULL) ? r->status : "NO_MODE");
 		return;
 	}
@@ -844,8 +883,8 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 	// A path longer than about 7000 km has no dominant mode, so the columns that
 	// describe one are left empty while the frequencies, SNRs and noise are not.
 	if (r->hops > 0) {
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,%d%c,%s,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-			number, r->dist, r->txBearing, r->rxBearing,
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,%d%c,%s,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
 			r->hops, r->layer,
 			fbuf[FRQBUF], r->prob, r->toa, r->loss, snbuf[FRQBUF],
 			r->delay, r->grange,
@@ -856,8 +895,8 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 			(r->status != NULL) ? r->status : "OK");
 	}
 	else {
-		fprintf(fp, "%d,%.6g,%.6g,%.6g,,%s,%.6g,,,%s,,,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
-			number, r->dist, r->txBearing, r->rxBearing,
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,,%s,%.6g,,,%s,,,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
 			fbuf[FRQBUF], r->prob, snbuf[FRQBUF],
 			r->noiseRx, r->noiseRx,
 			fbuf[FRQMUF], snbuf[FRQMUF],
@@ -1045,8 +1084,11 @@ static void PrintUsage(void) {
 	printf("  -h          This help\n\n");
 	printf("Input columns (looked up by name, order and extra columns do not matter):\n");
 	printf("  txSite txLat txLon rxSite rxLat rxLon year month day hour\n");
-	printf("  t_Index minTOA txPow reqSN rxNoise bandW percDays\n\n");
-	printf("  t_Index is the 12-month smoothed sunspot number, R12.\n");
+	printf("  SSN|t_Index minTOA txPow reqSN rxNoise bandW percDays\n\n");
+	printf("  SSN is the 12-month smoothed sunspot number R12, SIDC version 2, used as\n");
+	printf("  given. t_Index, the IPS T index, is accepted instead and converted as\n");
+	printf("  SSN = (T - 4.90)/0.670 (negative results taken as 0). If both columns are\n");
+	printf("  present SSN is used. The SSN_used output column shows the value applied.\n");
 	printf("  txPow is watts, rxNoise is dBW, bandW is Hz, percDays is %% of days.\n");
 	printf("  day is echoed but unused: P.533 predicts monthly medians.\n\n");
 
@@ -1150,6 +1192,19 @@ int main(int argc, char *argv[]) {
 	nhdr = SplitCSV(line, field, CSVMAXFIELDS);
 	for (int i = 0; i < NINPUTCOLUMNS; i++) {
 		col[i] = FindColumn(field, nhdr, InputColumns[i]);
+		if ((i == COLINDEX) && (col[i] < 0)) {
+			// No SSN column: accept the IPS T index instead and convert it.
+			col[i] = FindColumn(field, nhdr, "t_Index");
+			if (col[i] >= 0) {
+				IndexIsT = TRUE;
+				IndexName = "t_Index";
+			}
+			else {
+				printf("CircuitCSV: Error %d Header needs an 'SSN' or a 't_Index' column\n", RTN_ERRCSVHEADER);
+				fclose(fin);
+				return RTN_ERRCSVHEADER;
+			}
+		}
 		if (col[i] < 0) {
 			printf("CircuitCSV: Error %d Header is missing the column '%s'\n",
 				RTN_ERRCSVHEADER, InputColumns[i]);

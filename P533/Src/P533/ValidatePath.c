@@ -54,7 +54,8 @@ int ValidatePath(struct PathData *path) {
 	// not a limit of the method. foF2 and M(3000)F2 clamp R12 to MAXSSN themselves
 	// in IonosphericParameters() (P.533-14 section 3.4 and P.1239-4 section 3.1);
 	// nothing else in P.533 limits it.
-	if (1 > path->SSN)												return RTN_ERRSSN;
+	// R12 = 0 is valid: P.533-14 section 3.4 gives the maps for R12 from 0 up.
+	if (0 > path->SSN)												return RTN_ERRSSN;
 	if ((path->Modulation != DIGITAL) && (path->Modulation != ANALOG))	return RTN_ERRMODULATION;
 	if ((1.0 > path->frequency) || path->frequency > 30.0)				return RTN_ERRFREQUENCY;
 	if ((0.005 > path->BW) || (path->BW > 3e6))							return RTN_ERRBW;

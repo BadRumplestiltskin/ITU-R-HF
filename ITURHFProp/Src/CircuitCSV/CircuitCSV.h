@@ -20,7 +20,8 @@
 
 /*
 	One row of the input file. The names match the csv header exactly.
-	t_Index is the 12-month smoothed sunspot number, R12, which P.533 calls SSN.
+	The solar index column is either SSN (R12, SIDC version 2) or t_Index (the IPS
+	T index), which is converted to SSN; see SSNFromIndex() in CircuitCSV.c.
 */
 struct Circuit {
 	int    row;				// 1-based data row number in the input file
@@ -35,7 +36,8 @@ struct Circuit {
 	int    month;			// 1 - 12 in the file, 0 - 11 in the engine
 	int    day;				// read and echoed; P.533 works on monthly medians
 	int    hour;			// UTC, 0 - 23
-	int    t_Index;			// SSN (R12)
+	double index;			// the solar index as given: SSN, or t_Index
+	int    ssn;				// SSN applied: index, or converted from the T index
 	double minTOA;			// minimum take-off angle (degrees)
 	double txPow;			// transmitter power (W)
 	double reqSN;			// required signal-to-noise ratio (dB)

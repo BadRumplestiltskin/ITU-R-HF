@@ -33,7 +33,7 @@ ignored. All are required.
 | `txSite`, `txLat`, `txLon` | transmitter name and position, degrees, N/E positive |
 | `rxSite`, `rxLat`, `rxLon` | receiver name and position |
 | `year`, `month`, `day`, `hour` | month is **1-12**, hour is **0-23 UTC** |
-| `t_Index` | the 12-month smoothed sunspot number R12, which P.533 calls SSN |
+| `SSN` or `t_Index` | the solar index, see below |
 | `minTOA` | minimum take-off angle, degrees |
 | `txPow` | transmitter power, **watts** |
 | `reqSN` | required signal-to-noise ratio, dB |
@@ -42,6 +42,20 @@ ignored. All are required.
 | `percDays` | required reliability, % of days |
 
 `day` is echoed to the output but unused: P.533 predicts monthly medians.
+
+**Solar index.** P.533 is driven by the 12-month smoothed sunspot number R12,
+which it calls SSN. The input gives it in one of two columns:
+
+- `SSN`: taken as the SIDC version 2 sunspot number and used as it is (rounded
+  to an integer).
+- `t_Index`: the IPS ionospheric T index, converted with the SIDC version 2
+  relation T = 4.90 + 0.670 SSN, i.e. SSN = (T - 4.90)/0.670, rounded. T falls
+  below 4.90 at deep solar minimum; P.533 gives its maps for R12 from 0 upward,
+  so a negative result is taken as 0.
+
+If both columns are present `SSN` is used. The index is echoed under the name the
+file gave it, and the `SSN_used` output column shows the value P.533 received:
+a T index of 10 runs as SSN 8, and 120 as SSN 172.
 
 ## Row matching
 
@@ -72,6 +86,7 @@ Written in the engine's own units with `%.6g`, no fixed-point scaling.
 
 | Column | Unit |
 |---|---|
+| `SSN_used` | the sunspot number P.533 was run with (see Solar index) |
 | `Dist` | km |
 | `Tx-Bearing`, `Rx-Bearing` | degrees from true north |
 | `Mode` | dominant mode, e.g. `2F` = two-hop F2 |
