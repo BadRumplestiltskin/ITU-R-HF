@@ -199,25 +199,15 @@ void MUFBasic(struct PathData *path) {
 		// Determine the lowest order E mode
 		hr = 110.0; // The mirror reflection height is 110 km for the E layer basic MUF calculation
 
-		// Determine the elevation angle
-		delta = minele;
-		
-		// The angle of incidence for the minimum elevation (minele) and mirror reflection height (hr)
-		aoi = IncidenceAngle(delta, hr);
-
-		// Now solve for the arc length of the half-hop length and multiply by the earth's radius. Then to find the total
-		// hop length (dh) multiply by 2.0.
-		dh = (PI - aoi - ((PI/2.0) + minele))*R0*2.0;
-
-		// The hop distance can't be longer than 4000 km.
-		dh = min(dh, 4000.0);
-
-		for( n0 = 0; n0 < 3; n0++ ) {
-			if(dh > path->distance/(n0+1)) { // Is the mirror reflection height horizon less than the n0 hop distance?
-				path->n0_E = n0;
-				break; // You have found the lowest-order mode. Jump out of the loop.
-			}
-        }
+		// P.533-14 section 5.2.1 considers "E modes - the lowest-order mode with hop
+		// length up to 2 000 km, and the next two higher-order modes", and P.1240-2
+		// section 2 lists 1E for 0-2 000 km and 2E for 2 000-4 000 km. The lowest-order
+		// E mode is therefore one hop up to 2000 km and two beyond. This found it from
+		// a 3 degree minimum elevation angle instead, which limits one hop to 1776 km,
+		// so paths of 1776-2000 km took 2E (a basic MUF about 27 % low) and paths of
+		// 3552-4000 km took 3E.
+		n0 = (path->distance <= 2000.0) ? 0 : 1;
+		path->n0_E = n0;
 
         // Is there a lowest order E mode?
 		if(path->n0_E != NOLOWESTMODE) {
