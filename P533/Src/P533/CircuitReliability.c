@@ -563,7 +563,6 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 
 	int n,m,j;	// Temp
 
-	double Etw;		// Sum of the field strengths (dB) within path->A of the dominant mode and Tw of the earlest arriving mode
 	double Ssum;	// Sum of the field strengths 
 	double S;		// Signal used in Step 1 Table 1 and Table 3 P.842-4
 	double dh;		// Hop distance
@@ -688,7 +687,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 				if((M[n]->BMUF != 0.0) && M[n]->MC && (M[n]->Ew >= deltaA)) { 
 					if(M[n]->tau <= deltat) {
 
-						Ssum += pow(pow(10.0, M[n]->Ew/10.0), 2);
+						Ssum += pow(10.0, M[n]->Prw/10.0);
 						iS[n] = n;
 					}
 					else { // If the mode is not determined to be a signal then it is interference.
@@ -699,17 +698,18 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
                 }
             }
 
-            // Only determine Etw if there is a mode that satisfies the criteria above 
-			// otherwise Etw is set to the something small
+            // Step 4: "a power summation of the modes arriving within the window",
+			// the in-window counterpart of equation (44): the sum of each mode's
+			// available power Prw, which carries that mode's own receive antenna
+			// gain. This took 10 log sqrt(sum (10^(Ew/10))^2) -- the root of the
+			// summed squares of the field strengths, so two equal modes added
+			// 1.5 dB rather than 3 dB -- and applied only the dominant mode's gain.
 			if(Ssum > 0) {
-				Etw = 10.0*log10(sqrt(Ssum));
+				S = 10.0*log10(Ssum);
 			}
 			else {
-				Etw = TINYDB;
+				S = TINYDB;
 			}
-
-            // Use the combined mode power, Ssum, and the antenna gain, Grw
-			S = Etw + path->Grw - 20.0*log10(path->frequency) - 107.2;
 
 		}
 		else { // (NumberofModes(*path) < 2) 
