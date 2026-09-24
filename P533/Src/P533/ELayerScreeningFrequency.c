@@ -39,8 +39,12 @@ void ELayerScreeningFrequency(struct PathData *path) {
 
 	int k;			// Temp
 	
-	// E layer screening is restricted to paths no longer than 4000 km.
-	if(path->distance > 4000) return; 
+	// E layer screening is restricted to paths no longer than 4000 km, but the
+	// mirror-reflection heights of section 5.1 are needed for every F2 mode up to
+	// 9000 km: equation (47) takes the mode delay from p' "and the reflection
+	// height, hr, determined as in section 5.1". This returned before setting hr
+	// beyond 4000 km, so every F2 mode there had hr = 0 and its delay was the
+	// ground distance over c -- the same for all modes (14.67 ms at 4399 km).
 
 	// Determine the foE for this calculation.
 	if(path->distance <= 2000.0) {
@@ -68,7 +72,9 @@ void ELayerScreeningFrequency(struct PathData *path) {
 					            MirrorReflectionHeight(*path, path->CP[Rd02], dh))/3.0;
 		}
 
-        // Find the elevation angle from equation 13 Section 5.1 Elevation angle.
+        if(path->distance > 4000) continue; // no E-layer screening beyond 4000 km
+
+		// Find the elevation angle from equation 13 Section 5.1 Elevation angle.
 		// ITU-R P.533-12
 		deltaf = ElevationAngle(dh, path->Md_F2[k].hr);
 

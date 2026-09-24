@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 16:29:58 2026
+     Analysis Prepared  Thu Sep 24 16:57:21 2026
 
 ---------------------------------------------------------------------------
 
@@ -176,7 +176,7 @@
 	Receiver Power            = -153.191 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.566 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  0.525 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -197,7 +197,7 @@
 	Receiver Power            = -153.951 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.397 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  4.235 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -218,7 +218,7 @@
 	Receiver Power            = -157.760 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  19.450 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  5.917 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -239,7 +239,7 @@
 	Receiver Power            = -162.423 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.978 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  6.717 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -260,7 +260,7 @@
 	Receiver Power            = -167.339 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  28.088 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  7.022 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -281,7 +281,7 @@
 	Receiver Power            = -172.285 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.835 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain =  7.015 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -302,7 +302,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -323,7 +323,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -344,7 +344,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  452.892 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -704,7 +704,7 @@
 	Receiver Power            = -155.357 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.613 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  0.568 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -725,7 +725,7 @@
 	Receiver Power            = -156.006 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.458 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  4.261 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -746,7 +746,7 @@
 	Receiver Power            = -159.795 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  19.522 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  5.934 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -767,7 +767,7 @@
 	Receiver Power            = -164.472 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  24.059 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  6.727 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -788,7 +788,7 @@
 	Receiver Power            = -169.417 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  28.176 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  7.024 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -809,7 +809,7 @@
 	Receiver Power            = -174.391 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.928 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain =  7.012 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -830,7 +830,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -851,7 +851,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -872,7 +872,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  472.293 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -1232,7 +1232,7 @@
 	Receiver Power            = -147.246 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.719 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  418.862 (km)
 	Receiver Gain =  0.665 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -1253,7 +1253,7 @@
 	Receiver Power            = -148.381 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.593 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  416.040 (km)
 	Receiver Gain =  4.321 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -1274,7 +1274,7 @@
 	Receiver Power            = -152.320 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  19.682 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  414.347 (km)
 	Receiver Gain =  5.972 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -1295,7 +1295,7 @@
 	Receiver Power            = -157.029 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  24.239 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  413.219 (km)
 	Receiver Gain =  6.746 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -1316,7 +1316,7 @@
 	Receiver Power            = -161.959 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  28.371 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  412.412 (km)
 	Receiver Gain =  7.027 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -1337,7 +1337,7 @@
 	Receiver Power            = -166.885 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  32.135 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  411.808 (km)
 	Receiver Gain =  7.005 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -1358,7 +1358,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  411.338 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -1379,7 +1379,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  410.961 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -1400,7 +1400,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  410.654 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -1760,7 +1760,7 @@
 	Receiver Power            = -150.828 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  7.748 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  394.258 (km)
 	Receiver Gain = -0.255 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -1781,7 +1781,7 @@
 	Receiver Power            = -151.152 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.351 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  390.407 (km)
 	Receiver Gain =  3.749 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -1802,7 +1802,7 @@
 	Receiver Power            = -154.815 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  18.209 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  388.097 (km)
 	Receiver Gain =  5.596 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -1823,7 +1823,7 @@
 	Receiver Power            = -159.395 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  22.576 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  386.557 (km)
 	Receiver Gain =  6.526 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -1844,7 +1844,7 @@
 	Receiver Power            = -164.268 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  26.559 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  385.456 (km)
 	Receiver Gain =  6.948 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -1865,7 +1865,7 @@
 	Receiver Power            = -169.198 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  30.209 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  384.631 (km)
 	Receiver Gain =  7.048 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -1886,7 +1886,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  383.990 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -1907,7 +1907,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  383.476 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -1928,7 +1928,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  383.056 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -2288,7 +2288,7 @@
 	Receiver Power            = -140.379 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  6.436 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  323.546 (km)
 	Receiver Gain = -1.739 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -2309,7 +2309,7 @@
 	Receiver Power            = -140.804 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  11.663 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  317.159 (km)
 	Receiver Gain =  2.821 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -2330,7 +2330,7 @@
 	Receiver Power            = -146.415 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  16.191 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  313.327 (km)
 	Receiver Gain =  4.953 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -2351,7 +2351,7 @@
 	Receiver Power            = -151.368 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  20.279 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  310.772 (km)
 	Receiver Gain =  6.106 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -2372,7 +2372,7 @@
 	Receiver Power            = -156.320 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  24.031 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  308.947 (km)
 	Receiver Gain =  6.723 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -2393,7 +2393,7 @@
 	Receiver Power            = -161.208 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  27.500 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  307.578 (km)
 	Receiver Gain =  6.999 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -2414,7 +2414,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  306.514 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -2435,7 +2435,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  305.662 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -2456,7 +2456,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  304.966 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -2816,7 +2816,7 @@
 	Receiver Power            = -146.822 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.242 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  347.719 (km)
 	Receiver Gain =  0.230 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -2837,7 +2837,7 @@
 	Receiver Power            = -145.358 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.984 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  335.072 (km)
 	Receiver Gain =  4.052 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -2858,7 +2858,7 @@
 	Receiver Power            = -151.757 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  18.960 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  327.484 (km)
 	Receiver Gain =  5.799 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -2879,7 +2879,7 @@
 	Receiver Power            = -157.596 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.426 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  322.426 (km)
 	Receiver Gain =  6.645 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -2900,7 +2900,7 @@
 	Receiver Power            = -163.305 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  27.487 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  318.812 (km)
 	Receiver Gain =  6.998 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -2921,7 +2921,7 @@
 	Receiver Power            = -169.012 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.197 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  316.102 (km)
 	Receiver Gain =  7.034 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -2942,7 +2942,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  313.994 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -2963,7 +2963,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  312.308 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -2984,7 +2984,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  310.929 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -3344,7 +3344,7 @@
 	Receiver Power            = -153.719 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.711 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  413.118 (km)
 	Receiver Gain =  0.657 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -3365,7 +3365,7 @@
 	Receiver Power            = -150.786 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.583 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  394.437 (km)
 	Receiver Gain =  4.316 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -3386,7 +3386,7 @@
 	Receiver Power            = -156.566 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  19.670 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  383.229 (km)
 	Receiver Gain =  5.969 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -3407,7 +3407,7 @@
 	Receiver Power            = -162.267 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  24.226 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  375.757 (km)
 	Receiver Gain =  6.745 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -3428,7 +3428,7 @@
 	Receiver Power            = -167.915 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  28.356 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  370.419 (km)
 	Receiver Gain =  7.027 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -3449,7 +3449,7 @@
 	Receiver Power            = -173.601 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  32.119 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  366.416 (km)
 	Receiver Gain =  7.005 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -3470,7 +3470,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  363.303 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -3491,7 +3491,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  360.812 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -3512,7 +3512,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  358.774 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -3872,7 +3872,7 @@
 	Receiver Power            = -155.863 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.402 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  400.402 (km)
 	Receiver Gain =  0.376 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -3893,7 +3893,7 @@
 	Receiver Power            = -156.199 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.188 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  382.945 (km)
 	Receiver Gain =  4.143 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -3914,7 +3914,7 @@
 	Receiver Power            = -160.533 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  19.203 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  372.471 (km)
 	Receiver Gain =  5.858 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -3935,7 +3935,7 @@
 	Receiver Power            = -165.564 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.700 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  365.489 (km)
 	Receiver Gain =  6.681 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -3956,7 +3956,7 @@
 	Receiver Power            = -171.247 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  27.785 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  360.501 (km)
 	Receiver Gain =  7.011 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -3977,7 +3977,7 @@
 	Receiver Power            = -176.687 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.514 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  356.760 (km)
 	Receiver Gain =  7.025 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -3998,7 +3998,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  353.851 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -4019,7 +4019,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  351.524 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -4040,7 +4040,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  349.619 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -4400,7 +4400,7 @@
 	Receiver Power            = -152.914 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  7.742 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  365.367 (km)
 	Receiver Gain = -0.261 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -4421,7 +4421,7 @@
 	Receiver Power            = -148.745 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.344 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  351.322 (km)
 	Receiver Gain =  3.745 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -4442,7 +4442,7 @@
 	Receiver Power            = -155.806 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  18.200 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  342.895 (km)
 	Receiver Gain =  5.594 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -4463,7 +4463,7 @@
 	Receiver Power            = -161.086 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  22.567 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  337.277 (km)
 	Receiver Gain =  6.524 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -4484,7 +4484,7 @@
 	Receiver Power            = -166.662 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  26.548 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  333.264 (km)
 	Receiver Gain =  6.947 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -4505,7 +4505,7 @@
 	Receiver Power            = -172.050 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  30.198 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  330.254 (km)
 	Receiver Gain =  7.048 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -4526,7 +4526,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  327.913 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -4547,7 +4547,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  326.041 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -4568,7 +4568,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  324.508 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -4928,7 +4928,7 @@
 	Receiver Power            = -145.771 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  7.268 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  319.091 (km)
 	Receiver Gain = -0.758 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -4949,7 +4949,7 @@
 	Receiver Power            = -137.525 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  12.736 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  309.447 (km)
 	Receiver Gain =  3.435 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -4970,7 +4970,7 @@
 	Receiver Power            = -134.969 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  17.475 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  303.660 (km)
 	Receiver Gain =  5.377 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -4991,7 +4991,7 @@
 	Receiver Power            = -147.211 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  21.744 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  299.803 (km)
 	Receiver Gain =  6.392 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -5012,7 +5012,7 @@
 	Receiver Power            = -153.719 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  25.646 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  297.047 (km)
 	Receiver Gain =  6.882 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -5033,7 +5033,7 @@
 	Receiver Power            = -159.395 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  29.234 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  294.980 (km)
 	Receiver Gain =  7.042 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -5054,7 +5054,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  293.373 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -5075,7 +5075,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  292.087 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -5096,7 +5096,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  291.035 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -5456,7 +5456,7 @@
 	Receiver Power            = -134.065 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  7.528 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  274.050 (km)
 	Receiver Gain = -0.486 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -5477,7 +5477,7 @@
 	Receiver Power            = -127.796 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.069 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  283.548 (km)
 	Receiver Gain =  3.613 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -5498,7 +5498,7 @@
 	Receiver Power            = -139.703 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  17.873 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  303.220 (km)
 	Receiver Gain =  5.501 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -5519,7 +5519,7 @@
 	Receiver Power            = -145.838 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  22.195 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  324.941 (km)
 	Receiver Gain =  6.468 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -5540,7 +5540,7 @@
 	Receiver Power            = -151.365 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  26.141 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  337.917 (km)
 	Receiver Gain =  6.920 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -5561,7 +5561,7 @@
 	Receiver Power            = -156.632 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  29.764 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  347.012 (km)
 	Receiver Gain =  7.048 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -5582,7 +5582,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  347.012 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -5603,7 +5603,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  347.012 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -5624,7 +5624,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  347.012 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
@@ -5984,7 +5984,7 @@
 	Receiver Power            = -139.292 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.188 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  341.223 (km)
 	Receiver Gain =  0.181 (dBi)
 **********************************************************
 *                      F2 Mode 4                         *
@@ -6005,7 +6005,7 @@
 	Receiver Power            = -141.983 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.914 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  370.330 (km)
 	Receiver Gain =  4.019 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -6026,7 +6026,7 @@
 	Receiver Power            = -146.377 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  18.878 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  391.437 (km)
 	Receiver Gain =  5.777 (dBi)
 **********************************************************
 *                      F2 Mode 6                         *
@@ -6047,7 +6047,7 @@
 	Receiver Power            = -151.281 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.333 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain =  6.633 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -6068,7 +6068,7 @@
 	Receiver Power            = -156.296 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  27.386 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain =  6.994 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -6089,7 +6089,7 @@
 	Receiver Power            = -161.282 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.090 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain =  7.037 (dBi)
 **********************************************************
 *                      F2 Mode 9                         *
@@ -6110,7 +6110,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 10                         *
@@ -6131,7 +6131,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -6152,7 +6152,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  0.000 (km)
+	Reflection height =  395.180 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                       E Mode 1                         *
