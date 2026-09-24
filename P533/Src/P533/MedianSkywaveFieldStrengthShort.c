@@ -1233,28 +1233,19 @@ int SmallestCPfoF2(struct PathData path) {
 
 	 */
 
-	//Initialise to prevent warning C4701: potentially uninitialized local variable 'temp' used
-	int temp = 0;
-    int i, j;
-	int idx[5] = {0,1,2,3,4}; // This is what will change.
+	// P.533-14 section 5.2.1: for paths from dmax to 9000 km the F2 mirror-reflection
+	// height hr is from equation (2) "at the control point given in Table 1c) for which
+	// foF2 has the lower value", and Table 1c) lists T + d0/2, M and R - d0/2. This
+	// searched all five control points (T + 1000 and R - 1000 as well) with a double
+	// loop that is not a sort and could never return index 0 (the MATLAB port's D15).
+	int cp[3] = {Td02, MP, Rd02};
+	int i, low = cp[0];
 
-	// Sort by brute force
-	for(i=0; i<5; i++) {
-		for(j=0; j<5; j++) {
-			if(path.CP[idx[i]].foF2 > path.CP[idx[j]].foF2) { 
-				temp = idx[i]; 
-				idx[i] = idx[j]; 
-				idx[j] = temp; 
-			} 
-		}
-    }
-
-    // return the last non zero index
-	for(i=0; i<5; i++) {
-		if(idx[i] != 0.0) temp = idx[i];
+	for(i=1; i<3; i++) {
+		if(path.CP[cp[i]].foF2 < path.CP[low].foF2) low = cp[i];
 	}
 
-    return temp;
+	return low;
 
 }
 
