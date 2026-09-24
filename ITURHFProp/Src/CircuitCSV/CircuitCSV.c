@@ -29,6 +29,8 @@
 			-t <file>	transmit antenna, a Type 13 file, or ISOTROPIC
 			-r <file>	receive antenna, a Type 13 file, or ISOTROPIC
 			-g <dBi>	gain to use for an isotropic pattern (default 0.0)
+			-F <spec>	also scan each circuit over a list of frequencies
+			-S <file>	with -F, csv of every scanned frequency's results
 
 		OUTPUT
 			A csv with the input columns echoed, followed by the calculated
@@ -95,6 +97,11 @@ struct Result {
 	double snfM, snfL;		// dB at those, when they are inside 1-30 MHz
 	int    fMok, fLok;		// FALSE when not computed
 	int    islong;			// TRUE when the long model was used
+	int    scanned;			// TRUE when the -F scan ran on this circuit
+	double luf;				// lowest scanned MHz with SNR >= reqSN, 0 if none
+	double bestF;			// scanned MHz with the highest SNR, 0 if none ran
+	double snBest, duBest, dlBest, bcrBest;	// SNR, its deciles and BCR there
+	double bw10;			// 10 log10(bandW), to refer SN_Best to 1 Hz
 	int    valid;
 	const char *status;	// why a row has no results, or "OK"
 };
@@ -496,6 +503,179 @@ static int DominantMode(struct PathData *path, int *hops, char *layer) {
 }
 
 /*
+	Frequency scan (-F).
+
+	The characteristic-frequency columns describe a circuit at three points.
+	Coverage work needs the signal-to-noise ratio across the band: P.533 gives,
+	for each frequency, the monthly median S/N and its upper and lower decile
+	deviations (P.842 Table 1 Steps 3, 6 and 9), and none of the three depends
+	on the required S/N or, beyond the 10 log10(b) term in Step 3, on the
+	bandwidth. So one scan answers every service and threshold afterwards.
+
+	-F takes either a range, start:stop:step in MHz, or a comma separated list,
+	e.g. assigned frequencies. -S names a second csv that receives one row per
+	circuit and frequency, keyed by Circuit#; the main output keeps its one row
+	per input row and gains summary columns.
+*/
+#define SCANMAX 10000
+static double *ScanF = NULL;
+static int     NScan = 0;
+static FILE   *ScanOut = NULL;
+
+static int CompareDouble(const void *a, const void *b) {
+
+	double x = *(const double *)a, y = *(const double *)b;
+
+	return (x > y) - (x < y);
+
+}
+
+/*
+	ParseScan() - Reads the -F specification into ScanF.
+
+		"start:stop:step" gives start, start+step, ... up to stop inclusive; each
+		value is rounded to 1 kHz so that 0.1 MHz steps do not accumulate binary
+		fractions. Anything else is read as a comma separated list, sorted
+		ascending with duplicates removed. Every frequency must lie in P.533's
+		1-30 MHz, which ValidatePath() enforces.
+
+		INPUT
+			const char *spec
+
+		OUTPUT
+			returns RTN_CSVOK, or RTN_ERRCSVARGS
+
+		SUBROUTINES
+			CompareDouble()
+*/
+static int ParseScan(const char *spec) {
+
+	double a, b, c;
+	char tail;
+	int n = 0;
+
+	ScanF = (double *)calloc(SCANMAX, sizeof(double));
+	if (ScanF == NULL) return RTN_ERRCSVARGS;
+
+	if (strchr(spec, ':') != NULL) {
+		if (sscanf(spec, "%lf:%lf:%lf%c", &a, &b, &c, &tail) != 3 || c <= 0.0 || b < a) {
+			printf("CircuitCSV: Error %d -F range must be start:stop:step with step > 0 and stop >= start\n", RTN_ERRCSVARGS);
+			return RTN_ERRCSVARGS;
+		}
+		for (int k = 0; ; k++) {
+			double f = floor((a + k*c)*1000.0 + 0.5)/1000.0;
+			if (f > b + 1e-9) break;
+			if (n >= SCANMAX) {
+				printf("CircuitCSV: Error %d -F gives more than %d frequencies\n", RTN_ERRCSVARGS, SCANMAX);
+				return RTN_ERRCSVARGS;
+			}
+			ScanF[n++] = f;
+		}
+	}
+	else {
+		char buf[CSVMAXLINE], *tok, *end;
+		snprintf(buf, sizeof(buf), "%s", spec);
+		for (tok = strtok(buf, ","); tok != NULL; tok = strtok(NULL, ",")) {
+			double f = strtod(tok, &end);
+			while (*end == ' ') end++;
+			if (end == tok || *end != '\0') {
+				printf("CircuitCSV: Error %d -F list entry '%s' is not a number\n", RTN_ERRCSVARGS, tok);
+				return RTN_ERRCSVARGS;
+			}
+			if (n >= SCANMAX) {
+				printf("CircuitCSV: Error %d -F gives more than %d frequencies\n", RTN_ERRCSVARGS, SCANMAX);
+				return RTN_ERRCSVARGS;
+			}
+			ScanF[n++] = f;
+		}
+		qsort(ScanF, n, sizeof(double), CompareDouble);
+		{
+			int m = 0;
+			for (int k = 0; k < n; k++) if (m == 0 || ScanF[k] != ScanF[m-1]) ScanF[m++] = ScanF[k];
+			n = m;
+		}
+	}
+
+	if (n == 0 || ScanF[0] < 1.0 || ScanF[n-1] > 30.0) {
+		printf("CircuitCSV: Error %d -F frequencies must lie within 1-30 MHz\n", RTN_ERRCSVARGS);
+		return RTN_ERRCSVARGS;
+	}
+
+	NScan = n;
+
+	return RTN_CSVOK;
+
+}
+
+/*
+	ScanCircuit() - Runs one circuit at every -F frequency.
+
+		Called after RunCircuit(), which has validated the path and pointed the
+		antennas along it. Each frequency is a full P533() call, since the
+		engine evaluates one frequency per call.
+
+		The summary kept in the Result is P.533 section 9's LUF on the scan grid
+		-- the lowest scanned frequency whose median S/N reaches reqSN -- and the
+		frequency with the highest median S/N, with that S/N, its decile
+		deviations and the BCR for reqSN there. With -S every frequency is also
+		written out, so that nothing is lost to the summary.
+
+		INPUT
+			struct PathData *path, struct Circuit *c, struct Result *r, int number
+
+		OUTPUT
+			r->scanned and the summary fields; one -S row per frequency
+
+		SUBROUTINES
+			SetPath(), csvP533(), DominantMode()
+*/
+static void ScanCircuit(struct PathData *path, struct Circuit *c, struct Result *r, int number) {
+
+	int hops;
+	char layer;
+
+	r->scanned = TRUE;
+	r->luf = r->bestF = 0.0;
+	r->bw10 = 10.0*log10(c->bandW);
+
+	for (int k = 0; k < NScan; k++) {
+
+		double f = ScanF[k];
+		int ok;
+
+		SetPath(path, c, f);
+		ok = (csvP533(path) == RTN_P533OK);
+
+		if (ok) {
+			if (r->luf == 0.0 && path->SNR >= path->SNRr) r->luf = f;
+			if (r->bestF == 0.0 || path->SNR > r->snBest) {
+				r->bestF   = f;
+				r->snBest  = path->SNR;
+				r->duBest  = path->DuSN;
+				r->dlBest  = path->DlSN;
+				r->bcrBest = path->BCR;
+			}
+		}
+
+		if (ScanOut == NULL) continue;
+
+		if (!ok) {
+			fprintf(ScanOut, "%d,%.6g,,,,,,,,,,P533_ERROR\n", number, f);
+			continue;
+		}
+
+		{
+			char mode[16] = "";
+			if (DominantMode(path, &hops, &layer) == TRUE) snprintf(mode, sizeof(mode), "%d%c", hops, layer);
+			fprintf(ScanOut, "%d,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,OK\n",
+				number, f, mode, path->Pr, path->noiseP.FamT,
+				path->SNR, path->SNR + r->bw10, path->DuSN, path->DlSN, path->BCR, path->SNRXX);
+		}
+	}
+
+}
+
+/*
 	RunCircuit() - Calculates one circuit.
 
 		P.533's three characteristic frequencies do not depend on the frequency
@@ -750,7 +930,8 @@ static void PrintHeader(FILE *fp) {
 		"minTOA,txPow,reqSN,rxNoise,bandW,percDays,"
 		"Circuit#,SSN_used,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,"
 		"SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,"
-		"fM,SN_fM,fL,SN_fL,Status\n", IndexName);
+		"fM,SN_fM,fL,SN_fL,%sStatus\n", IndexName,
+		(NScan > 0) ? "LUF,BestF,SN_Best,SN0_Best,DuSN_Best,DlSN_Best,BCR_Best," : "");
 
 }
 
@@ -833,6 +1014,42 @@ static const char *CsvQuote(char *out, size_t n, const char *in) {
 		SUBROUTINES
 			None
 */
+/*
+	WriteTail() - Ends a row: the -F summary columns, when scanning, and Status.
+
+		The summary is blank when the scan did not run on the row, LUF is blank
+		when no scanned frequency reached reqSN, and the columns at the best
+		frequency are blank when no frequency ran. SN0_Best is SN_Best referred
+		to 1 Hz, SN_Best + 10 log10(bandW), in dB-Hz.
+
+		INPUT
+			FILE *fp, struct Result *r, const char *dflt
+
+		OUTPUT
+			The rest of the record, newline included
+
+		SUBROUTINES
+			None
+*/
+static void WriteTail(FILE *fp, struct Result *r, const char *dflt) {
+
+	if (NScan > 0) {
+		if (r->scanned != TRUE) fprintf(fp, ",,,,,,,");
+		else {
+			if (r->luf > 0.0) fprintf(fp, "%.6g,", r->luf);
+			else              fprintf(fp, ",");
+			if (r->bestF > 0.0) {
+				fprintf(fp, "%.6g,%.6g,%.6g,%.6g,%.6g,%.6g,", r->bestF, r->snBest,
+					r->snBest + r->bw10, r->duBest, r->dlBest, r->bcrBest);
+			}
+			else fprintf(fp, ",,,,,,");
+		}
+	}
+
+	fprintf(fp, "%s\n", (r->status != NULL) ? r->status : dflt);
+
+}
+
 static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) {
 
 	// Site names are the only free-text input columns, so they are the only
@@ -848,9 +1065,9 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 	if (r->valid == FALSE) {
 		// No results. Geometry is still meaningful when the circuit ran but no
 		// mode was supported; it is zero when the circuit never ran at all.
-		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,,,,,%s\n",
-			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
-			(r->status != NULL) ? r->status : "NO_MODE");
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,NONE,,,,,,,,,,,,,,,,,,",
+			number, c->ssn, r->dist, r->txBearing, r->rxBearing);
+		WriteTail(fp, r, "NO_MODE");
 		return;
 	}
 
@@ -883,7 +1100,7 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 	// A path longer than about 7000 km has no dominant mode, so the columns that
 	// describe one are left empty while the frequencies, SNRs and noise are not.
 	if (r->hops > 0) {
-		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,%d%c,%s,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,%d%c,%s,%.6g,%.6g,%.6g,%s,%.6g,%.6g,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,",
 			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
 			r->hops, r->layer,
 			fbuf[FRQBUF], r->prob, r->toa, r->loss, snbuf[FRQBUF],
@@ -891,19 +1108,18 @@ static void WriteRow(FILE *fp, struct Circuit *c, struct Result *r, int number) 
 			r->noiseRx, r->noiseRx,
 			fbuf[FRQMUF], snbuf[FRQMUF],
 			fbuf[FRQOWF], snbuf[FRQOWF],
-			fmbuf, fmsn, flbuf, flsn,
-			(r->status != NULL) ? r->status : "OK");
+			fmbuf, fmsn, flbuf, flsn);
 	}
 	else {
-		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,,%s,%.6g,,,%s,,,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+		fprintf(fp, "%d,%d,%.6g,%.6g,%.6g,,%s,%.6g,,,%s,,,%.6g,%.6g,%s,%s,%s,%s,%s,%s,%s,%s,",
 			number, c->ssn, r->dist, r->txBearing, r->rxBearing,
 			fbuf[FRQBUF], r->prob, snbuf[FRQBUF],
 			r->noiseRx, r->noiseRx,
 			fbuf[FRQMUF], snbuf[FRQMUF],
 			fbuf[FRQOWF], snbuf[FRQOWF],
-			fmbuf, fmsn, flbuf, flsn,
-			(r->status != NULL) ? r->status : "OK");
+			fmbuf, fmsn, flbuf, flsn);
 	}
+	WriteTail(fp, r, "OK");
 
 }
 
@@ -1080,6 +1296,12 @@ static void PrintUsage(void) {
 	printf("  -m <factor> Evaluate at factor x each characteristic frequency\n");
 	printf("              (default 1.0). The frequency columns still report the\n");
 	printf("              true frequency; only the SN_ columns move with it.\n");
+	printf("  -F <spec>   Also scan every circuit over a set of frequencies, MHz:\n");
+	printf("              start:stop:step (e.g. 2:30:0.5) or a list (e.g. 4.5,7.1,11.2),\n");
+	printf("              all within 1-30. Adds LUF, BestF, SN_Best, SN0_Best, DuSN_Best,\n");
+	printf("              DlSN_Best and BCR_Best before Status.\n");
+	printf("  -S <file>   With -F, also write every scanned frequency's results to this\n");
+	printf("              csv, one row per circuit and frequency, keyed by Circuit#\n");
 	printf("  -s          Silent: suppress progress output\n");
 	printf("  -h          This help\n\n");
 	printf("Input columns (looked up by name, order and extra columns do not matter):\n");
@@ -1100,6 +1322,7 @@ int main(int argc, char *argv[]) {
 
 	char *infile = NULL, *outfile = NULL, *datapath = NULL;
 	char *txant = NULL, *rxant = NULL;
+	char *scanspec = NULL, *scanfile = NULL;
 	double gos = 0.0;
 	int silent = FALSE;
 
@@ -1121,6 +1344,8 @@ int main(int argc, char *argv[]) {
 		else if (strcmp(argv[i], "-r") == 0 && i+1 < argc) rxant    = argv[++i];
 		else if (strcmp(argv[i], "-g") == 0 && i+1 < argc) gos      = atof(argv[++i]);
 		else if (strcmp(argv[i], "-m") == 0 && i+1 < argc) FreqMargin = atof(argv[++i]);
+		else if (strcmp(argv[i], "-F") == 0 && i+1 < argc) scanspec = argv[++i];
+		else if (strcmp(argv[i], "-S") == 0 && i+1 < argc) scanfile = argv[++i];
 		else if (strcmp(argv[i], "-s") == 0) silent = TRUE;
 		else if (strcmp(argv[i], "-h") == 0) { PrintUsage(); return RTN_CSVOK; }
 		else {
@@ -1135,6 +1360,12 @@ int main(int argc, char *argv[]) {
 		PrintUsage();
 		return RTN_ERRCSVARGS;
 	}
+
+	if (scanfile != NULL && scanspec == NULL) {
+		printf("CircuitCSV: Error %d -S needs -F\n", RTN_ERRCSVARGS);
+		return RTN_ERRCSVARGS;
+	}
+	if (scanspec != NULL && ParseScan(scanspec) != RTN_CSVOK) return RTN_ERRCSVARGS;
 
 	// The P533/P372 readers insert the separator themselves now, so this only
 	// has to bound the copy.
@@ -1221,6 +1452,19 @@ int main(int argc, char *argv[]) {
 	}
 	PrintHeader(fout);
 
+	if (scanfile != NULL) {
+		ScanOut = fopen(scanfile, "w");
+		if (ScanOut == NULL) {
+			printf("CircuitCSV: Error %d Can't open %s (%s)\n", RTN_ERRCSVOPENOUT, scanfile, strerror(errno));
+			fclose(fin); fclose(fout);
+			return RTN_ERRCSVOPENOUT;
+		}
+		// SN0 is the S/N referred to 1 Hz, SNR + 10 log10(bandW), in dB-Hz; DuSN
+		// and DlSN are its upper and lower decile deviations; BCR is for reqSN
+		// and SNRXX the S/N exceeded on percDays of the days.
+		fprintf(ScanOut, "Circuit#,Freq,Mode,Pr,Noise,SNR,SN0,DuSN,DlSN,BCR,SNRXX,Status\n");
+	}
+
 	// Stream the input: one row read, calculated and written at a time. The
 	// ionospheric maps are held by the library's month cache, so a month is
 	// still read at most once however the file is ordered, while memory stays
@@ -1291,6 +1535,10 @@ int main(int argc, char *argv[]) {
 				// RunCircuit() may already have said why there are no results.
 				if (r.status == NULL) r.status = (r.valid == TRUE) ? "OK" : "NO_MODE";
 				number++;
+				// The path validated, so every circuit that reaches here is
+				// scanned, NO_MODE and LONG_PATH ones included: whether any
+				// scanned frequency propagates is what the scan is for.
+				if (NScan > 0) ScanCircuit(&path, &c, &r, c.row);
 			}
 		}
 
@@ -1307,6 +1555,8 @@ int main(int argc, char *argv[]) {
 
 	fclose(fin);
 	fclose(fout);
+	if (ScanOut != NULL) fclose(ScanOut);
+	free(ScanF);
 	// The maps the path points at belong to the cache, so FreePathMemory() must
 	// not see them; it skips NULL.
 	path.foF2  = NULL;

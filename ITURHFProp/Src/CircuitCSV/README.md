@@ -16,6 +16,8 @@ different circuits in one pass.
       -r <file>   receive antenna:  a Type 13 file, or ISOTROPIC (default)
       -g <dBi>    gain for an isotropic pattern (default 0.0)
       -m <factor> evaluate at factor x each MUF (default 1.0)
+      -F <spec>   also scan every circuit over a set of frequencies (see below)
+      -S <file>   with -F, write every scanned frequency's results to this csv
       -s          silent
 
 Antenna patterns are read once at startup and re-pointed along each circuit's
@@ -103,6 +105,65 @@ Written in the engine's own units with `%.6g`, no fixed-point scaling.
 | `fM`, `fL` | long-model upper and lower reference frequencies, MHz (blank on short paths) |
 | `SN_fM`, `SN_fL` | signal-to-noise ratio at each, dB |
 | `Status` | see Row matching above |
+
+With `-F`, seven columns are inserted before `Status`; see Frequency scan.
+
+## Frequency scan (`-F`, `-S`)
+
+    CircuitCSV -i circuits.csv -o results.csv -d Data -F 2:30:0.5 -S scan.csv
+
+`-F` evaluates every circuit at a set of frequencies, given either as a range
+`start:stop:step` in MHz (values rounded to 1 kHz, `stop` included) or as a
+comma separated list such as assigned frequencies, `4.5,7.1,11.2` (sorted,
+duplicates dropped). All must lie within P.533's 1-30 MHz.
+
+Why: for each frequency P.533 gives the monthly median S/N and its upper and
+lower decile deviations (P.842 Table 1 Steps 3, 6 and 9). None of the three
+depends on `reqSN`, and bandwidth enters only as the `10 log10(bandW)` term of
+Step 3. So one scan serves every service and threshold afterwards: refer the S/N
+to 1 Hz (`SN0`, dB-Hz) and compare with `reqSN + 10 log10(bandwidth)` for any
+service.
+
+The main output keeps one row per input row and gains, before `Status`:
+
+| Column | Meaning |
+|---|---|
+| `LUF` | lowest scanned frequency whose median S/N reaches `reqSN`, MHz (P.533 section 9 on the scan grid); blank if none does |
+| `BestF` | scanned frequency with the highest median S/N, MHz (the lowest, on a tie) |
+| `SN_Best` | median S/N there, dB in `bandW` |
+| `SN0_Best` | the same referred to 1 Hz, `SN_Best + 10 log10(bandW)`, dB-Hz |
+| `DuSN_Best`, `DlSN_Best` | upper and lower decile deviations of the S/N there, dB |
+| `BCR_Best` | basic circuit reliability there for `reqSN`, % of days |
+
+The seven are blank on rows that never reached the engine (`BAD_RECORD`,
+`BAD_MONTH`, `P533_ERROR`). `NO_MODE` and `LONG_PATH` circuits are scanned like
+any other.
+
+`LUF` follows P.533's definition, the *lowest* passing frequency, so it can be
+an isolated pass window below the main usable band; the `-S` file shows the
+whole curve.
+
+`-S` writes a second csv with one row per circuit and frequency, joined to the
+main output by `Circuit#`:
+
+| Column | Unit |
+|---|---|
+| `Circuit#` | input data row number |
+| `Freq` | MHz |
+| `Mode` | dominant mode, blank beyond about 7000 km |
+| `Pr` | median available receiver power, dBW |
+| `Noise` | total noise, dB above kT0B |
+| `SNR` | median S/N in `bandW`, dB |
+| `SN0` | median S/N referred to 1 Hz, dB-Hz |
+| `DuSN`, `DlSN` | upper and lower decile deviations of the S/N, dB |
+| `BCR` | basic circuit reliability for `reqSN`, % of days |
+| `SNRXX` | S/N exceeded on `percDays` % of days, dB |
+| `Status` | `OK`, or `P533_ERROR` when the engine rejected that frequency |
+
+Cost: each frequency is one full `P533()` call, about 0.1 ms. 2,000 circuits on
+the 57-frequency grid `2:30:0.5` take 11 s (0.55 s without `-F`), so 100,000
+circuits take about 9 minutes, or 45 at 0.1 MHz steps. The `-S` file is about
+4.4 KB per circuit at 57 frequencies. Without `-F` the output is unchanged.
 
 ## Notes on the calculation
 
