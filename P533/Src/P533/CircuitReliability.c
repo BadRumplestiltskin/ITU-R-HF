@@ -576,6 +576,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 	double ptick;	// Slant range
 	double deltat;	// Time window criteria
 	double deltaA;  // A ratio criteria 
+	double Xs, Xl;	// Equation (42) terms for 7000 - 9000 km
 
 	struct Mode *M[MAXMDS];	// This array is so that all modes can be examined together independant of E or F2 layer
 	// The following 2 arrays, iPrw and itau, are modes indicies arrays for the digital BCR, SIR and OCR calculation
@@ -713,6 +714,18 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 			}
 			else {
 				S = TINYDB;
+			}
+
+			// Step 4 continues: "or for path lengths between 7 000 and 9 000 km the
+			// interpolation procedure given in section 5.4 is used". The in-window
+			// short-path power is interpolated, with the equation (42) weights, towards
+			// the long-path power El + Grw(0-8 deg) that section 6 uses at 9000 km
+			// (path->Grw holds that gain in this range). This used the short-path
+			// window sum alone at every distance up to 9000 km.
+			if((7000.0 < path->distance) && (path->distance < 9000.0)) {
+				Xs = pow(10.0, S/100.0);
+				Xl = pow(10.0, (path->El + path->Grw - 20.0*log10(path->frequency) - 107.2)/100.0);
+				S = 100.0*log10(Xs + ((path->distance - 7000.0)/2000.0)*(Xl - Xs));
 			}
 
 		}

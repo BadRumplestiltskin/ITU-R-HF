@@ -1,0 +1,103 @@
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 24 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Thu Sep 24 15:49:18 2026
+
+---------------------------------------------------------------------------
+
+***************************** P533 Input Parameters ****************************
+
+	Digital modulation, 7000-9000 km: Caracas to Birmingham
+	Year          : 2018
+	Month         : May
+	Hour          : 2 (hour UTC)
+	SSN (R12)     : 10
+	Distance      : 7403.116568 (km)
+	dmax          : 4000.000000 (km)
+	Tx power      : 13.000000
+	Tx Location     Caracas
+	Tx latitude   :  10.500000 N
+	Tx longitude  :  66.900000 W
+	Rx Location     Birmingham
+	Rx latitude   :  52.486200 N
+	Rx longitude  :   1.890400 W
+	local time Rx : 2 (hour UTC)
+	local time Tx : 22 (hour UTC)
+	Frequency     : 12.000000
+	Bandwidth     : 3000.000000
+	Modulation : DIGITAL
+	Required signal-to-noise ratio : 17.000000
+	Required % of month signal-to-noise ratio :  90
+	Required signal-to-interference ratio : 10.000000
+	Man-made noise : RESIDENTIAL
+	Frequency dispersion for simple BCR (F0) : 1.000000
+	Time spread for simple BCR (T0) : 0.500000
+	Required Amplitude ratio (A) : 3.000000
+	Time window (usec) : 1.000000
+	Frequency window (Hz) : 10.000000
+	Antenna configuration : Transmitter main beam to receiver main beam
+	Path Direction : SHORTPATH
+	Transmit antenna               ISOTROPIC
+	Transmit antenna bearing     : 36.977792
+	Transmit antenna gain offset : 0.000000
+	Receive antenna                ISOTROPIC
+	Receive antenna bearing      : 256.223100
+	Receive antenna gain offset  : 0.000000
+
+************************ End P533 Input Parameters *****************************
+
+************************** ITURHFP Input Parameters *****************************
+
+	Upper left (North West) latitude   :  52.486200 N
+	Upper left (North West) longitude  :   1.890400 W
+	Lower right (South East) latitude  :  52.486200 N
+	Lower right (South East) longitude :   1.890400 W
+	Number of frequencies : 1
+	Number of hours       : 4
+	Number of months      : 1
+	Latitude increment    : 1.000000 (deg)
+	Longitude increment   : 1.000000 (deg)
+
+************************** ITURHFP Input Parameters *****************************
+
+******************************** Data Format ***********************************
+
+Column 01: Month
+Column 02: Hour
+Column 03: Frequency (MHz)
+Column 04: D - Path distance (km)
+Column 05: Pr - Median receiver power (dB)
+Column 06: SNR - Median signal-to-noise ratio (dB)
+Column 07: SIR - Signal-to-interference ratio (dB)
+Column 08: RSN - Probability that the required SNR is achieved (%)
+Column 09: RT - Probability that the required time spread T0 is not exceeded (%)
+Column 10: RF - Probability that the required frequency spread f0 is not exceeded (%)
+Column 11: BCR - Basic circuit reliability (%)
+Column 12: OCR - Overall circuit reliability not considering scattering (%)
+Column 13: OCRs - Overall circuit reliability considering scattering (%)
+Column 14: Probocc - Probability of scattering (%)
+Column 15: MIR - Multimode Interference (%)
+Column 16: Dominant mode
+Column 17: Dominant mode - Elevation angle (deg)
+Column 18: Dominant mode - Delay (mS)
+Column 19: Dominant mode - Loss (dB)
+Column 20: Dominant mode - Propagation probability (%)
+Column 21: Dominant mode - Virtual height (km)
+Column 22: Dominant mode - Median received power (dB)
+Column 23: Dominant mode - Receiver Antenna Gain (dBi)
+Column 24: Dominant mode - Field Strength (dB(1uV/m))
+Column 25: Dominant mode - Basic MUF (MHz)
+
+************************** End Data Format ********************************
+
+************************ Calculated Parameters ****************************
+
+05, 02,   12.000,  7403.12,-125.00,   0.65, 307.00,   8.09,   0.00,   0.00,   8.09,   8.09,   8.09,   0.00, 100.00, NONE ,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 08,   12.000,  7403.12,-120.83,   4.96, 307.00,  13.02,   0.00,   0.00,  13.02,  13.02,  13.02,   0.00, 100.00, NONE ,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 14,   12.000,  7403.12,-132.04,  -7.09, 307.00,   0.00, 100.00,   0.00,   0.00,   0.00,   0.00,   0.00, 100.00, NONE ,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 20,   12.000,  7403.12,-119.75,   3.16, 307.00,   2.40, 100.00,   0.00,   2.40,   2.40,   2.40,   0.00, 100.00, NONE ,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00,   0.00
+
+**************************End Calculated Parameters ***********************
+
