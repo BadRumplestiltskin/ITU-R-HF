@@ -30,7 +30,7 @@ double AbsorptionFactor(struct ControlPt CP, int month);
 double AbsorptionLayerPenetrationFactor(double T);
 double AbsorptionTerm(struct ControlPt CP, int month, double fv);
 double FindLh(struct ControlPt CP, double dh, int hour, int month);
-double PenetrationPoints(struct PathData * path, double noh, double hr, double fv);
+double PenetrationPoints(struct PathData * path, double noh, double fv);
 int WhatSeasonforLh(struct Location L, int month); 
 int SmallestCPfoF2(struct PathData path);
 // End local prototypes
@@ -170,7 +170,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				if(path->distance <= 2000.0) {
 
 					if(PEN) {
-						AT = PenetrationPoints(path, n, hr_E, fv); 
+						AT = PenetrationPoints(path, n, fv); 
 					}
 					else {
 						// Find the loss due to all the absorption terms in Li
@@ -187,7 +187,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				else { // (path->distance > 2000.0) There are three control points
 
 					if(PEN) {
-						AT = PenetrationPoints(path, n, hr_E, fv); 
+						AT = PenetrationPoints(path, n, fv); 
 					}
 					else {				
 						// Find the loss due to all the absorption terms in Li
@@ -314,7 +314,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				if(path->distance <= 2000.0) { // Use the mid-path control point
 
 					if(PEN) {
-						AT = PenetrationPoints(path, n, hr_F2, fv); 
+						AT = PenetrationPoints(path, n, fv); 
 					}
 					else {
 						// Find the loss due to all the absorption terms in Li
@@ -331,7 +331,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				else if((2000.0 < path->distance) && (path->distance <= path->dmax)) { // There are three control points
 
 					if(PEN) {
-						AT = PenetrationPoints(path, n, hr_F2, fv); 
+						AT = PenetrationPoints(path, n, fv); 
 					}
 					else {
 						// Find the loss due to all the absorption terms in Li
@@ -354,7 +354,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				else { // There are 5 control points.
 
 					if(PEN) {
-						AT = PenetrationPoints(path, n, hr_F2, fv); 
+						AT = PenetrationPoints(path, n, fv); 
 					}
 					else {
 						// Find the loss due to all the absorption terms in Li.
@@ -1394,11 +1394,18 @@ void ZeroCP(struct ControlPt *CP) {
 		
 }
 
-double PenetrationPoints(struct PathData * path, double noh, double hr, double fv) {
+double PenetrationPoints(struct PathData * path, double noh, double fv) {
  
  	// The routine finds the penetration points as described initially in the long model
  	// As is done in the long model use the control points as penetration points
  	// There are twice as many penetration points as there are hops. 
+	//
+	// P.533-14 equation (20): "The penetration points are determined by assuming a
+	// fixed reflection height of 300 km and a penetration height of 90 km (two
+	// penetration points per hop)." This took the reflection height of the mode
+	// instead -- 110 km for E modes, eq. (2)'s hr for F2 modes -- which moves the
+	// E-mode points by several hundred km (the MATLAB port's D31).
+	const double hr = 300.0;
  	
 	struct ControlPt PP[2]; // Temp
 
