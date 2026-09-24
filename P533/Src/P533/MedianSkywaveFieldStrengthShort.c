@@ -129,7 +129,10 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 
 	// Determine the local time at the midpath point
 	tz = (int)(path->CP[MP].L.lng/(15.0*D2R));
-	mpltime = (int)fmod(path->CP[MP].ltime+tz, 24);
+	// Wrap into 0-23. fmod() keeps the sign of its argument, so west of
+	// 15 W this went negative for the first |tz| UTC hours, and FindLh()
+	// then filed every negative hour under the 22-01 h column of Table 2.
+	mpltime = (int)fmod(fmod(path->CP[MP].ltime+tz, 24.0) + 24.0, 24.0);
 	
 	// Begin E modes median sky-wave field strength calculation
 	// Does a low order E mode exist?
