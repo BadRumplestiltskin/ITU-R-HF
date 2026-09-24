@@ -347,18 +347,22 @@ void CircuitReliability(struct PathData *path) {
 		// iI[] came from the routine DigitalModulationSignalandInterferers() which grouped 
 		// all E and F2 layers together. Consequently the E and F2 layers will have to be determined
 		// separately here. Note: In the F2 layer loop the index is offset by 3 for the 3 E layer modes.
+		// P.842-5 Table 3 step 4: S/I = S - 10 log sum 10^((Ii + Ri)/10), and P.533-14
+		// section 10.2.3 step 5 replaces "the relative protection ratios of Step 3 of
+		// Table 3 by the ratio A", so each interferer enters as Ii + A. It entered as
+		// Ii - A, which put S/I (and the decile sums of steps 7 and 10) 2A dB high.
 		// E layer loop
 		for(n=0; n<MAXMDS; n++) {
 			if(iI[n] != NOTINDEX) {  //
 				if(iI[n] < MAXEMDS) { // E mode interference
-					Isum += pow(10.0, ((path->Md_E[iI[n]].Prw - path->A)/10.0));
-					Isumu += pow(10.0, ((path->Md_E[iI[n]].Prw - path->A + DuIh)/10.0));
-					Isuml += pow(10.0, ((path->Md_E[iI[n]].Prw - path->A - DlIh)/10.0));
+					Isum += pow(10.0, ((path->Md_E[iI[n]].Prw + path->A)/10.0));
+					Isumu += pow(10.0, ((path->Md_E[iI[n]].Prw + path->A + DuIh)/10.0));
+					Isuml += pow(10.0, ((path->Md_E[iI[n]].Prw + path->A - DlIh)/10.0));
 				}
 				else { // F2 mode interference 
-					Isum += pow(10.0, ((path->Md_F2[iI[n]-3].Prw - path->A)/10.0));
-					Isumu += pow(10.0, ((path->Md_F2[iI[n]-3].Prw - path->A + DuIh)/10.0));
-					Isuml += pow(10.0, ((path->Md_F2[iI[n]-3].Prw - path->A - DlIh)/10.0));
+					Isum += pow(10.0, ((path->Md_F2[iI[n]-3].Prw + path->A)/10.0));
+					Isumu += pow(10.0, ((path->Md_F2[iI[n]-3].Prw + path->A + DuIh)/10.0));
+					Isuml += pow(10.0, ((path->Md_F2[iI[n]-3].Prw + path->A - DlIh)/10.0));
 				}
             }
         }
