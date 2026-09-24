@@ -62,3 +62,21 @@ Ten circuits are tabulated the long way round — their transmitter name ends
 over the short path produces field strengths near −400 dB(1 µV/m). Both
 `d1_makecomp.py` and `d1_absolute.py` choose the sense whose great-circle
 distance matches the tabulated one.
+
+## Absolute error and the near-MUF bias
+
+`D1_1148.py` needs `D1Comp.csv`; two lighter scripts in `macos-build/` drive
+the engine directly and compare against the measurements:
+
+    python3 macos-build/d1_absolute.py 2000
+    python3 macos-build/d1_bias.py
+
+`d1_absolute.py` reports bias and RMS by distance and by f against the basic
+MUF. `d1_bias.py` breaks the short model's above-the-MUF bias down by f/fb and
+distance, and reruns all of D1 under alternative above-the-MUF losses and a
+scaled basic MUF. It does this with a patched copy of `libp533` built in a
+temporary directory, and refuses to report unless that copy reproduces the
+tree's library exactly. Its findings are summarised in the `KNOWN BIAS` note in
+`P533/Src/P533/MedianSkywaveFieldStrengthShort.c`.
+
+Neither script is calibrated against a published D1 result.

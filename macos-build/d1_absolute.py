@@ -16,9 +16,8 @@ import csv, math, os, subprocess, sys, tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 D1   = os.path.join(ROOT, "ITURHFProp/D1")
 DATA = os.path.join(ROOT, "ITURHFProp/Data/")
-NCASE = int(sys.argv[1]) if len(sys.argv) > 1 else 40
-EXE   = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "ITURHFProp/Linux/ITURHFProp")
-LIBS  = sys.argv[3] if len(sys.argv) > 3 else os.path.join(ROOT, "P533/Linux") + ":" + os.path.join(ROOT, "P372/Linux")
+EXE   = os.path.join(ROOT, "ITURHFProp/Linux/ITURHFProp")
+LIBS  = os.path.join(ROOT, "P533/Linux") + ":" + os.path.join(ROOT, "P372/Linux")
 
 def dm(s):
     s = s.strip(); sign = -1.0 if s[-1] in "SW" else 1.0; s = s.rstrip("NSEW")
@@ -59,7 +58,9 @@ def measured():
             out.append((int(row[0]), int(row[1]), int(row[2]), vals))
     return out
 
-def predict(c, year, month, tmp):
+def predict(c, year, month, tmp, exe=None, libs=None, env=None):
+    """Run one circuit-month; returns {hour: (basic MUF, field strength)}.
+    `env` adds variables to the engine's environment (d1_bias.py uses it)."""
     inp, outp = os.path.join(tmp, "c.in"), os.path.join(tmp, "c.out")
     open(inp, "w").write(f'''PathName "D1 {c['id']}"
 PathTXName "TX"
@@ -108,8 +109,9 @@ latinc 1.0
 lnginc 1.0
 DataFilePath "{DATA}"
 ''')
-    subprocess.run([EXE, "-s", inp, outp],
-                   env={**os.environ, "DYLD_LIBRARY_PATH": LIBS}, capture_output=True)
+    subprocess.run([exe or EXE, "-s", inp, outp],
+                   env={**os.environ, **(env or {}), "DYLD_LIBRARY_PATH": libs or LIBS},
+                   capture_output=True)
     res = {}
     try:
         for line in open(outp, errors="surrogateescape"):
@@ -119,23 +121,6 @@ DataFilePath "{DATA}"
     except FileNotFoundError:
         pass
     return res
-
-geo, meas, rec, used = geometry(), measured(), [], 0
-with tempfile.TemporaryDirectory() as tmp:
-    for cid, yy, mm, vals in meas:
-        if used >= NCASE: break
-        year = 2000 + yy if yy < 50 else 1900 + yy
-        c = geo.get((cid, yy, mm))
-        if c is None: continue
-        pred = predict(c, year, mm, tmp)
-        if not pred: continue
-        got = False
-        for h in range(1, 25):
-            m = vals[h-1]
-            if m >= 99 or h not in pred: continue
-            bmuf, e = pred[h]
-            rec.append((e - m, c['dist'], c['freq'] > bmuf)); got = True
-        if got: used += 1
 
 def report(rs, label):
     if not rs:
@@ -147,18 +132,43 @@ def report(rs, label):
           f"RMS {math.sqrt(sum(x*x for x in d)/n):7.3f}  "
           f"max {max(abs(x) for x in d):8.2f}")
 
-if rec:
-    print(f"  cases {used}, hourly comparisons {len(rec)}  (dB, predicted - measured)")
-    report(rec, "all")
-    # By distance: which of the three P.533 models produced the value.
-    report([r for r in rec if r[1] <= 7000],            "d <= 7000 km")
-    report([r for r in rec if 7000 < r[1] <= 9000],     "7000 < d <= 9000 km")
-    report([r for r in rec if r[1] > 9000],             "d > 9000 km")
-    # By operating frequency relative to the basic MUF. The above-the-MUF loss
-    # Lm, P.533-14 eq (24)-(26), acts only on the second of these, and that is
-    # where the short model's bias lives -- see the KNOWN BIAS note in
-    # P533/Src/P533/MedianSkywaveFieldStrengthShort.c.
-    report([r for r in rec if r[1] <= 7000 and not r[2]], "d<=7000, f <= basic MUF")
-    report([r for r in rec if r[1] <= 7000 and r[2]],     "d<=7000, f  > basic MUF")
-else:
-    print("  no comparisons made")
+def main():
+    ncase = int(sys.argv[1]) if len(sys.argv) > 1 else 40
+    exe   = sys.argv[2] if len(sys.argv) > 2 else EXE
+    libs  = sys.argv[3] if len(sys.argv) > 3 else LIBS
+    geo, meas, rec, used = geometry(), measured(), [], 0
+    with tempfile.TemporaryDirectory() as tmp:
+        for cid, yy, mm, vals in meas:
+            if used >= ncase: break
+            year = 2000 + yy if yy < 50 else 1900 + yy
+            c = geo.get((cid, yy, mm))
+            if c is None: continue
+            pred = predict(c, year, mm, tmp, exe, libs)
+            if not pred: continue
+            got = False
+            for h in range(1, 25):
+                m = vals[h-1]
+                if m >= 99 or h not in pred: continue
+                bmuf, e = pred[h]
+                rec.append((e - m, c['dist'], c['freq'] > bmuf)); got = True
+            if got: used += 1
+
+    if rec:
+        print(f"  cases {used}, hourly comparisons {len(rec)}  (dB, predicted - measured)")
+        report(rec, "all")
+        # By distance: which of the three P.533 models produced the value.
+        report([r for r in rec if r[1] <= 7000],            "d <= 7000 km")
+        report([r for r in rec if 7000 < r[1] <= 9000],     "7000 < d <= 9000 km")
+        report([r for r in rec if r[1] > 9000],             "d > 9000 km")
+        # By operating frequency relative to the basic MUF. The above-the-MUF loss
+        # Lm, P.533-14 eq (24)-(26), acts only on the second of these. The short
+        # model's bias shows there, but d1_bias.py finds it starts just below the
+        # MUF -- see the KNOWN BIAS note in
+        # P533/Src/P533/MedianSkywaveFieldStrengthShort.c.
+        report([r for r in rec if r[1] <= 7000 and not r[2]], "d<=7000, f <= basic MUF")
+        report([r for r in rec if r[1] <= 7000 and r[2]],     "d<=7000, f  > basic MUF")
+    else:
+        print("  no comparisons made")
+
+if __name__ == "__main__":
+    main()
