@@ -394,6 +394,8 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	double p, h;		// coefficients
 	// End of Temporary Variables
 
+	(void)month; // no longer needed: polar night is found from the Sun itself
+
 	// R12 is not limited here. P.533-14 section 3.4 sets R12 to 160 "in the case of
 	// foF2 only", and P.1239-4 gives foE (equations (12), (13) and (18)) in terms of
 	// the 10.7 cm flux Phi12 estimated from R12 with no such limit. This clamped
@@ -485,17 +487,15 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 			h = 0.0;
 		}
 
-        // If it is night determine if here is in a polar region and during a period of polar winter
-		// The Norwegian territory of Svalbad is known to experiences a civil polar night lasting 
-		// from about 11 November until 30 January. 
-		// Civil Polar night is when the sun is 6 degrees below the horizon. 
-		// Because the arctic circle is at 66.5622 degrees, civil twilight would be 72.5622 degrees. Although civil twilight is chosen here,
-		// the precise angle of ionospheric twilight is open to debate. Half the month of November to the 1st of February experiences polar 
-		// night. This program works on median months, so polar night will be defined as ...
-		if(((here->L.lat > 72.5622*D2R) && ((month == NOV) || (month == DEC) || (month == JAN))) 
-										||
-		   ((here->L.lat < 72.5622*D2R) && ((month == MAY) || (month == JUN) || (month == JUL)))) {
-			// Northern hemisphere polar winter || Southern hemisphere polar winter
+        // P.1239-4: "In polar winter conditions, when the Sun does not rise, equation
+		// (17e) should be used." Here the Sun is below the horizon, so if there is no
+		// sunrise at all -- the sunrise hour angle is undefined -- it is polar night.
+		// This approximated that with a civil-twilight latitude of 72.5622 deg in
+		// November-January and May-July, and the southern test was written
+		// lat < 72.5622 deg instead of lat < -72.5622 deg, so from May to July almost
+		// every night-time point on Earth took (17e) alone.
+		if(isnan(here->Sun.sha)) {
+			// Polar night
 			D = pow(0.072,p)*exp(25.2 - 0.28*here->Sun.sza*R2D);
 		}
 		else {
