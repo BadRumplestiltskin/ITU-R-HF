@@ -362,16 +362,19 @@ void CircuitReliability(struct PathData *path) {
             }
         }
 
-        // In the situation where all the modes are signal and there is no interference
-		// there is nothing more to do
-		// Return the values set by this program with the interference set to 
+        // With no interfering mode there is no interference to fail against:
+		// the interference-only reliability of P.842 Table 3 step 12 is 100 %,
+		// so MIR = 100 and OCR = BCR. This used to set MIR = 0, which reported
+		// OCR = 0 for every digital circuit whose modes all fell inside the
+		// time window, and returned before the scattering and SNRXX steps.
 		if(Isum == 0.0) {
 			path->DuSI = DuSh;
 			path->DlSI = DlSh;
-			path->MIR = 0.0;
-			path->OCR = path->BCR*path->MIR/100.0;
-			return;
+			path->MIR = 100.0;
+			path->OCR = path->BCR;
+			EquatorialScattering(path, iS);
 		}
+		else {
 
         // Step 4: Determine the signal-to-interference ratio
 		path->SIR = S - 10.0*log10(Isum);
@@ -394,7 +397,8 @@ void CircuitReliability(struct PathData *path) {
 		path->OCR = path->BCR*path->MIR/100.0;
 
 		// Find the Overall Circuit reliability with scattering
-		EquatorialScattering(path, iS); 
+		EquatorialScattering(path, iS);
+		} // Isum != 0.0
 	}
 
     // End OCR Calculation ************************************************************************
