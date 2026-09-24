@@ -585,6 +585,11 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 	}
 
     //*****************************************************************************************
+	// Equation (47): tau = (p'/c) 10^3 ms, with p' the virtual slant range of
+	// equation (19), 2 R0 sin(d/2R0) / cos(Delta + d/2R0) per hop. This used
+	// cos(Delta - d/2R0), which is not p' and shrinks the delay differences
+	// between modes (1F to 3F at 3000 km: 0.87 ms instead of 1.46 ms). tau is
+	// stored in seconds: p' (km) * 1000 / VofL (m/s).
 	// Although the slant range. ptick, was calculated in MedianSkywaveFieldStrengthShort() is was
 	// calculated under the E layer screening condition which is not relevant here so ptick must be
 	// calculated here. 
@@ -598,7 +603,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 				dh = path->distance/(n+1); // Hop distance
 				delta = ElevationAngle(dh, hr);
 				psi = dh/(2.0*R0);
-				ptick = 2.0*R0*(sin(psi)/cos(delta - psi));
+				ptick = 2.0*R0*(sin(psi)/cos(delta + psi)); // equation (19)
 				path->Md_E[n].tau = (n+1)*(ptick/VofL)*1000.0;
 			}
         }
@@ -611,7 +616,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 				dh = path->distance/(n+1); // Hop distance
 				delta = ElevationAngle(dh, hr);
 				psi = dh/(2.0*R0);
-				ptick = 2.0*R0*(sin(psi)/cos(delta - psi));
+				ptick = 2.0*R0*(sin(psi)/cos(delta + psi)); // equation (19)
 				path->Md_F2[n].tau = (n+1)*(ptick/VofL)*1000.0;
 			}
         }
