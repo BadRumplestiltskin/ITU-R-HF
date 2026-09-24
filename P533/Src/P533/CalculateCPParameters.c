@@ -394,8 +394,10 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	double p, h;		// coefficients
 	// End of Temporary Variables
 
-	// Restrict the ssn to 160
-	SSN = min(SSN, MAXSSN);
+	// R12 is not limited here. P.533-14 section 3.4 sets R12 to 160 "in the case of
+	// foF2 only", and P.1239-4 gives foE (equations (12), (13) and (18)) in terms of
+	// the 10.7 cm flux Phi12 estimated from R12 with no such limit. This clamped
+	// R12 to 160 for foE as well.
 	 
 	/*
 	 * Now find the foE for the control point "here"

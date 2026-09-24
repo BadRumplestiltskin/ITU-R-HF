@@ -124,7 +124,10 @@ double MirrorReflectionHeight(struct PathData path, struct ControlPt CP, double 
 
 	y = max(x, 1.8);
 
-	deltaM = (0.18/(y - 1.4))+(0.096*(min(path.SSN,160) - 25.0)/(150.0));
+	// Delta M of equation (14) takes R12 as it is: P.533-14 section 3.4 limits R12
+	// to 160 "in the case of foF2 only" (P.1240-2 Annex 2 gives the same unlimited
+	// form). This clamped it to 160.
+	deltaM = (0.18/(y - 1.4))+(0.096*(path.SSN - 25.0)/(150.0));
 
 	xr = path.frequency/CP.foF2;
 

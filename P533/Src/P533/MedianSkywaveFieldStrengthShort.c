@@ -100,8 +100,10 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	//		E and F2 layer calculation loops
 	// 5.2.2 Field strength determination
 	
-	// For this calculation the SSN is restricted to 160 
-	SSN = MIN(path->SSN, MAXSSN);
+	// R12 in the absorption term (1 + 0.0067 R12) of equation (20) is not limited:
+	// P.533-14 section 3.4 sets R12 to 160 "in the case of foF2 only". This
+	// clamped it to 160, making Li low above R12 = 160 (11.5 % at R12 = 200).
+	SSN = path->SSN;
 
 	// This procedure applies only to paths less than 7000 km where it is the only method used and
 	// paths greater than 7000 km but less than 9000 km where the field strength is interpolated with

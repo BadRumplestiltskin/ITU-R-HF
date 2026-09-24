@@ -51,9 +51,9 @@ int ValidatePath(struct PathData *path) {
 	if (path->noiseP.fam == NULL)										return RTN_ERRNOFAMDATA;
 	if (path->foF2var == NULL)											return RTN_ERRNOFOF2VARDATA;
 	// The upper bound of 311 was removed upstream (no_limits, ae38e22): it is
-	// not a limit of the method. The terms that are only defined up to R12 = 160
-	// clamp to MAXSSN themselves, in CalculateCPParameters() and
-	// MedianSkywaveFieldStrengthShort().
+	// not a limit of the method. foF2 and M(3000)F2 clamp R12 to MAXSSN themselves
+	// in IonosphericParameters() (P.533-14 section 3.4 and P.1239-4 section 3.1);
+	// nothing else in P.533 limits it.
 	if (1 > path->SSN)												return RTN_ERRSSN;
 	if ((path->Modulation != DIGITAL) && (path->Modulation != ANALOG))	return RTN_ERRMODULATION;
 	if ((1.0 > path->frequency) || path->frequency > 30.0)				return RTN_ERRFREQUENCY;
