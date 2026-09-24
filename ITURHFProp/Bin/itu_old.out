@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 01:19:16 2026
+     Analysis Prepared  Thu Sep 24 15:26:47 2026
 
 ---------------------------------------------------------------------------
 
@@ -50,13 +50,13 @@
 	slant range =  5873.171
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
-	basic MUF       =  27.770
-	10% MUF         =  36.427
-	50% MUF         =  27.770
-	90% MUF         =  21.752
-	Operational MUF =  36.101
-	10% OPMUF       =  47.355
-	90% OPMUF       =  28.277
+	basic MUF       =  31.218
+	10% MUF         =  40.951
+	50% MUF         =  31.218
+	90% MUF         =  24.453
+	Operational MUF =  40.584
+	10% OPMUF       =  53.236
+	90% OPMUF       =  31.789
 ********* Lowest Order and Dominant Mode *****************
 	lowest order F2 layer mode =  2
 	lowest order E layer mode = No Mode
@@ -127,13 +127,13 @@
 **********************************************************
 *                      F2 Mode 2                         *
 **********************************************************
-	basic MUF  =  27.770 (MHz)
-	10% MUF    =  36.427 (MHz)
-	50% MUF    =  27.770 (MHz)
-	90% MUF    =  21.752 (MHz)
-	OPMUF      =  36.101 (MHz)
-	10% OPMUF  =  47.355 (MHz)
-	90% OPMUF  =  28.277 (MHz)
+	basic MUF  =  31.218 (MHz)
+	10% MUF    =  40.951 (MHz)
+	50% MUF    =  31.218 (MHz)
+	90% MUF    =  24.453 (MHz)
+	OPMUF      =  40.584 (MHz)
+	10% OPMUF  =  53.236 (MHz)
+	90% OPMUF  =  31.789 (MHz)
 	Fprob        =  1.000 (%)
 	Lower decile =  0.783
 	Upper decile =  1.312
@@ -148,13 +148,13 @@
 **********************************************************
 *                      F2 Mode 3                         *
 **********************************************************
-	basic MUF  =  21.650 (MHz)
-	10% MUF    =  28.400 (MHz)
-	50% MUF    =  21.650 (MHz)
-	90% MUF    =  16.959 (MHz)
-	OPMUF      =  28.146 (MHz)
-	10% OPMUF  =  36.920 (MHz)
-	90% OPMUF  =  22.046 (MHz)
+	basic MUF  =  24.339 (MHz)
+	10% MUF    =  31.927 (MHz)
+	50% MUF    =  24.339 (MHz)
+	90% MUF    =  19.065 (MHz)
+	OPMUF      =  31.641 (MHz)
+	10% OPMUF  =  41.505 (MHz)
+	90% OPMUF  =  24.784 (MHz)
 	Fprob        =  1.000 (%)
 	Lower decile =  0.783
 	Upper decile =  1.312
@@ -169,13 +169,13 @@
 **********************************************************
 *                      F2 Mode 4                         *
 **********************************************************
-	basic MUF  =  18.071 (MHz)
-	10% MUF    =  23.705 (MHz)
-	50% MUF    =  18.071 (MHz)
-	90% MUF    =  14.155 (MHz)
-	OPMUF      =  23.493 (MHz)
-	10% OPMUF  =  30.817 (MHz)
-	90% OPMUF  =  18.402 (MHz)
+	basic MUF  =  20.316 (MHz)
+	10% MUF    =  26.649 (MHz)
+	50% MUF    =  20.316 (MHz)
+	90% MUF    =  15.913 (MHz)
+	OPMUF      =  26.410 (MHz)
+	10% OPMUF  =  34.644 (MHz)
+	90% OPMUF  =  20.687 (MHz)
 	Fprob        =  1.000 (%)
 	Lower decile =  0.783
 	Upper decile =  1.312
@@ -190,13 +190,13 @@
 **********************************************************
 *                      F2 Mode 5                         *
 **********************************************************
-	basic MUF  =  15.926 (MHz)
-	10% MUF    =  20.891 (MHz)
-	50% MUF    =  15.926 (MHz)
-	90% MUF    =  12.475 (MHz)
-	OPMUF      =  20.704 (MHz)
-	10% OPMUF  =  27.158 (MHz)
-	90% OPMUF  =  16.217 (MHz)
+	basic MUF  =  17.904 (MHz)
+	10% MUF    =  23.485 (MHz)
+	50% MUF    =  17.904 (MHz)
+	90% MUF    =  14.024 (MHz)
+	OPMUF      =  23.275 (MHz)
+	10% OPMUF  =  30.531 (MHz)
+	90% OPMUF  =  18.231 (MHz)
 	Fprob        =  1.000 (%)
 	Lower decile =  0.783
 	Upper decile =  1.312
@@ -211,13 +211,13 @@
 **********************************************************
 *                      F2 Mode 6                         *
 **********************************************************
-	basic MUF  =  14.569 (MHz)
-	10% MUF    =  19.111 (MHz)
-	50% MUF    =  14.569 (MHz)
-	90% MUF    =  11.412 (MHz)
-	OPMUF      =  18.940 (MHz)
-	10% OPMUF  =  24.845 (MHz)
-	90% OPMUF  =  14.836 (MHz)
+	basic MUF  =  16.378 (MHz)
+	10% MUF    =  21.485 (MHz)
+	50% MUF    =  16.378 (MHz)
+	90% MUF    =  12.829 (MHz)
+	OPMUF      =  21.292 (MHz)
+	10% OPMUF  =  27.930 (MHz)
+	90% OPMUF  =  16.678 (MHz)
 	Fprob        =  1.000 (%)
 	Lower decile =  0.783
 	Upper decile =  1.312

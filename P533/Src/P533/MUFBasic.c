@@ -144,10 +144,13 @@ void MUFBasic(struct PathData *path) {
 			CalculateCPParameters(path, &path->CP[Rd02]);
 
 			// Determine the F2 basic MUF at each control point
-			// For these control points calculate the basic MUF at F2(dmax)MUF
-			// Note in this case for equation (3) in P.533-12 section 3.5.1.1
-			F2DMUF[0] = CalcF2DMUF(&path->CP[Td02], path->distance/(n0+1.0), dmax, CalcB(&path->CP[Td02]));
-			F2DMUF[1] = CalcF2DMUF(&path->CP[Rd02], path->distance/(n0+1.0), dmax, CalcB(&path->CP[Rd02]));
+			// P.533-14 section 3.5.1.2: "the lower of the F2(dmax)MUF values
+			// determined from equation (3) for the two control points", i.e.
+			// equation (3) with d = dmax. This passed the hop length D/(n0+1)
+			// instead, which is shorter than dmax whenever n0 > 0 and gave a
+			// path basic MUF 2-10 % low for every path beyond dmax.
+			F2DMUF[0] = CalcF2DMUF(&path->CP[Td02], dmax, dmax, CalcB(&path->CP[Td02]));
+			F2DMUF[1] = CalcF2DMUF(&path->CP[Rd02], dmax, dmax, CalcB(&path->CP[Rd02]));
 
 			path->Md_F2[n0].BMUF = min(F2DMUF[0], F2DMUF[1]); // Basic MUF is the lower of the two control point MUFs.
 

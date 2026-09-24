@@ -44,14 +44,17 @@ void Between7000kmand9000km(struct PathData *path) {
 
 		path->Ei = 100.0*log10(Xi); // Eqn (42) P.533-12
 
-		// Calculate the basic MUF according to P.533-12 Section 5.4 "Paths between 7000 and 9000 km"
+		// Calculate the basic MUF according to P.533-14 Section 5.4 "Paths between 7000 and 9000 km":
+		// equation (3) at the two Table 1a) control points. These paths are
+		// always longer than dmax, so as in section 3.5.1.2 that is
+		// F2(dmax)MUF, equation (3) with d = dmax; this passed the hop length.
 		B = CalcB(&path->CP[Td02]);
 		dmax = min(Calcdmax(&path->CP[Td02]), 4000.0);
-		BMUF[0] = CalcF2DMUF(&path->CP[Td02], path->distance/(path->n0_F2+1), dmax, B);
+		BMUF[0] = CalcF2DMUF(&path->CP[Td02], dmax, dmax, B);
 		
 		B = CalcB(&path->CP[Rd02]);
 		dmax = min(Calcdmax(&path->CP[Rd02]), 4000.0);
-		BMUF[1] = CalcF2DMUF(&path->CP[Rd02], path->distance/(path->n0_F2+1), dmax, B);
+		BMUF[1] = CalcF2DMUF(&path->CP[Rd02], dmax, dmax, B);
 
 		path->BMUF = min(BMUF[0], BMUF[1]);
 
