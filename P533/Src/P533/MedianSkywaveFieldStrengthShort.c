@@ -394,35 +394,37 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				// macos-build/d1_absolute.py) the short model is biased high on
 				// circuits operated above the path basic MUF fb:
 				//
-				//     f <= fb   n = 8002   bias +0.42 dB   RMS  8.19
-				//     f  > fb   n = 3618   bias +5.13 dB   RMS 11.83
+				//     f <= fb   n = 8083   bias +0.56 dB   RMS  8.19
+				//     f  > fb   n = 3537   bias +5.74 dB   RMS 11.92
+				//
+				// (figures after the 2026-09 alignment of this code with the text of
+				// P.533-14, P.842-5, P.1239-4 and P.1240-2; see git log.)
 				//
 				// macos-build/d1_bias.py breaks this down, and it is not simply
 				// Lm being too weak:
 				//
-				//  - It starts below fb, where Lm = 0: +4.8 dB at 0.9 < f/fb <= 1,
+				//  - It starts below fb, where Lm = 0: +5.4 dB at 0.9 < f/fb <= 1,
 				//    and no change to Lm moves it. Hour alignment is not the cause.
 				//  - It depends on distance. Above fb: +5.1 dB up to 1000 km
-				//    (2353 of the 3618), +12.8 dB at 3000-4000 km, +1.2 dB at
+				//    (2353 of the 3537), +13.2 dB at 3000-4000 km, +4.0 dB at
 				//    4000-7000 km. The 3000-4000 km figure is mostly circuit 76
-				//    (Teheran-Norddeich, 15.1 MHz), measured down to -55 dB(1 uV/m)
-				//    at f/fb = 1.85, which implies about 75 dB of Lm against 33 dB
-				//    here and a 62 dB cap.
-				//  - 1F2 or 2F2 carries the field in 3304 of the 3618 hours.
+				//    (Teheran-Norddeich, 15.1 MHz), measured down to -55 dB(1 uV/m),
+				//    which implies an Lm near 75 dB against the 62 dB cap.
+				//  - 1F2 or 2F2 carries the field in 3259 of the 3537 hours.
 				//
 				// Bias/RMS for d <= 7000 km (all 11620 hours) under alternatives:
 				//
-				//     this expression                     +1.88 / 9.48
-				//     the removed code (+5/+8, 70x+8)     -0.45 / 9.12
-				//     this expression + 5 dB              +0.42 / 9.10
-				//     fb scaled by 0.90 inside Lm only    -0.26 / 8.96
+				//     this expression                     +2.14 / 9.48
+				//     the removed code (+5/+8, 70x+8)     -0.08 / 8.88
+				//     this expression + 5 dB              +0.71 / 9.01
+				//     fb scaled by 0.90 inside Lm only    +0.04 / 8.83
 				//
 				// Scaling fb fits best and is the only one that removes the bias
 				// just below fb, which suggests the basic MUF acts 5-10% high for
-				// field strength rather than Lm being too small. Every variant
-				// that adds loss makes 4000-7000 km worse, so no single Lm fits
-				// all distances. D1 cannot separate a MUF error from an Lm error;
-				// oblique-sounding MUF data could.
+				// field strength rather than Lm being too small. The removed code's
+				// 70x+8 beyond 3000 km overshoots at 4000-7000 km (-5.7 dB). D1
+				// cannot separate a MUF error from an Lm error; oblique-sounding MUF
+				// data could.
 				//
 				// The Recommendation's expression is kept regardless: it is what
 				// P.533-14 states, and Lz cannot absorb a bias confined to one
