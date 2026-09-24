@@ -369,6 +369,9 @@ void CircuitReliability(struct PathData *path) {
 		// OCR = 0 for every digital circuit whose modes all fell inside the
 		// time window, and returned before the scattering and SNRXX steps.
 		if(Isum == 0.0) {
+			// S/I is unbounded with nothing to interfere; report it as -TINYDB
+			// (+307 dB) rather than leave TINYDB, which reads as the worst case.
+			path->SIR = -TINYDB;
 			path->DuSI = DuSh;
 			path->DlSI = DlSh;
 			path->MIR = 100.0;
@@ -650,7 +653,12 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 			// both of these criteria. Step 4 details what to do with the modes that meet the criteria.
 
 			// The zeroth element in the iEw[] array is the dominant mode.
-			deltaA = (M[iEw[0]]->Prw - path->A);
+			// Step 2: "All other active modes with strengths exceeding (Ew - A (dB))".
+			// A is defined on mode strengths (section 10.2.1: the ratio of the strength
+			// of the dominant mode to that of a sub-dominant mode), so the test is on
+			// the field strength Ew; it was made on the received power Prw, which
+			// also carries each mode's receive antenna gain.
+			deltaA = (M[iEw[0]]->Ew - path->A);
 
 			// Step 3: "Of the modes identified in Steps 1 or 2, the first arriving
 			// mode is identified". This took the earliest of every mode with a
@@ -660,7 +668,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 			// summed into Es (MC) -- that pass the step 2 test are considered.
 			deltat = DBL_MAX;
 			for(n=0; n<MAXMDS; n++) {
-				if((M[n]->BMUF != 0.0) && M[n]->MC && (M[n]->Prw >= deltaA) && (M[n]->tau < deltat)) {
+				if((M[n]->BMUF != 0.0) && M[n]->MC && (M[n]->Ew >= deltaA) && (M[n]->tau < deltat)) {
 					deltat = M[n]->tau;
 				}
 			}
@@ -670,11 +678,15 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 			Ssum = 0.0;
 			for(n=0; n<MAXMDS; n++) {
 				// Sum the mode as signals that satisfy the following criteria:
-				//		i) The mode exists
-				//		ii) The mode within the A ratio of the dominant mode median received power
-				//		iii) The mode arrives within TW of the earlest arriving mode
-				if(M[n]->BMUF != 0.0) { 
-					if((M[n]->Prw >= deltaA) && (M[n]->tau <= deltat)) {
+				//		i) The mode is active: it exists and was summed into Es
+				//		ii) The mode is within the A ratio of the dominant mode (step 2)
+				//		iii) The mode arrives within TW of the earlest arriving mode (step 3)
+				// Step 5: the interferers are "the active modes identified in Step 2 above
+				// [that] have differential time delays beyond the time window". Every other
+				// mode with a basic MUF used to count as an interferer, including E-screened
+				// modes and modes weaker than Ew - A, so the interference sum was never 0.
+				if((M[n]->BMUF != 0.0) && M[n]->MC && (M[n]->Ew >= deltaA)) { 
+					if(M[n]->tau <= deltat) {
 
 						Ssum += pow(pow(10.0, M[n]->Ew/10.0), 2);
 						iS[n] = n;
