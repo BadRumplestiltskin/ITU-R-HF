@@ -584,6 +584,7 @@ void FindfL(struct PathData *path, struct ControlPt CP[MAXCP][24], int hops, dou
 	double fL[24];
 	double chi;		// solar zenith angle
 	double dt;		// Temp
+	double fLtr;	// Equation (37) value at tr
 
 	int month;	// month index for readability
 	int i;
@@ -635,9 +636,13 @@ void FindfL(struct PathData *path, struct ControlPt CP[MAXCP][24], int hops, dou
 			if((fL[prev] >= 2.0*fLN) && (fL[now] <= 2.0*fLN)) { // Find a time where the LUF is decreasing into night
 				tr = now;
 				dt = (2.0*fLN - fL[tr])/(fL[prev] - fL[tr]);
-				fL[tr] = 0.7945*fL[prev]*(dt*(1.0 - 0.7945) + 0.7945);
-				if(fL[now] < fL[tr]) { 
-					fL[now] = fL[tr];
+				// Equation (37); "The newly recalculated fL values replace the
+				// initial fL values only if they are larger." The result used to be
+				// written straight into fL[tr] (tr == now), so the comparison
+				// compared it with itself and a smaller value always replaced it.
+				fLtr = 0.7945*fL[prev]*(dt*(1.0 - 0.7945) + 0.7945);
+				if(fL[now] < fLtr) {
+					fL[now] = fLtr;
 				}
             }
         }
