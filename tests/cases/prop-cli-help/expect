@@ -1,0 +1,3 @@
+ITUFHProp [Options] [Input File] [Output File]
+-c CSV: Create an RFC4180 compliant CSV output file.
+-t Table: Print only the CSV table

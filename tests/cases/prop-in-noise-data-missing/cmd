@@ -1,0 +1,1 @@
+mkdir d && ln -s "$P533DATA/P1239-3 Decile Factors.txt" "$P533DATA/ionos05.bin" d/ && sed -e "s|@DATA@|$P533DATA/|" -e "s|@ANT@|$CASE/../../../ITURHFProp/Data/Antenna/T13 Files|" in.tmpl > x.in && $ITURHFPROP -s x.in out
