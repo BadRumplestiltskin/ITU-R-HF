@@ -7,39 +7,100 @@
 #include "P533.h"
 // End local includes
 
+static int FreeAntenna(struct Antenna *ant, int retval);
+
 /*
  * Allocates the Antenna structure (Part of the PathData struct).  This 
  * function is called when the antenna types have been defined which in
  * turn define the dimensions of the required data structure.
  */
 DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen) {
-	double *freqList;   // List of frequencies for which we have pattern data
-	double ***antpat;
 	int m, n;
-	
+
+	// Built on the antenna as it goes, so on failure FreeAntenna() can release
+	// the partial structure and leave the antenna empty rather than half-set.
 	ant->freqn = freqn;
-	freqList = (double *) malloc(ant->freqn * sizeof(double));
-	if(freqList != NULL) {
-		ant->freqs = freqList;
-	} else {
-		return RTN_ERRALLOCATEANT;
+	ant->freqs = (double *) malloc(freqn * sizeof(double));
+	ant->pattern = (double ***) calloc(freqn, sizeof(double **));
+	if ((ant->freqs == NULL) || (ant->pattern == NULL)) return FreeAntenna(ant, RTN_ERRALLOCATEANT);
+	for (m=0; m < freqn; m++) {
+		ant->pattern[m] = (double **) calloc(azin, sizeof(double *));
+		if (ant->pattern[m] == NULL) return FreeAntenna(ant, RTN_ERRALLOCATEANT);
+		for (n=0; n<azin; n++) {
+			ant->pattern[m][n] = (double*) malloc(elen * sizeof(double));
+			if (ant->pattern[m][n] == NULL) return FreeAntenna(ant, RTN_ERRALLOCATEANT);
+		}
 	}
 
-	antpat = (double ***) malloc(ant->freqn * sizeof(double *));
- 	for (m=0; m < ant->freqn; m++) {
- 		antpat[m] = (double **) malloc(azin * sizeof(double *));
- 		for (n=0; n<azin; n++) {
- 			antpat[m][n] = (double*) malloc(elen * sizeof(double));
- 		}
- 	}
-	
-	if(antpat != NULL) {
-		ant->pattern = antpat;
-	} else {
-		return RTN_ERRALLOCATEANT;
-	}
-	
 	return RTN_ALLOCATEP533OK;
+
+}
+
+
+
+/*
+	FreeAntenna() - Releases an antenna pattern and returns retval.
+
+		NULL-tolerant at every level, and leaves the antenna empty (NULL
+		pointers, freqn 0), so it is safe on an antenna that was never
+		allocated, was partly allocated, or has already been freed.
+
+		INPUT
+			struct Antenna *ant, int retval
+
+		OUTPUT
+			returns retval
+
+*/
+static int FreeAntenna(struct Antenna *ant, int retval) {
+
+	int m, n;
+
+	if (ant->pattern != NULL) {
+		for (m=0; m < ant->freqn; m++) {
+			if (ant->pattern[m] == NULL) continue;
+			for (n=0; n<360; n++) free(ant->pattern[m][n]);		// 360 azimuths
+			free(ant->pattern[m]);
+		}
+		free(ant->pattern);
+		ant->pattern = NULL;
+	}
+	free(ant->freqs);
+	ant->freqs = NULL;
+	ant->freqn = 0;
+
+	return retval;
+
+}
+
+
+
+/*
+	FreefoF2var() - Releases the foF2 variability array, NULL-tolerant at every
+		level, and leaves path->foF2var NULL so a second call is harmless.
+
+*/
+static void FreefoF2var(struct PathData *path) {
+
+	int i, j, k, m;
+
+	if (path->foF2var != NULL) {
+		for (i=0; i<3; i++) {					// season
+			if (path->foF2var[i] == NULL) continue;
+			for (j=0; j<24; j++) {				// hours
+				if (path->foF2var[i][j] == NULL) continue;
+				for (k=0; k<19; k++) {			// latitude
+					if (path->foF2var[i][j][k] == NULL) continue;
+					for (m=0; m<3; m++) free(path->foF2var[i][j][k][m]);
+					free(path->foF2var[i][j][k]);
+				}
+				free(path->foF2var[i][j]);
+			}
+			free(path->foF2var[i]);
+		}
+		free(path->foF2var);
+		path->foF2var = NULL;
+	}
 
 }
 
@@ -65,27 +126,8 @@ DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, in
 */
 static int AllocFailed(struct PathData *path, int retval) {
 
-	int i, j, k, m;
-
 	FreeIonMaps(path);		// foF2 and M3kF2, NULL-tolerant
-
-	if (path->foF2var != NULL) {
-		for (i=0; i<3; i++) {					// season
-			if (path->foF2var[i] == NULL) continue;
-			for (j=0; j<24; j++) {				// hours
-				if (path->foF2var[i][j] == NULL) continue;
-				for (k=0; k<19; k++) {			// latitude
-					if (path->foF2var[i][j][k] == NULL) continue;
-					for (m=0; m<3; m++) free(path->foF2var[i][j][k][m]);
-					free(path->foF2var[i][j][k]);
-				}
-				free(path->foF2var[i][j]);
-			}
-			free(path->foF2var[i]);
-		}
-		free(path->foF2var);
-		path->foF2var = NULL;
-	}
+	FreefoF2var(path);
 
 	return retval;
 
@@ -218,8 +260,12 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	 *
 	 * The arrays are free'd in FreePathMemory.
 	 */
- 	path->A_tx.pattern = NULL;
+	path->A_tx.pattern = NULL;
+	path->A_tx.freqs = NULL;
+	path->A_tx.freqn = 0;
 	path->A_rx.pattern = NULL;
+	path->A_rx.freqs = NULL;
+	path->A_rx.freqn = 0;
 
 	// The arrays are attached to the path as they are completed, above, so that
 	// AllocFailed() can release a partially built structure.
@@ -312,10 +358,8 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 	 */
 
 	int retval;
-	int hrs, lng, lat, ssn;
-	int i, j, k, m, n;
-	int season;
-	int azimuth;
+	int hrs, lng, lat;
+	int i, j, k;
 	
 	/*
 	 * Free the ionospheric parameter arrays.
@@ -323,7 +367,6 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 	hrs = 24;	// 24 hours
 	lng = 241;	// 241 longitudes at 1.5 degree increments
 	lat = 121;	// 121 latitudes at 1.5 degree increments
-	ssn = 2;	// 2 SSN (12-month smoothed sun spot numbers) high and low
 
 	// NULL when the caller released its own maps with FreeIonMaps() and pointed
 	// the path at the shared month cache instead; those belong to IonMapFree().
@@ -355,44 +398,10 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 		path->M3kF2 = NULL;
 	}
 
-	// Free the foF2 variability memory
-	season = 3;	 
-	lat = 19;	
-	ssn = 3;	
+	FreefoF2var(path);
 
-	for (i=0; i<season; i++) {
-		for (j=0; j<hrs; j++) {
-			for (k=0; k<lat; k++) {
-				for (m=0; m<ssn; m++) {
-					free(path->foF2var[i][j][k][m]);
-				}
-				free(path->foF2var[i][j][k]);
-			}
-			free(path->foF2var[i][j]);
-		}
-		free(path->foF2var[i]);
-	}
-	free(path->foF2var);
-	
-	// Free antenna array
-	azimuth = 360;
-	free(path->A_tx.freqs);
-	for (m=0; m < path->A_tx.freqn; m++) {
-		for (n=0; n<azimuth; n++) {
-			free(path->A_tx.pattern[m][n]);
-		}
-		free(path->A_tx.pattern[m]);
-    }
-	free(path->A_tx.pattern);
-
-  free(path->A_rx.freqs);
-	for (m=0; m < path->A_rx.freqn; m++) {
-		for (n=0; n<azimuth; n++) {
-			free(path->A_rx.pattern[m][n]);
-		}
-		free(path->A_rx.pattern[m]);
-	}
-	free(path->A_rx.pattern);
+	FreeAntenna(&path->A_tx, 0);
+	FreeAntenna(&path->A_rx, 0);
 
 	// Free the noise memory
 	retval = dllFreeNoiseMemory(&path->noiseP);
