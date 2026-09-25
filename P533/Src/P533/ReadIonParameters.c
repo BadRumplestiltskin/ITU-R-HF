@@ -53,6 +53,8 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 	#endif
 
 	int		j, k, m;
+	int		p, r, h, i, n;		// Map, line, hour, value and count indices
+	float	v[5];				// Values on one line
 	int		/*hrs,*/ lng, lat, ssn; // Temp gridmap maxima
 
 	int linelen = 300;
@@ -91,58 +93,34 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 		printf("ReadIonParameters: Reading foF2 into array\n");
 	}
 
-    // Read in foF2
-	for(m = 0; m < ssn; m++) { // SSN
-		for(j = 0; j < lng; j++) { // Longitude
-			for(k = 0; k < lat; k++) { // Latitude
-				// Read 24 hours of data from the Dambolt/Seussman ionospheric atlas file.
-				// There are six lines for 24 hours.
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->foF2[0][j][k][m], &path->foF2[1][j][k][m], &path->foF2[2][j][k][m],                 
-					                                 &path->foF2[3][j][k][m], &path->foF2[4][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->foF2[5][j][k][m], &path->foF2[6][j][k][m],&path->foF2[7][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->foF2[8][j][k][m], &path->foF2[9][j][k][m], &path->foF2[10][j][k][m],
-					                                 &path->foF2[11][j][k][m], &path->foF2[12][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->foF2[13][j][k][m], &path->foF2[14][j][k][m], &path->foF2[15][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->foF2[16][j][k][m], &path->foF2[17][j][k][m], &path->foF2[18][j][k][m],
-					                                 &path->foF2[19][j][k][m], &path->foF2[20][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->foF2[21][j][k][m],&path->foF2[22][j][k][m],&path->foF2[23][j][k][m]);
-			}
-        }
-    }
+    // Read in foF2, then M3kF2. Each grid point is 24 hours of data from the
+	// Dambolt/Seussman ionospheric atlas file, on six lines of 5, 3, 5, 3, 5
+	// and 3 values. Every line is checked: a truncated or corrupt file used to
+	// leave the rest of the maps unset and still return OK.
+	for (p = 0; p < 2; p++) {
+		float ****map = (p == 0) ? path->foF2 : path->M3kF2;
 
-    if(silent != TRUE) {
-		printf("ReadIonParameters: Reading M3kF2 into array\n");
+		if ((p == 1) && (silent != TRUE)) {
+			printf("ReadIonParameters: Reading M3kF2 into array\n");
+		}
+
+		for(m = 0; m < ssn; m++) { // SSN
+			for(j = 0; j < lng; j++) { // Longitude
+				for(k = 0; k < lat; k++) { // Latitude
+					for (h = 0, r = 0; r < 6; r++) {
+						n = (r % 2 == 0) ? 5 : 3;
+						if ((fgets(line, linelen, fp) == NULL) ||
+							(sscanf(line, "%f %f %f %f %f", &v[0], &v[1], &v[2], &v[3], &v[4]) < n)) {
+							fclose(fp);
+							printf("ReadIonParameters: ERROR Truncated or malformed file %s\n", InFilePath);
+							return RTN_ERRREADIONPARAMETERS;
+						}
+						for (i = 0; i < n; i++, h++) map[h][j][k][m] = v[i];
+					}
+				}
+			}
+		}
 	}
-
-    // Read in M3kF2
-	for(m = 0; m < ssn; m++) { // SSN
-		for(j = 0; j < lng; j++) { // Longitude
-			for(k = 0; k < lat; k++) { // Latitude
-				// Read 24 hours of data from the Dambolt/Seussman ionospheric atlas file.
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->M3kF2[0][j][k][m], &path->M3kF2[1][j][k][m], &path->M3kF2[2][j][k][m],
-					                                 &path->M3kF2[3][j][k][m], &path->M3kF2[4][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->M3kF2[5][j][k][m], &path->M3kF2[6][j][k][m], &path->M3kF2[7][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->M3kF2[8][j][k][m],  &path->M3kF2[9][j][k][m], &path->M3kF2[10][j][k][m],
-					                                 &path->M3kF2[11][j][k][m], &path->M3kF2[12][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->M3kF2[13][j][k][m], &path->M3kF2[14][j][k][m], &path->M3kF2[15][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f  %f  %f", &path->M3kF2[16][j][k][m], &path->M3kF2[17][j][k][m], &path->M3kF2[18][j][k][m], 
-					                                 &path->M3kF2[19][j][k][m], &path->M3kF2[20][j][k][m]);
-				fgets(line, linelen, fp);
-				sscanf(line, "  %f  %f  %f", &path->M3kF2[21][j][k][m], &path->M3kF2[22][j][k][m], &path->M3kF2[23][j][k][m]);
-			}
-        }
-    }
 
     // Close the file and return.
 	fclose(fp);

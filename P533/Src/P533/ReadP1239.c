@@ -7,6 +7,16 @@
 #include "P533.h"
 // End local includes
 
+/*
+	P1239Fail() - Closes the decile file, reports it and returns RTN_ERRNOTP12393.
+*/
+static int P1239Fail(FILE *fp, const char *InFilePath) {
+	fclose(fp);
+	printf("ReadP1239: ERROR Truncated or malformed decile file\n");
+	printf("\t\t<%s>\n", InFilePath);
+	return RTN_ERRNOTP12393;
+}
+
 int ReadP1239(struct PathData *path, const char * DataFilePath) {
 
 	/*
@@ -55,33 +65,38 @@ int ReadP1239(struct PathData *path, const char * DataFilePath) {
 	decile = 2;	// 2 deciles 
 				//	1) lower 2) upper
 
-	fgets(line, 256, fp);
-	fgets(line, 256, fp);
+	// Every line is checked: a truncated or corrupt file used to leave the
+	// remaining factors uninitialised (or repeat the last line) and still
+	// return OK.
+	for (k = 0; k < 2; k++) {
+		if (fgets(line, 256, fp) == NULL) return P1239Fail(fp, InFilePath);
+	}
 
 	// Now read numbers for the lower decile.
 	for(n=0;n<decile;n++) { // 2 deciles lower and upper
 		for(i=0;i<season;i++) { // Three seasons
 			for(m=0; m<ssn; m++) { // Three sunspot ranges
 				// Read the next four lines of text.
-				fgets(line, 256, fp);
-				fgets(line, 256, fp);
-				fgets(line, 256, fp);
-				fgets(line, 256, fp);
+				for (k = 0; k < 4; k++) {
+					if (fgets(line, 256, fp) == NULL) return P1239Fail(fp, InFilePath);
+				}
 				for(k=lat-1;k>=0;k--) {  // 19 latitudes counting backward to make the indices correspond to increasing latitude
 					// Read the next latitude line of text
-					fgets(line, 256, fp);
+					if (fgets(line, 256, fp) == NULL) return P1239Fail(fp, InFilePath);
 					// Scan 1 string latitude and 24 numbers corresponding to hours
 					// %44s, not %s: line is 256 bytes and substr is 45, so an
 					// over-long first token -- a corrupt or hand-edited decile
 					// file -- overran the stack. The latitude labels are a few
 					// characters, so the width costs nothing.
-					sscanf(line, "%44s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf/n", substr,
+					if (sscanf(line, "%44s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf/n", substr,
 									&path->foF2var[i][0][k][m][n],  &path->foF2var[i][1][k][m][n],  &path->foF2var[i][2][k][m][n],  &path->foF2var[i][3][k][m][n], 
 									&path->foF2var[i][4][k][m][n],  &path->foF2var[i][5][k][m][n],  &path->foF2var[i][6][k][m][n],  &path->foF2var[i][7][k][m][n],
 									&path->foF2var[i][8][k][m][n],  &path->foF2var[i][9][k][m][n],  &path->foF2var[i][10][k][m][n], &path->foF2var[i][11][k][m][n], 
 									&path->foF2var[i][12][k][m][n], &path->foF2var[i][13][k][m][n], &path->foF2var[i][14][k][m][n], &path->foF2var[i][15][k][m][n], 
 									&path->foF2var[i][16][k][m][n], &path->foF2var[i][17][k][m][n], &path->foF2var[i][18][k][m][n], &path->foF2var[i][19][k][m][n], 
-									&path->foF2var[i][20][k][m][n], &path->foF2var[i][21][k][m][n], &path->foF2var[i][22][k][m][n], &path->foF2var[i][23][k][m][n]);
+									&path->foF2var[i][20][k][m][n], &path->foF2var[i][21][k][m][n], &path->foF2var[i][22][k][m][n], &path->foF2var[i][23][k][m][n]) != 25) {
+						return P1239Fail(fp, InFilePath);
+					}
 				}
 			}
 		}
