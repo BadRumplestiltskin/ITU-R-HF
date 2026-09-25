@@ -398,7 +398,9 @@ void substrbtwnchar(char instr[256], char searchchar, char * outstr) {
 
 	frstchar = strchr(instr, searchchar);
 	scndchar = strrchr(instr, searchchar);
-	if((&frstchar[0] != NULL) && (&scndchar[0] != NULL)) {
+	// Needs two distinct delimiters: with one, strchr() and strrchr() agree and n
+	// would be -1; with none, both are NULL.
+	if((frstchar != NULL) && (scndchar != frstchar)) {
 		n =  (int)(&scndchar[0] - &frstchar[0] - sizeof(char));
 		strncpy(outstr, &frstchar[0]+sizeof(char), n);
 		outstr[n] = '\0';
