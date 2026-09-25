@@ -10,6 +10,8 @@
 
 
 int ValidateITURHFP(struct ITURHFProp ITURHFP) {
+
+	int i;
 	
 	if((ITURHFP.TXBearing > 2.0*PI) || (ITURHFP.TXBearing < 0.0))							return RTN_ERRTXBEARING;
 	if((ITURHFP.RXBearing > 2.0*PI) || (ITURHFP.RXBearing < 0.0))							return RTN_ERRRXBEARING;
@@ -45,6 +47,30 @@ int ValidateITURHFP(struct ITURHFProp ITURHFP) {
 	if(ITURHFP.L_LR.lng != ITURHFP.L_UR.lng)													return RTN_ERRRLNG;
 
 	if ((ITURHFP.AntennaOrientation != MANUAL) && (ITURHFP.AntennaOrientation != TX2RX))		return RTN_ERRANTENNAORN;
+
+	// Hour, frequency and month lists. Each is filled from index 0 up to the
+	// first unused slot; every entry before that must be in range. A bad entry
+	// is an error rather than skipped, because ITURHFProp() runs the first N
+	// entries and a skipped one would be run anyway. Hours and months are
+	// stored minus 1, so they are reported plus 1 as the user typed them.
+	for(i=0; (i<NMBOFHOURS) && (ITURHFP.hrs[i] != LISTUNSET); i++) {
+		if((ITURHFP.hrs[i] < 0) || (ITURHFP.hrs[i] >= 24)) {
+			printf("ValidateITURHFP: Error Path.hour entry %d is %d; hours must be 1 to 24\n", i+1, ITURHFP.hrs[i]+1);
+			return RTN_ERRHOUR;
+		}
+	}
+	for(i=0; (i<NMBOFFREQS) && (ITURHFP.frqs[i] != LISTUNSET); i++) {
+		if(!((ITURHFP.frqs[i] >= 1.0) && (ITURHFP.frqs[i] <= 30.0))) {
+			printf("ValidateITURHFP: Error Path.frequency entry %d is %g; frequencies must be 1 to 30 MHz\n", i+1, ITURHFP.frqs[i]);
+			return RTN_ERRFREQUENCY;
+		}
+	}
+	for(i=0; (i<NMBOFMONTHS) && (ITURHFP.months[i] != LISTUNSET); i++) {
+		if((ITURHFP.months[i] < 0) || (ITURHFP.months[i] >= NMBOFMONTHS)) {
+			printf("ValidateITURHFP: Error Path.month entry %d is %d; months must be 1 to 12\n", i+1, ITURHFP.months[i]+1);
+			return RTN_ERRMONTH;
+		}
+	}
 
 	return RTN_VALIDATEITURHFPOK;
 }
