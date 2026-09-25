@@ -1,0 +1,1 @@
+mkdir ro && chmod a-w ro && cd ro && $ITURNOISE 1 14 1 40 165 0 "$P372DATA" 2; s=$?; cd .. && chmod u+w ro; exit $s

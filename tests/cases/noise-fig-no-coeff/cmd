@@ -1,0 +1,1 @@
+mkdir d && ln -s "$P372DATA/V_d.txt" "$P372DATA/sigma_V_d.txt" d/ && $ITURNOISE d

@@ -1,0 +1,1 @@
+mkdir d && for f in "$P372DATA"/*; do ln -s "$f" d/; done && rm d/sigma_V_d.txt && sed '24s/.*/four 6 1 2 3 4 5/' "$P372DATA/sigma_V_d.txt" >d/sigma_V_d.txt && $ITURNOISE d

@@ -1,0 +1,1 @@
+mkdir d && for f in "$P372DATA"/*; do ln -s "$f" d/; done && rm d/V_d.txt && cat "$P372DATA/V_d.txt" "$P372DATA/V_d.txt" >d/V_d.txt && $ITURNOISE d

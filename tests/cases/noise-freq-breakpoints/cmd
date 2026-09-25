@@ -1,0 +1,1 @@
+for f in 0.01 0.1 5 10 10.5 20 20.5 30; do printf '%s: ' $f; $ITURNOISE 10 3 $f 10 20 3 "$P372DATA" 4 | cut -d, -f6-8,15-17; done >out

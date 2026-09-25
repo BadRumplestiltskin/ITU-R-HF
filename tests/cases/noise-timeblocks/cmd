@@ -1,0 +1,1 @@
+for lat in 40 -40; do for h in 1 5 9 13 17 21 24; do printf '%s %s: ' $lat $h; $ITURNOISE 7 $h 1 $lat 30 2 "$P372DATA" 4 | cut -d, -f6-8,15-17; done; done >out

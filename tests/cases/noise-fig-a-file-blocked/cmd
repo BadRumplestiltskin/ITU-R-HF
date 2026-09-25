@@ -1,0 +1,1 @@
+mkdir -p P372_figures/a/csv/a_1m0h.csv && $ITURNOISE "$P372DATA"

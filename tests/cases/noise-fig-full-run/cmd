@@ -1,0 +1,1 @@
+$ITURNOISE "$P372DATA" && echo "csv files: $(find P372_figures -name '*.csv' | wc -l | tr -d ' ')" && echo "a rows: $(wc -l <P372_figures/a/csv/a_1m0h.csv | tr -d ' ')" && head -2 P372_figures/a/csv/a_1m0h.csv && head -2 P372_figures/b/csv/b_7m12h.csv && head -2 P372_figures/c/csv/c_1m0h.csv

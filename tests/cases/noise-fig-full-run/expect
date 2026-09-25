@@ -1,0 +1,9 @@
+*** End ITURNoise Data Generation ***
+csv files: 72
+a rows: 65342
+month,hour,freq,latitude,longitude,FaA
+1, 0, 1.0000, -90.0000, -180.0000, 27.5558
+month,hour,freq,latitude,longitude,Fam5,Fam10,Fam20,Fam30,Fam40,Fam50,Fam60,Fam70,Fam80,Fam90,Fam100
+7, 12, 0.0100, 40.0157, -105.2793, 154.0116, 155.1222
+month,hour,freq,latitude,longitude,FaA,DuA,DlA,sigmaFaA,sigmaDuA,sigmaDlA,V_d,sigma_V_d
+1, 0, 0.0100, 40.0157, -105.2793, 155.7189, 3.5870, 3.3607, 2.0672, 1.4942, 1.1719, 9.1249, 2.7970
