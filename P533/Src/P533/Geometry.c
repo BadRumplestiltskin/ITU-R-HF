@@ -162,6 +162,15 @@ DLLEXPORT double Bearing(struct Location here, struct Location there, int direct
 	numerator = sin(there.lng - here.lng)*cos(there.lat);
 	denominator = cos(here.lat)*sin(there.lat) - sin(here.lat)*cos(there.lat)*cos(there.lng - here.lng);
 
+	// When the two points coincide, or are antipodal, every direction is a great
+	// circle between them and both terms are rounding noise. atan2() of that noise
+	// gave 0 on macOS and PI on Linux for the same full-circle path, so the
+	// antennas, and every result, differed by platform. Take due north, in both
+	// directions.
+	if ((fabs(numerator) < 1.0E-12) && (fabs(denominator) < 1.0E-12)) {
+		return 0.0;
+	}
+
 	bearing = atan2(numerator, denominator);
 
 	bearing = fmod((2.0 * PI + bearing), 2.0 * PI);
