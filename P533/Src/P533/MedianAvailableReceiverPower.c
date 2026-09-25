@@ -162,7 +162,7 @@ double SumModePowers(struct PathData *path, int dominant) {
 
 
 	// Calculate the available signal power Prw (dBW) for each mode from 
-	// sky-wave field strength Ew (dB(1 µV/m)), frequency f (MHz) and Grw
+	// sky-wave field strength Ew (dB(1 ÂµV/m)), frequency f (MHz) and Grw
 	// lossless receiving antenna of gain.
 
 	// Do any E-layer modes exist if so proceed

@@ -1,0 +1,1 @@
+R=$CASE/../../..; (cd "$R" && git ls-files '*.c' '*.h' '*.py' '*.sh' '*.md' '*.txt' '*.in' '*.csv' '*Makefile') | { bad=0; while IFS= read -r f; do iconv -f UTF-8 -t UTF-8 "$R/$f" >/dev/null 2>&1 || { echo "not UTF-8: $f"; bad=1; }; done; echo checked; exit $bad; }

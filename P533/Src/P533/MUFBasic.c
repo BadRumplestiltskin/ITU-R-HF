@@ -91,7 +91,7 @@ void MUFBasic(struct PathData *path) {
 	
 	for( n0 = 0; n0 <= MAXN0F2; n0++ ) {
 		if(dh > path->distance/(n0+1)) { // Is the mirror reflection height horizon less than the n0 hop distance?
-			// At this point lowest-order mode is known – store it.
+			// At this point lowest-order mode is known â€“ store it.
 			path->n0_F2 = n0;
 			break; // You have found the lowest-order mode. Jump out of the loop.
 		}
