@@ -108,9 +108,7 @@ int MakeNoise(
         datafilepath,
         month
     );
-    if (retval != RTN_READFAMDUDOK) {
-        return retval;
-    }
+    if (retval != RTN_READFAMDUDOK) goto done;
 
     noiseP.ManMadeNoise = mmnoise;
 
@@ -123,7 +121,7 @@ int MakeNoise(
         freq
     );
     // check that the input parameters are correct
-    if (retval != RTN_NOISEOK) return retval;
+    if (retval != RTN_NOISEOK) goto done;
 
     *out = noiseP.FaA;
     *(out + 1) = noiseP.DuA;
@@ -174,7 +172,8 @@ int MakeNoise(
                 outputfile,
                 strerror(errno)
             );
-            return RTN_ERRMNCANTOPENFILE;
+            retval = RTN_ERRMNCANTOPENFILE;
+            goto done;
         }
         printf(
             "MakeNoise: Writing output file %s\n",
@@ -195,7 +194,13 @@ int MakeNoise(
         fclose(fp);
     }
 
-    return RTN_MAKENOISEOK;
+    retval = RTN_MAKENOISEOK;
+
+    // Every path after a successful allocation leaves through here, so the
+    // noise arrays are released on success and on error alike.
+done:
+    FreeNoiseMemory(&noiseP);
+    return retval;
 }
 
 void PrintFam(
