@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------
  International Telecommunications Union - Radiocommunication Sector (ITU-R)
-     ITURHFProp         Ver Sep 24 2026
+     ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 10:33:06 2026
+     Analysis Prepared  Fri Sep 25 20:39:22 2026
 
 ---------------------------------------------------------------------------
 
@@ -64,10 +64,10 @@
 ************************ Season ***************************
 	season = Winter
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
-	Field Strength (7000 km > D)           = -8.633
+	Field Strength (7000 km > D)           = -7.838
 	Field Strength (7000 km < D < 9000 km) = -307.000
 	Field Strength           (D > 9000 km) = -307.000
-	Median Rx power = -131.681
+	Median Rx power = -130.886
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  9.996
 ***************** Short Path Parameters *******************
@@ -86,16 +86,16 @@
 	Total noise lower decile       =  4.372
 	Total noise                    =  45.490
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio = -3.171
+	Monthly median resultant signal-to-noise ratio = -2.377
 	Upper decile deviation signal-to-noise ratio   =  8.960
 	Lower decile deviation signal-to-noise ratio   =  14.430
-	Signal-to-noise exceeded for 99% of the month  = -29.364
+	Signal-to-noise exceeded for 99% of the month  = -28.570
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.390
+	Basic Circuit Reliability                      =  3.596
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -138,9 +138,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  161.179 (dB)
-	Median Field Strength     = -8.731 (dB(1 uV/m))
-	Receiver Power            = -131.779 (dBW)
+	Basic Loss (< 7000 km)    =  160.396 (dB)
+	Median Field Strength     = -7.949 (dB(1 uV/m))
+	Receiver Power            = -130.996 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  9.996 (degs)
 	Reflection height =  187.016 (km)
@@ -159,9 +159,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  177.648 (dB)
-	Median Field Strength     = -25.200 (dB(1 uV/m))
-	Receiver Power            = -148.248 (dBW)
+	Basic Loss (< 7000 km)    =  176.364 (dB)
+	Median Field Strength     = -23.916 (dB(1 uV/m))
+	Receiver Power            = -146.964 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  18.609 (degs)
 	Reflection height =  187.016 (km)
@@ -180,9 +180,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  200.050 (dB)
-	Median Field Strength     = -47.602 (dB(1 uV/m))
-	Receiver Power            = -170.650 (dBW)
+	Basic Loss (< 7000 km)    =  198.468 (dB)
+	Median Field Strength     = -46.020 (dB(1 uV/m))
+	Receiver Power            = -169.068 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  25.764 (degs)
 	Reflection height =  187.016 (km)
@@ -201,9 +201,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  202.395 (dB)
-	Median Field Strength     = -49.948 (dB(1 uV/m))
-	Receiver Power            = -172.995 (dBW)
+	Basic Loss (< 7000 km)    =  201.514 (dB)
+	Median Field Strength     = -49.066 (dB(1 uV/m))
+	Receiver Power            = -172.114 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.914 (degs)
 	Reflection height =  189.461 (km)
@@ -222,9 +222,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  201.077 (dB)
-	Median Field Strength     = -48.629 (dB(1 uV/m))
-	Receiver Power            = -171.677 (dBW)
+	Basic Loss (< 7000 km)    =  200.083 (dB)
+	Median Field Strength     = -47.635 (dB(1 uV/m))
+	Receiver Power            = -170.683 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  37.236 (degs)
 	Reflection height =  194.895 (km)
@@ -243,9 +243,9 @@
 	Lower decile =  0.890
 	Upper decile =  1.120
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  204.302 (dB)
-	Median Field Strength     = -51.855 (dB(1 uV/m))
-	Receiver Power            = -174.902 (dBW)
+	Basic Loss (< 7000 km)    =  203.202 (dB)
+	Median Field Strength     = -50.754 (dB(1 uV/m))
+	Receiver Power            = -173.802 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  41.849 (degs)
 	Reflection height =  202.358 (km)

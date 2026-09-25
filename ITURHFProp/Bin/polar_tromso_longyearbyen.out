@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 12:03:44 2026
+     Analysis Prepared  Fri Sep 25 20:39:23 2026
 
 ---------------------------------------------------------------------------
 
@@ -86,7 +86,7 @@
 	Total noise lower decile       =  5.177
 	Total noise                    =  49.235
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  58.332
+	Monthly median resultant signal-to-noise ratio =  58.331
 	Upper decile deviation signal-to-noise ratio   =  9.393
 	Lower decile deviation signal-to-noise ratio   =  15.469
 	Signal-to-noise exceeded for 90% of the month  =  42.862
@@ -182,7 +182,7 @@
 	E Layer Screen Frequency  =  3.140 (MHz)
 	Basic Loss (< 7000 km)    =  170.158 (dB)
 	Median Field Strength     = -28.109 (dB(1 uV/m))
-	Receiver Power            = -153.665 (dBW)
+	Receiver Power            = -153.664 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  68.529 (degs)
 	Reflection height =  342.027 (km)
@@ -203,7 +203,7 @@
 	E Layer Screen Frequency  =  3.074 (MHz)
 	Basic Loss (< 7000 km)    =  177.384 (dB)
 	Median Field Strength     = -36.431 (dB(1 uV/m))
-	Receiver Power            = -163.082 (dBW)
+	Receiver Power            = -163.081 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  72.555 (degs)
 	Reflection height =  340.640 (km)
@@ -347,9 +347,9 @@
 	Fprob        =  1.000 (%)
 	Lower decile =  0.950
 	Upper decile =  1.050
-	Basic Loss (< 7000 km)    =  131.706 (dB)
-	Median Field Strength     =  13.974 (dB(1 uV/m))
-	Receiver Power            = -107.948 (dBW)
+	Basic Loss (< 7000 km)    =  131.705 (dB)
+	Median Field Strength     =  13.976 (dB(1 uV/m))
+	Receiver Power            = -107.947 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  10.667 (degs)
 	Reflection height =  110.000 (km)
@@ -367,9 +367,9 @@
 	Fprob        =  0.022 (%)
 	Lower decile =  0.950
 	Upper decile =  1.050
-	Basic Loss (< 7000 km)    =  145.999 (dB)
+	Basic Loss (< 7000 km)    =  146.000 (dB)
 	Median Field Strength     =  4.145 (dB(1 uV/m))
-	Receiver Power            = -113.314 (dBW)
+	Receiver Power            = -113.315 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.403 (degs)
 	Reflection height =  110.000 (km)
@@ -388,8 +388,8 @@
 	Lower decile =  0.950
 	Upper decile =  1.050
 	Basic Loss (< 7000 km)    =  169.297 (dB)
-	Median Field Strength     = -18.861 (dB(1 uV/m))
-	Receiver Power            = -136.030 (dBW)
+	Median Field Strength     = -18.862 (dB(1 uV/m))
+	Receiver Power            = -136.031 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  33.615 (degs)
 	Reflection height =  110.000 (km)
@@ -528,7 +528,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 12:03:44 2026
+     Analysis Prepared  Fri Sep 25 20:39:23 2026
 
 ---------------------------------------------------------------------------
 
@@ -728,7 +728,7 @@
 	E Layer Screen Frequency  =  1.003 (MHz)
 	Basic Loss (< 7000 km)    =  178.817 (dB)
 	Median Field Strength     = -36.961 (dB(1 uV/m))
-	Receiver Power            = -162.708 (dBW)
+	Receiver Power            = -162.709 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  69.192 (degs)
 	Reflection height =  246.578 (km)
@@ -747,9 +747,9 @@
 	Lower decile =  0.744
 	Upper decile =  1.269
 	E Layer Screen Frequency  =  0.982 (MHz)
-	Basic Loss (< 7000 km)    =  183.544 (dB)
+	Basic Loss (< 7000 km)    =  183.545 (dB)
 	Median Field Strength     = -42.563 (dB(1 uV/m))
-	Receiver Power            = -169.185 (dBW)
+	Receiver Power            = -169.186 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  72.442 (degs)
 	Reflection height =  246.357 (km)
@@ -873,8 +873,8 @@
 	Lower decile =  0.950
 	Upper decile =  1.050
 	Basic Loss (< 7000 km)    =  205.497 (dB)
-	Median Field Strength     = -59.816 (dB(1 uV/m))
-	Receiver Power            = -181.739 (dBW)
+	Median Field Strength     = -59.817 (dB(1 uV/m))
+	Receiver Power            = -181.740 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  10.667 (degs)
 	Reflection height =  110.000 (km)
@@ -912,7 +912,7 @@
 	Fprob        =  0.000 (%)
 	Lower decile =  0.950
 	Upper decile =  1.050
-	Basic Loss (< 7000 km)    =  212.202 (dB)
+	Basic Loss (< 7000 km)    =  212.203 (dB)
 	Median Field Strength     = -61.767 (dB(1 uV/m))
 	Receiver Power            = -178.936 (dBW)
 	Delay                     =  0.000 (mS)
