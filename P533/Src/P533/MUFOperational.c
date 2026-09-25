@@ -52,8 +52,8 @@ void MUFOperational(struct PathData *path) {
 	//      > 30 dBW   summer 1.15/1.25, equinox 1.20/1.30, winter 1.25/1.35
 	// The > 30 dBW row had its winter and summer entries exchanged.
 	
-	double OPEMUF, OPEMUF10, OPEMUF90;		// E layer operational MUFs
-	double OPF2MUF, OPF2MUF10, OPF2MUF90;	// F2 layer operational MUFa
+	double OPEMUF;		// E layer operational MUF
+	double OPF2MUF;		// F2 layer operational MUF
 	
 	int time;	// Day/night index to the Rop array
 	int power;	// Power index
@@ -106,8 +106,6 @@ void MUFOperational(struct PathData *path) {
 
     // Initialize the OPMUF extrema for the F2 Layer
 	OPF2MUF = 0.0;
-	OPF2MUF10 = 0.0;
-	OPF2MUF90 = 0.0;
 
 	// 6 F2 Modes OPMUF. 
 	// Set the OPMUF for the ith F2 mode then determine if it are the largest for all existant F2 modes
@@ -119,18 +117,14 @@ void MUFOperational(struct PathData *path) {
 			path->Md_F2[i].OPMUF90 = path->Md_F2[i].OPMUF*path->Md_F2[i].deltal;
 
 			// Now assume that the same procedure that applies to the basic MUF and variability MUF applies to the Operation MUF.
-			// As was done in the MUFBasic(), determine the largest of the OPMUF, OPMUF10 and OPMUF90. 
+			// As was done in the MUFBasic(), determine the largest OPMUF. 
 			// Pick the MUF extrema for the path for the F2 layer.
 			if(path->Md_F2[i].OPMUF > OPF2MUF) OPF2MUF = path->Md_F2[i].OPMUF;
-			if(path->Md_F2[i].OPMUF90 > OPF2MUF90) OPF2MUF90 = path->Md_F2[i].OPMUF90;
-			if(path->Md_F2[i].OPMUF10 > OPF2MUF10) OPF2MUF10 = path->Md_F2[i].OPMUF10;
 		}
     }
 
     // Initialize the OPMUF extrema for the E Layers
 	OPEMUF = 0.0;
-	OPEMUF10 = 0.0;
-	OPEMUF90 = 0.0;
 
 	// 3 E Modes OPMUF. 
 	// Set the OPMUF for the ith E mode then determine if it is the largest amongst all existant E modes
@@ -142,18 +136,43 @@ void MUFOperational(struct PathData *path) {
 			path->Md_E[i].OPMUF90 = path->Md_E[i].OPMUF*path->Md_E[i].deltal;
 
 			// Now assume that the same procedure that applies to the basic MUF and variability MUF applies to the Operation MUF.
-			// As was done in the MUFBasic(), determine the largest of the OPMUF, OPMUF10 and OPMUF90. 
+			// As was done in the MUFBasic(), determine the largest OPMUF. 
 			// Pick the MUF extrema for the path for the E layer.
 			if(path->Md_E[i].OPMUF > OPEMUF) OPEMUF = path->Md_E[i].OPMUF;
-			if(path->Md_E[i].OPMUF90 > OPEMUF90) OPEMUF90 = path->Md_E[i].OPMUF90;
-			if(path->Md_E[i].OPMUF10 > OPEMUF10) OPEMUF10 = path->Md_E[i].OPMUF10;
 		}
     }
 
     // Now find the largest OPMUF of all existant modes
 	path->OPMUF = max(OPEMUF, OPF2MUF); // largest OPMUF
-	path->OPMUF90 = max(OPEMUF90, OPF2MUF90); // largest 90% OPMUF
-	path->OPMUF10 = max(OPEMUF10, OPF2MUF10); // largest 10% OPMUF
+
+	/*
+		P.533-14 section 3.7: "An estimate of the operational MUF exceeded for 10%
+		and 90% of the days is determined by multiplying the median operational
+		MUF by the appropriate factors given in Recommendation ITU-R P.1239,
+		Tables 2 and 3, in the case of the F modes. In the case of E modes the
+		appropriate factors are 1.05 and 0.95 respectively." So the path deciles
+		are the path OPMUF times the factors of the mode that set it. They were
+		the largest OPMUF90 and OPMUF10 of any mode, taken separately, which could
+		pair an F2 median with an E mode's 90% value: London-Madrid, April, 12 UTC,
+		SSN 60 gave an OWF of 14.78 MHz (the E mode's) where the text gives
+		12.95 MHz (1F2, which sets the OPMUF). On a tie the F2 mode is used.
+	*/
+	path->OPMUF90 = 0.0;
+	path->OPMUF10 = 0.0;
+	for(i=0; i<MAXF2MDS; i++) {
+		if(path->Md_F2[i].BMUF != 0.0 && path->Md_F2[i].OPMUF == path->OPMUF) {
+			path->OPMUF90 = path->Md_F2[i].OPMUF90;
+			path->OPMUF10 = path->Md_F2[i].OPMUF10;
+			return;
+		}
+	}
+	for(i=0; i<MAXEMDS; i++) {
+		if(path->Md_E[i].BMUF != 0.0 && path->Md_E[i].OPMUF == path->OPMUF) {
+			path->OPMUF90 = path->Md_E[i].OPMUF90;
+			path->OPMUF10 = path->Md_E[i].OPMUF10;
+			return;
+		}
+	}
 
 	return;
 	
