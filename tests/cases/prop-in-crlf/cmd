@@ -1,0 +1,1 @@
+sed -e "s|@DATA@|$P533DATA/|" -e "s|@ANT@|$CASE/../../../ITURHFProp/Data/Antenna/T13 Files|" in.tmpl > x.in && awk '{printf "%s\r\n", $0}' x.in > y.in && od -c y.in | grep -q '\\r' && $ITURHFPROP -s -c y.in out && cat out

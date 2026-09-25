@@ -1,0 +1,1 @@
+sed -e "s|@DATA@|$P533DATA/|" -e "s|@ANT@|$CASE/../../../ITURHFProp/Data/Antenna/T13 Files|" in.tmpl > x.in && printf 'Path.frequency 9.5' >> x.in && $ITURHFPROP -s -c x.in out && tail -1 out

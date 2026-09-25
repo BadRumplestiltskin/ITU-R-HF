@@ -1,0 +1,1 @@
+head -100 "$CASE/../../../ITURHFProp/Data/Antenna/T13 Files/141-14_0.t13" > t.13 && sed -e "s|@DATA@|$P533DATA/|" -e "s|@ANT@|$CASE/../../../ITURHFProp/Data/Antenna/T13 Files|" in.tmpl > x.in && $ITURHFPROP -s  x.in out
