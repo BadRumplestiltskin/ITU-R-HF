@@ -1,0 +1,1 @@
+ITURHFProp/Src/ITURHFProp/ITURHFProp.c:375 prints path.hour on every ITURHFProp() failure, but path (line 155) is never zeroed and the hour is only set inside the hour loop, so a failure before it (P.1239, antenna, ionospheric or COEFF file) prints stack garbage, e.g. ' path hour -460002776'. Low.

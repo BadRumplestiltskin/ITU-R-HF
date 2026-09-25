@@ -1,0 +1,1 @@
+ReadInputConfiguration.c:181-190: an unrecognised Path.Modulation word leaves path->Modulation uninitialised; the run succeeds. Should be rejected (110). Medium.

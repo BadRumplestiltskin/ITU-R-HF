@@ -1,0 +1,1 @@
+P533/Src/P533/ReadIonParameters.c:415 says 'Reading file ionos05.txt' while ReadIonParametersBin() reads ionos05.bin. Low.

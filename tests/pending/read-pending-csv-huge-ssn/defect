@@ -1,0 +1,1 @@
+CircuitCSV.c:476 (int)floor(1e300 + 0.5): undefined behaviour. Fails only under the sanitizer build. Should be P533_ERROR without UB. Low.

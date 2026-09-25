@@ -1,0 +1,1 @@
+L=$CASE/../../cases/read-lib;  sh "$L/mkin.sh" MOD=BOGUS > x.in && $ITURHFPROP -s x.in out

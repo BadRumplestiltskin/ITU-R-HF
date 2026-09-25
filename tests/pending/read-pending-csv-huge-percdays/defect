@@ -1,0 +1,1 @@
+CircuitCSV.c:629 (int)(percDays + 0.5) with percDays 1e300: undefined behaviour (UBSan: outside the range of int). Fails only under the sanitizer build; should be P533_ERROR without UB. Medium.

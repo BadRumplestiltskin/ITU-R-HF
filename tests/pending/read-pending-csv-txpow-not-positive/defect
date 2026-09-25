@@ -1,0 +1,1 @@
+ITURHFProp/Src/CircuitCSV/CircuitCSV.c:626 maps txPow <= 0 W to txpower 0 dB(1 kW), so 0 W and -5 W run as 1 kW and report OK. Should be P533_ERROR (or BAD_RECORD). Medium.

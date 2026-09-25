@@ -1,0 +1,1 @@
+L=$CASE/../../cases/read-lib; mkdir d && for f in "$P533DATA"/*; do ln -s "$f" d/; done; rm d/ionos05.bin && head -c 11197844 /dev/zero > d/ionos05.bin && sh "$L/mkin.sh" DATA=d/ > x.in && $ITURHFPROP -s x.in out
