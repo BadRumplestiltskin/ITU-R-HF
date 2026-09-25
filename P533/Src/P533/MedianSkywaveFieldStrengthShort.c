@@ -1302,6 +1302,13 @@ double AntennaGain(struct PathData path, struct Antenna Ant, double delta, int d
 	// delta is in radians convert to degrees
 	delta = delta*R2D;
 
+	// The pattern holds elevations 0 to 90 degrees only. The lowest-order F2 mode
+	// is chosen for at least MINELEANGLES at the midpoint hr, but the field
+	// strength recomputes the elevation with the hr of another control point,
+	// which can be low enough to give a negative angle. Clamp to the pattern so
+	// the indices below stay in range.
+	delta = min(max(delta, 0.0), 90.0);
+
 	// Determine the bearing
 	// From the tx to rx.
 	if (direction == TXTORX) {
