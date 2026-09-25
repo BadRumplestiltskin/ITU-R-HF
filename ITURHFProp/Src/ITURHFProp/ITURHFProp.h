@@ -196,6 +196,11 @@
 #define NMBOFFREQS		32
 #define NMBOFMONTHS		12
 
+// Marks an unused slot in the hrs[], frqs[] and months[] lists. The lists are
+// filled from index 0; the first unused slot ends the list. It is chosen so no
+// value a user can type (hour/month minus 1, or a frequency) collides with it.
+#define LISTUNSET		(-9999)
+
 // End returns for ITURHFProp Demonstration Program - main()
 
 // End returns values *****************************************************************************

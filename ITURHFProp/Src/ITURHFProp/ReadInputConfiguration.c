@@ -598,9 +598,9 @@ void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
 	ITURHFP->RXBearing = 0.0;
 	sprintf(ITURHFP->TXAntFilePath, ".");
 	sprintf(ITURHFP->RXAntFilePath, ".");
-	for(i=0; i<NMBOFFREQS; i++) ITURHFP->frqs[i] = 99.0;
-	for(i=0; i<NMBOFHOURS; i++) ITURHFP->hrs[i] = 99;
-	for(i=0; i<NMBOFMONTHS; i++) ITURHFP->months[i] = 99;
+	for(i=0; i<NMBOFFREQS; i++) ITURHFP->frqs[i] = LISTUNSET;
+	for(i=0; i<NMBOFHOURS; i++) ITURHFP->hrs[i] = LISTUNSET;
+	for(i=0; i<NMBOFMONTHS; i++) ITURHFP->months[i] = LISTUNSET;
 	// Defaulted on every platform. This used to be guarded by #ifdef _WIN32, so
 	// on Linux and macOS an input file that omitted RptFilePath left the member
 	// holding whatever was on the stack, which was then used to build the output

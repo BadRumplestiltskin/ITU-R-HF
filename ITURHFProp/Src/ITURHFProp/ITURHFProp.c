@@ -426,22 +426,19 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 	count = 1;
 
 	// Determine the maximum hour
-	ITURHFP->ihrend = 0;
-	for(i=0; i<NMBOFHOURS; i++) {
-		if((0 <= ITURHFP->hrs[i]) && (ITURHFP->hrs[i] < 24)) ITURHFP->ihrend += 1;
-	}
+	// The lists run from index 0 to the first unused slot. ValidateITURHFP()
+	// has already rejected any entry that is out of range, so every entry
+	// counted here is one the loops below may run.
+	for(i=0; (i<NMBOFHOURS) && (ITURHFP->hrs[i] != LISTUNSET); i++);
+	ITURHFP->ihrend = i;
 
     // Determine the maximum frequency
-	ITURHFP->ifrqend = 0;
-	for(i=0; i<NMBOFFREQS; i++) {
-		if((1.0 <= ITURHFP->frqs[i]) && (ITURHFP->frqs[i] <= 30.0)) ITURHFP->ifrqend += 1;
-	}
+	for(i=0; (i<NMBOFFREQS) && (ITURHFP->frqs[i] != LISTUNSET); i++);
+	ITURHFP->ifrqend = i;
 
     // Determine the maximum month
-	ITURHFP->imnthend = 0;
-	for(i=0; i<NMBOFMONTHS; i++) {
-		if((0 <= ITURHFP->months[i]) && (ITURHFP->months[i] < NMBOFMONTHS)) ITURHFP->imnthend += 1;
-	}
+	for(i=0; (i<NMBOFMONTHS) && (ITURHFP->months[i] != LISTUNSET); i++);
+	ITURHFP->imnthend = i;
 
     // Determine the area. If the values are all the same then do only one point. This is point-to-point mode.
 	ITURHFP->ilatend = 0;
