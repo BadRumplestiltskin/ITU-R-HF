@@ -474,10 +474,12 @@ static int ReadCircuit(struct Circuit *c, char **f, int nf, int *col) {
 
 	#define CSVFLD(i) ((col[i] < nf) ? f[col[i]] : "")
 
-	snprintf(c->txSite, sizeof(c->txSite), "%s", CSVFLD(0));
+	// A site name that does not fit would be echoed cut short and no longer
+	// match its input, so such a row is BAD_RECORD rather than silently altered.
+	if ((size_t)snprintf(c->txSite, sizeof(c->txSite), "%s", CSVFLD(0)) >= sizeof(c->txSite)) complete = FALSE;
 	c->txLat    = FieldNum(CSVFLD(1), &complete);
 	c->txLon    = FieldNum(CSVFLD(2), &complete);
-	snprintf(c->rxSite, sizeof(c->rxSite), "%s", CSVFLD(3));
+	if ((size_t)snprintf(c->rxSite, sizeof(c->rxSite), "%s", CSVFLD(3)) >= sizeof(c->rxSite)) complete = FALSE;
 	c->rxLat    = FieldNum(CSVFLD(4), &complete);
 	c->rxLon    = FieldNum(CSVFLD(5), &complete);
 	c->year     = FieldInt(CSVFLD(6), &complete);
@@ -1432,7 +1434,10 @@ static void PrintUsage(void) {
 	printf("  SSN = (T - 4.90)/0.670 (negative results taken as 0). If both columns are\n");
 	printf("  present SSN is used. The SSN_used output column shows the value applied.\n");
 	printf("  txPow is watts, rxNoise is dBW, bandW is Hz, percDays is %% of days.\n");
-	printf("  day is echoed but unused: P.533 predicts monthly medians.\n\n");
+	printf("  day is echoed but unused: P.533 predicts monthly medians.\n");
+	printf("  Site names over %d characters make the row BAD_RECORD.\n\n", CSVMAXNAME - 1);
+	printf("Every non-blank input row gives exactly one output row, in input order;\n");
+	printf("Circuit# is its data row number. Blank lines are skipped and not numbered.\n\n");
 
 }
 

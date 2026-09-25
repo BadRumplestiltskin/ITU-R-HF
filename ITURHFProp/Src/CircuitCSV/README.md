@@ -77,7 +77,7 @@ empty result fields and a `Status` saying why:
 |---|---|
 | `OK` | calculated normally |
 | `NO_MODE` | ran, but no propagation mode is supported; geometry columns are still filled |
-| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers) |
+| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers), or a site name was over 255 characters |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
 | `FREQ_RANGE` | every characteristic frequency fell outside P.533's 1-30 MHz, so nothing was evaluated |
