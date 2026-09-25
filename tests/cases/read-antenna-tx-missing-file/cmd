@@ -1,0 +1,1 @@
+L=$CASE/../read-lib;  sh "$L/mkin.sh" TXANT=nosuch.t13 > x.in && $ITURHFPROP x.in out

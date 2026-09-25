@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkant.sh" 14 | head -n 300 > bad.ant && sh "$L/mkin.sh" RXANT=bad.ant > x.in && $ITURHFPROP -s x.in out

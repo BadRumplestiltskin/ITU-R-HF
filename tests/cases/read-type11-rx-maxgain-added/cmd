@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkant.sh" 11 2.0 > w.11 && sh "$L/mkin.sh" RXANT=w.11 > x.in && $ITURHFPROP -s x.in out && grep -a "^05, 20" out

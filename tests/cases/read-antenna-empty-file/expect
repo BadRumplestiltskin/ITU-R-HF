@@ -1,0 +1,2 @@
+ReadAntennaPatterns: Error antenna file bad.ant has only 0 lines; the antenna type is on line 4
+Main: Error 52 from ITURHFProp
