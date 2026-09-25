@@ -1648,8 +1648,14 @@ static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 static int RunParallel(FILE *fin, const char *infile, const char *outfile, const char *scanfile,
 					   struct PathData *path, int *col, const char *dpath, int silent) {
 
-	char outpart[CSVMAXWORKERS][CSVMAXNAME + 16], scanpart[CSVMAXWORKERS][CSVMAXNAME + 16];
-	char idxpart[CSVMAXWORKERS][CSVMAXNAME + 16];
+	// The part names were CSVMAXNAME+16 bytes on the stack, and snprintf()
+	// silently cut a long output path's ".part<k>" suffix off, so workers
+	// shared one file. They are sized for any path now, on the heap, and a
+	// name that still does not fit stops the run.
+	#define CSVPARTNAME (PATH_MAX + 32)
+	char (*outpart)[CSVPARTNAME] = malloc(sizeof(*outpart) * CSVMAXWORKERS);
+	char (*scanpart)[CSVPARTNAME] = malloc(sizeof(*scanpart) * CSVMAXWORKERS);
+	char (*idxpart)[CSVPARTNAME] = malloc(sizeof(*idxpart) * CSVMAXWORKERS);
 	int nextidx[CSVMAXWORKERS];
 	pid_t pid[CSVMAXWORKERS];
 	int k, bad = 0, number = 0, failed = 0, nrow = 0;
@@ -1658,15 +1664,26 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	int havepend[CSVMAXWORKERS];
 	time_t t0 = time(NULL);
 
+	if (outpart == NULL || scanpart == NULL || idxpart == NULL) {
+		printf("CircuitCSV: Error %d Out of memory\n", RTN_ERRCSVWORKER);
+		free(outpart); free(scanpart); free(idxpart);
+		return RTN_ERRCSVWORKER;
+	}
 	for (k = 0; k < Workers; k++) {
-		snprintf(outpart[k], sizeof(outpart[k]), "%s.part%d", outfile, k);
-		snprintf(idxpart[k], sizeof(idxpart[k]), "%s.part%d.idx", outfile, k);
-		if (scanfile != NULL) snprintf(scanpart[k], sizeof(scanpart[k]), "%s.part%d", scanfile, k);
+		if ((size_t)snprintf(outpart[k], CSVPARTNAME, "%s.part%d", outfile, k) >= CSVPARTNAME ||
+			(size_t)snprintf(idxpart[k], CSVPARTNAME, "%s.part%d.idx", outfile, k) >= CSVPARTNAME ||
+			(scanfile != NULL &&
+			 (size_t)snprintf(scanpart[k], CSVPARTNAME, "%s.part%d", scanfile, k) >= CSVPARTNAME)) {
+			printf("CircuitCSV: Error %d Output path too long for -j\n", RTN_ERRCSVARGS);
+			free(outpart); free(scanpart); free(idxpart);
+			return RTN_ERRCSVARGS;
+		}
 	}
 
 	NextBlock = (int *)mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
 	if (NextBlock == MAP_FAILED) {
 		printf("CircuitCSV: Error %d Can't share memory with workers (%s)\n", RTN_ERRCSVWORKER, strerror(errno));
+		free(outpart); free(scanpart); free(idxpart);
 		return RTN_ERRCSVWORKER;
 	}
 	*NextBlock = 0;
@@ -1782,6 +1799,8 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 
 	munmap(NextBlock, sizeof(int));
 	NextBlock = NULL;
+	free(outpart); free(scanpart); free(idxpart);
+	#undef CSVPARTNAME
 
 	if (bad != 0) return RTN_ERRCSVWORKER;
 
