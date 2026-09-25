@@ -20,9 +20,15 @@
 // End Local Define
 
 // Control point array, CP, defines to enhance readability.
-#define MAXCP	28 // There are a potential 26 90 km penetration points and 2 control points from Table 1a.
-#define TdM2	26 // For this routine this will be the index to the Control point at T + d0/2.
-#define RdM2	27 // For this routine this will be the index to the Control point at R - d0/2.
+// The fL geometry uses nL+1 equal hops of at most 3000 km, with two 90 km
+// penetration points per hop in slots 0 .. 2*nL+1. The longest possible path is
+// a long path of one full circumference, 2*PI*R0 (about 40030 km), which needs
+// 14 hops, so nL <= 13 and the penetration points fill at most slots 0 .. 27.
+// The two Table 1a control points go after them so the two sets never overlap.
+#define MAXPP	28 // Maximum 90 km penetration points: 2*(13+1).
+#define MAXCP	(MAXPP+2) // Penetration points plus the 2 control points from Table 1a.
+#define TdM2	(MAXPP)   // For this routine this will be the index to the Control point at T + d0/2.
+#define RdM2	(MAXPP+1) // For this routine this will be the index to the Control point at R - d0/2.
 
 // Define for FindfL()
 #define NOTIME	99
@@ -127,6 +133,9 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 		
 		// Number of hops
 		nL = n;
+		if(2*(nL+1) > MAXPP) { // Cannot happen for a distance <= 2*PI*R0; guards CP[]
+			nL = MAXPP/2 - 1;
+		}
 
 		// Hop distance
 		dL = path->distance/(nL+1.0);  
@@ -522,13 +531,11 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 		smallerCP = 99; // Initialize smallerCP
 		if(fBM[0][path->hour] < fBM[1][path->hour]) {
 			smallerCP = TdM2;
-			smallerCP = 26;
 			// This is the Basic MUF for the path if the path is greater than 9000 km, otherwise it is calculated in MUFBasic()
 			if(path->distance > 9000) path->BMUF = fBM[0][path->hour];
 		}
 		else if(fBM[0][path->hour] >= fBM[1][path->hour]) {
 			smallerCP = RdM2;
-			smallerCP = 27;
 			// This is the Basic MUF for the path if the path is greater than 9000 km, otherwise it is calculated in MUFBasic()
 			if(path->distance > 9000) path->BMUF = fBM[1][path->hour];
 		}
