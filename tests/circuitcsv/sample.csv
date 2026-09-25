@@ -1,0 +1,5 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+London,51.51,-0.13,Paris,48.86,2.35,2024,6,15,12,50,3,500,10,-150,3000,90
+Madrid,40.42,-3.70,Wellington,-41.29,174.78,2024,12,15,20,10,3,10000,10,-150,3000,90
+Tromso,69.65,18.96,Longyearbyen,78.22,15.65,2024,1,15,0,80,3,100,10,-150,3000,90

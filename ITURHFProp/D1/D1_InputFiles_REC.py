@@ -13,6 +13,10 @@ import os
 full_path = os.path.realpath(__file__)
 cwdpath = os.path.dirname(full_path)
 
+# Usage: D1_InputFiles_REC.py [itshfbc_dir]
+# itshfbc_dir is where ITSHFBC (rec533w) is installed; default C:\ITSHFBC.
+itshfbc = sys.argv[1] if len(sys.argv) > 1 else 'C:\\ITSHFBC'
+
 # Open output bath file
 bat_file = open("D1_REC.bat", 'wt')
 
@@ -29,7 +33,7 @@ D1T1_file = open("D1_Table1.csv", "rt")
 D1T1_file.readline()
 
 # Write the first line to the batch file
-batstr = 'cd c:\\ITHFBC\\BIN_WIN'
+batstr = 'cd '+itshfbc+'\\BIN_WIN'
 print(batstr, file=bat_file) 
 
 # Initialize line counter for D1.csv
@@ -74,15 +78,15 @@ for line in D1T1_file:
 	# del c:\ITSHFBC\RUN\1-8-84.out
 	# cd \Users\Behm\Documents\GitHub\GitHf\D1
 	#
-	batstr = 'copy '+datpath+'\\'+test_file_name+'.dat '+'c:\\itshfbc\\run\\'+test_file_name+'.dat'
+	batstr = 'copy '+datpath+'\\'+test_file_name+'.dat '+itshfbc+'\\RUN\\'+test_file_name+'.dat'
 	print(batstr, file=bat_file)
-	batstr = 'C:\\ITSHFBC\\BIN_WIN\\rec533w C:\\ITSHFBC '+test_file_name+'.dat'+' '+test_file_name+'.out'
+	batstr = itshfbc+'\\BIN_WIN\\rec533w '+itshfbc+' '+test_file_name+'.dat'+' '+test_file_name+'.out'
 	print(batstr, file=bat_file) 
-	batstr = 'copy c:\\itshfbc\\run\\'+test_file_name+'.out'+' '+outpath+'\\'+test_file_name+'.out'
+	batstr = 'copy '+itshfbc+'\\RUN\\'+test_file_name+'.out'+' '+outpath+'\\'+test_file_name+'.out'
 	print(batstr, file=bat_file) 
-	batstr = 'del '+'C:\\ITSHFBC\\RUN\\'+test_file_name+'.dat'
+	batstr = 'del '+itshfbc+'\\RUN\\'+test_file_name+'.dat'
 	print(batstr, file=bat_file)
-	batstr = 'del '+'C:\\ITSHFBC\\RUN\\'+test_file_name+'.out'
+	batstr = 'del '+itshfbc+'\\RUN\\'+test_file_name+'.out'
 	print(batstr, file=bat_file)
 
 	##############################################################

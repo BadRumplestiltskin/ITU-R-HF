@@ -11,7 +11,7 @@ endif
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -fPIC -Wall -Wextra $(OPTIMIZE) -I../Src/ITURHFProp -I../../Include
+CFLAGS = -fPIC -Wall -Wextra -MMD -MP $(OPTIMIZE) -I../Src/ITURHFProp -I../../Include
 
 # Set linker flags based on the operating system
 ifeq ($(UNAME_S),Darwin)
@@ -43,11 +43,10 @@ all: ${TARGET}
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-# -MT names the object as it is built (../Src/.../x.o). Without it -MM wrote a
-# rule for a bare x.o in this directory, so no header change rebuilt anything.
-$(SRCS:.c=.d):%.d:%.c
-	$(CC) $(CFLAGS) -MM -MT $(<:.c=.o) $< >$@
-include $(SRCS:.c=.d)
+# -MMD -MP (in CFLAGS) writes a dependency file beside each object as it is
+# compiled; -MP adds an empty rule per header, so a deleted or renamed header
+# does not stop make with "No rule to make target".
+-include $(OBJS:.o=.d)
 
 .PHONY: clean
 clean:

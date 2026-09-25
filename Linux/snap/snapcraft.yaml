@@ -15,10 +15,13 @@ apps:
 
 parts:
   iturhfprop:
-    source: https://github.com/onetablespoon/ITU-R-HF.git
+    # Build from the checkout this file lives in, not a fetched copy. The
+    # project directory is Linux/ (it holds snap/), so its parent is the
+    # repository root; the make plugin copies that into the part's build
+    # directory and runs make there, so -C Linux is relative to it.
+    source: ..
     plugin: make
-    makefile: Makefile
     make-parameters:
-        - 'prefix=/usr/'
+        - 'prefix=/usr'
         - '-C'
-        - '/home/jwatson/github/itu-snap/parts/iturhfprop/build/Linux/'
+        - 'Linux'

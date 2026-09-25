@@ -785,6 +785,7 @@ P533(): Return numbers greater than 100 and less than 200 are errors
     135    ERROR:    Allocating Memory for Noise
     140    ERROR:    Antenna File Format Error (Type 13)
     141    ERROR:    Can Not Open Receive Antenna Array
+    142    ERROR:    Antenna File Truncated or Malformed (e.g. a gain line with too few values)
     160    ERROR:    Can Not Open foF2 Variability file "P1239-2 Decile Factors.txt"
     161    ERROR:    Invalid P.1239-3 File
     170    ERROR:    Can Not Open Ionospheric Parameters File
@@ -805,6 +806,10 @@ P372(): Return numbers greater than 200 and less than 210 are errors
     203    ERROR:    Allocating Memory for Fam
     204    ERROR:    Allocating Memory for FakP
     205    ERROR:    Allocating Memory for FakABP
+    206    ERROR:    Can Not Open P372.DLL
+    207    ERROR:    Allocating Memory for Noise Structure
+    208    ERROR:    Can Not Open Output File in MakeNoise()
+    209    ERROR:    Coefficient (COEFF) File Truncated or Malformed
 
 ITURHFProp(): Return numbers greater than or less than 1000 and less than 1100 are normal and indicate no error in processing
 

@@ -13,7 +13,7 @@ bin_dir = ../Bin/
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g -I$(source_dir)
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -std=c99 -fPIC -Wall -Wextra $(OPTIMIZE) -I$(source_dir) -I../../Include
+CFLAGS = -std=c99 -fPIC -Wall -Wextra -MMD -MP $(OPTIMIZE) -I$(source_dir) -I../../Include
 
 # Set linker flags based on the operating system
 UNAME_S := $(shell uname -s)
@@ -59,11 +59,10 @@ all: ${TARGET_LIB}
 $(TARGET_LIB): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-# -MT names the object as it is built (../Src/.../x.o). Without it -MM wrote a
-# rule for a bare x.o in this directory, so no header change rebuilt anything.
-$(SRCS:.c=.d):%.d:%.c
-	$(CC) $(CFLAGS) -MM -MT $(<:.c=.o) $< >$@
-include $(SRCS:.c=.d)
+# -MMD -MP (in CFLAGS) writes a dependency file beside each object as it is
+# compiled; -MP adds an empty rule per header, so a deleted or renamed header
+# does not stop make with "No rule to make target".
+-include $(OBJS:.o=.d)
 
 .PHONY: clean
 clean:
