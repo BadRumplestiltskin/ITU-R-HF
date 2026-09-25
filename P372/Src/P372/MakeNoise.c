@@ -37,20 +37,57 @@ int MakeNoise(
 
     /*
     Stand alone subroutine to use the P.372-14 method.
+    Performs a complete noise calculation for one location, month, hour and
+    frequency: allocates and initialises a private NoiseParams, reads the
+    month's coefficient file with ReadFamDud(), sets the man-made noise
+    selector, calls Noise(), copies the twelve results into out[] and
+    optionally prints them. The structure's memory is always freed before
+    return once allocation succeeded.
 
         INPUT
-            int month
-            int hour
-            double lat        (degrees)
-            double lng        (degrees)
+            int month         0-based month (0 = January ... 11 = December);
+                              selects COEFF<month+1>W.txt (see ReadFamDud())
+            int hour          UTC hour index passed unchanged to Noise(); the
+                              printout labels it as hour + 1 "(UTC) (1 to 24)"
+            double lat        (degrees, decimal; converted to radians here)
+            double lng        (degrees, decimal, east positive; converted to
+                              radians here)
             double freq       (MHz)
-            double mmnoise
-            char* datafilepath
-            int pntflag
+            double mmnoise    Man-made noise selector copied into
+                              noiseP.ManMadeNoise: one of the category codes
+                              CITY 0, RESIDENTIAL 1, RURAL 2, QUIETRURAL 3,
+                              NOISY 4, QUIET 5 (Noise.h); any other
+                              non-negative value is used as a user value (see
+                              ManMadeNoise() in Noise.c); a negative value
+                              overrides the whole calculation (see Noise()).
+            char* datafilepath  Directory holding the COEFFxxW.txt files
+            int pntflag       MNNOPRINT 0 - no output
+                              MNPRINTTOSTDOUT 1 - print report to stdout
+                              MNPRINTTOFILE 2 - write report to
+                                  ".\\MakeNoiseOut.txt" (name hard coded)
+                              Any other value is treated as MNNOPRINT.
 
         OUTPUT
             double* out
-                Pointer to an array of 12 doubles.
+                Pointer to an array of 12 doubles supplied by the caller,
+                all in dB (figures are dB above kT0b):
+                  out[0]  FaA   out[1]  DuA   out[2]  DlA   (atmospheric)
+                  out[3]  FaM   out[4]  DuM   out[5]  DlM   (man-made)
+                  out[6]  FaG   out[7]  DuG   out[8]  DlG   (galactic)
+                  out[9]  FamT  out[10] DuT   out[11] DlT   (total)
+                out[] is written only if ReadFamDud() and Noise() succeed.
+
+            Returns
+                RTN_MAKENOISEOK        success
+                RTN_ERRALLOCATENOISE   AllocateNoiseMemory() failed
+                RTN_ERROPENCOEFFFILE, RTN_ERRREADCOEFFFILE or an allocation
+                                       code passed through from ReadFamDud()
+                RTN_ERRMNCANTOPENFILE  report file could not be opened
+
+        SUBROUTINES
+            AllocateNoiseMemory(), InitializeNoise(), P372Version(),
+            P372CompileTime(), ReadFamDud(), Noise(), PrintFam(),
+            FreeNoiseMemory()
     */
 
     FILE *fp;
@@ -215,6 +252,29 @@ void PrintFam(
     const char* P372ver,
     const char* P372compt
 ) {
+    /*
+    Write a formatted report of one MakeNoise() result: a banner with the
+    analysis time stamp and the P372 version/compile time, the month, hour,
+    location and frequency, then the twelve noise figures and deciles.
+
+        INPUT
+            FILE *fp               Open output stream (stdout or a file)
+            struct NoiseParams *noiseP  Structure already filled by Noise()
+            int month              0-based month (index into month names)
+            int hour               Hour index; printed as hour + 1 (1 to 24)
+            double rlng            Longitude (rad); printed in degrees
+            double rlat            Latitude (rad); printed in degrees
+            double freq            Frequency (MHz)
+            char *ntimestr         Analysis time stamp text
+            const char *P372ver    Version string
+            const char *P372compt  Compile time string
+
+        OUTPUT
+            Text written to fp. Nothing is returned.
+
+        SUBROUTINES
+            None
+    */
 
     const char* monthnames[] = {
         "JANUARY ",
