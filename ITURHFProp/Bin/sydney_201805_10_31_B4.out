@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 20:36:06 2026
+     Analysis Prepared  Fri Sep 25 10:33:06 2026
 
 ---------------------------------------------------------------------------
 
@@ -96,16 +96,16 @@
 	Total noise lower decile       =  4.898
 	Total noise                    =  41.239
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  9.619
+	Monthly median resultant signal-to-noise ratio =  9.657
 	Upper decile deviation signal-to-noise ratio   =  14.879
 	Lower decile deviation signal-to-noise ratio   =  16.469
-	Signal-to-noise exceeded for 90% of the month  = -6.850
+	Signal-to-noise exceeded for 90% of the month  = -6.811
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.827
+	Basic Circuit Reliability                      =  2.862
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000

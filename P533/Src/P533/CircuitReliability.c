@@ -164,8 +164,14 @@ void CircuitReliability(struct PathData *path) {
 	}
 
     // Calculate the SNR
-	path->SNR = S - 10.0*log10(pow(10.0, (noiseP.FaA/10.0)) + pow(10.0, (noiseP.FaM/10.0)) + pow(10.0, (noiseP.FaG/10.0)))
-		          - 10.0*log10(path->BW) + 204;
+	// Fa is the total noise P.372 gives, FamT: its section 8 combination of the
+	// atmospheric, man-made and galactic noise as log-normal variables, which is
+	// the external noise figure P.533 section 7 refers to P.372 for and the value
+	// reported as the receiver noise. This used a plain power sum of the three
+	// medians, up to about 2 dB different, and so disagreed with its own noise
+	// column and with the MATLAB port (its D26). The power sum is still used for
+	// the decile terms of Steps 6 and 9 below, as P.842 Table 1 gives them.
+	path->SNR = S - noiseP.FamT - 10.0*log10(path->BW) + 204;
 
 	// Step 4 & 7: "Signal upper decile deviation (day-to-day) (dB)" & "Signal lower decile deviation (day-to-day) (dB)"		
 

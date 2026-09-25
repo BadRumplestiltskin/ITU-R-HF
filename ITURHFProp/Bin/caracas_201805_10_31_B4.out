@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 24 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Thu Sep 24 20:36:06 2026
+     Analysis Prepared  Fri Sep 25 10:33:05 2026
 
 ---------------------------------------------------------------------------
 
@@ -98,16 +98,16 @@
 	Total noise lower decile       =  5.140
 	Total noise                    =  40.864
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  9.597
+	Monthly median resultant signal-to-noise ratio =  9.735
 	Upper decile deviation signal-to-noise ratio   =  13.982
 	Lower decile deviation signal-to-noise ratio   =  15.373
-	Signal-to-noise exceeded for 90% of the month  = -5.776
+	Signal-to-noise exceeded for 90% of the month  = -5.638
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  1.612
+	Basic Circuit Reliability                      =  1.735
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -626,10 +626,10 @@
 	Total noise lower decile       =  5.128
 	Total noise                    =  40.874
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  6.996
+	Monthly median resultant signal-to-noise ratio =  7.126
 	Upper decile deviation signal-to-noise ratio   =  13.989
 	Lower decile deviation signal-to-noise ratio   =  15.377
-	Signal-to-noise exceeded for 90% of the month  = -8.380
+	Signal-to-noise exceeded for 90% of the month  = -8.251
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
@@ -1154,16 +1154,16 @@
 	Total noise lower decile       =  5.100
 	Total noise                    =  40.904
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  15.872
+	Monthly median resultant signal-to-noise ratio =  15.999
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.500
-	Signal-to-noise exceeded for 90% of the month  = -0.628
+	Signal-to-noise exceeded for 90% of the month  = -0.501
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  9.642
+	Basic Circuit Reliability                      =  9.811
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -1682,16 +1682,16 @@
 	Total noise lower decile       =  5.060
 	Total noise                    =  40.961
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  13.499
+	Monthly median resultant signal-to-noise ratio =  13.624
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.488
-	Signal-to-noise exceeded for 90% of the month  = -2.989
+	Signal-to-noise exceeded for 90% of the month  = -2.865
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  6.736
+	Basic Circuit Reliability                      =  6.878
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -2210,16 +2210,16 @@
 	Total noise lower decile       =  4.992
 	Total noise                    =  41.065
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  23.687
+	Monthly median resultant signal-to-noise ratio =  23.789
 	Upper decile deviation signal-to-noise ratio   =  10.769
 	Lower decile deviation signal-to-noise ratio   =  17.760
-	Signal-to-noise exceeded for 90% of the month  =  5.926
+	Signal-to-noise exceeded for 90% of the month  =  6.029
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  17.645
+	Basic Circuit Reliability                      =  17.917
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -2738,16 +2738,16 @@
 	Total noise lower decile       =  4.898
 	Total noise                    =  41.239
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  18.338
+	Monthly median resultant signal-to-noise ratio =  18.376
 	Upper decile deviation signal-to-noise ratio   =  10.788
 	Lower decile deviation signal-to-noise ratio   =  17.754
-	Signal-to-noise exceeded for 90% of the month  =  0.583
+	Signal-to-noise exceeded for 90% of the month  =  0.622
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  6.802
+	Basic Circuit Reliability                      =  6.863
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -3266,16 +3266,16 @@
 	Total noise lower decile       =  4.801
 	Total noise                    =  41.406
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  13.160
+	Monthly median resultant signal-to-noise ratio =  13.164
 	Upper decile deviation signal-to-noise ratio   =  10.812
 	Lower decile deviation signal-to-noise ratio   =  17.734
-	Signal-to-noise exceeded for 90% of the month  = -4.574
+	Signal-to-noise exceeded for 90% of the month  = -4.570
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  0.188
+	Basic Circuit Reliability                      =  0.192
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -3794,10 +3794,10 @@
 	Total noise lower decile       =  4.721
 	Total noise                    =  41.504
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  9.682
+	Monthly median resultant signal-to-noise ratio =  9.741
 	Upper decile deviation signal-to-noise ratio   =  10.841
 	Lower decile deviation signal-to-noise ratio   =  17.683
-	Signal-to-noise exceeded for 90% of the month  = -8.001
+	Signal-to-noise exceeded for 90% of the month  = -7.942
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
@@ -4322,16 +4322,16 @@
 	Total noise lower decile       =  4.726
 	Total noise                    =  41.368
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  14.793
+	Monthly median resultant signal-to-noise ratio =  14.968
 	Upper decile deviation signal-to-noise ratio   =  10.821
 	Lower decile deviation signal-to-noise ratio   =  17.651
-	Signal-to-noise exceeded for 90% of the month  = -2.858
+	Signal-to-noise exceeded for 90% of the month  = -2.683
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.029
+	Basic Circuit Reliability                      =  2.237
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -4850,16 +4850,16 @@
 	Total noise lower decile       =  4.881
 	Total noise                    =  41.098
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  28.273
+	Monthly median resultant signal-to-noise ratio =  28.524
 	Upper decile deviation signal-to-noise ratio   =  9.364
 	Lower decile deviation signal-to-noise ratio   =  15.235
-	Signal-to-noise exceeded for 90% of the month  =  13.037
+	Signal-to-noise exceeded for 90% of the month  =  13.288
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  31.955
+	Basic Circuit Reliability                      =  33.267
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -5378,16 +5378,16 @@
 	Total noise lower decile       =  5.015
 	Total noise                    =  40.963
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  34.157
+	Monthly median resultant signal-to-noise ratio =  34.382
 	Upper decile deviation signal-to-noise ratio   =  10.731
 	Lower decile deviation signal-to-noise ratio   =  17.711
-	Signal-to-noise exceeded for 90% of the month  =  16.446
+	Signal-to-noise exceeded for 90% of the month  =  16.671
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  62.102
+	Basic Circuit Reliability                      =  62.826
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -5906,16 +5906,16 @@
 	Total noise lower decile       =  5.102
 	Total noise                    =  40.893
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  23.953
+	Monthly median resultant signal-to-noise ratio =  24.123
 	Upper decile deviation signal-to-noise ratio   =  13.974
 	Lower decile deviation signal-to-noise ratio   =  18.449
-	Signal-to-noise exceeded for 90% of the month  =  5.503
+	Signal-to-noise exceeded for 90% of the month  =  5.674
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  23.181
+	Basic Circuit Reliability                      =  23.615
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
