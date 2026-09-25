@@ -177,6 +177,8 @@
 #define RTN_ERRUL					72 // ERROR: Invalid Area Upper Latitude
 #define RTN_ERRLR					73 // ERROR: Invalid Area Left Longitude
 #define RTN_ERRUR					74 // ERROR: Invalid Area Right Longitude
+#define RTN_ERRLATINC				77 // ERROR: Invalid Latitude Increment (latinc)
+#define RTN_ERRLNGINC				78 // ERROR: Invalid Longitude Increment (lnginc)
 
 // Returns ERROR for ITURHFProp - main()
 #define RTN_ERRCOMMANDLINEARG		75 // ERROR: Invalid Command Line
