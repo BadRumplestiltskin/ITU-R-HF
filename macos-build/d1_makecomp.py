@@ -89,7 +89,7 @@ lnginc 1.0
 DataFilePath "{DATA}"
 '''
 
-rows, missing = [], 0
+rows, missing, failed = [], 0, 0
 with tempfile.TemporaryDirectory() as tmp:
     inp, outp = os.path.join(tmp, "c.in"), os.path.join(tmp, "c.out")
     with open(os.path.join(D1, "D1_Table1.csv")) as f:
@@ -106,16 +106,25 @@ with tempfile.TemporaryDirectory() as tmp:
                                         freq=float(row[3]),
                                         sorl=sorl(txlat, txlng, rxlat, rxlng, dist),
                                         tmp=tmp, DATA=DATA))
-            subprocess.run([EXE, "-s", inp, outp],
-                           env={**os.environ, "DYLD_LIBRARY_PATH": LIBS}, capture_output=True)
+            # Every case writes the same report: remove the last one so a failed
+            # run cannot be read as this case's prediction.
+            if os.path.exists(outp): os.remove(outp)
+            rc = subprocess.run([EXE, "-s", inp, outp],
+                                env={**os.environ, "DYLD_LIBRARY_PATH": LIBS},
+                                capture_output=True).returncode
             pred = {}
-            try:
-                for line in open(outp, errors="surrogateescape"):
-                    p = [x.strip() for x in line.split(",")]
-                    if len(p) >= 5 and p[0].isdigit() and p[1].isdigit():
-                        pred[int(p[1])] = float(p[4])
-            except FileNotFoundError:
-                pass
+            if rc != 0:
+                failed += 1
+                print(f"case {cid}: engine exit {rc}; its hours are written as -307.0",
+                      file=sys.stderr)
+            else:
+                try:
+                    for line in open(outp, errors="surrogateescape"):
+                        p = [x.strip() for x in line.split(",")]
+                        if len(p) >= 5 and p[0].isdigit() and p[1].isdigit():
+                            pred[int(p[1])] = float(p[4])
+                except FileNotFoundError:
+                    pass
             vals = []
             for h in range(1, 25):
                 if h in pred: vals.append(f"{pred[h]:.0f}")
@@ -124,4 +133,4 @@ with tempfile.TemporaryDirectory() as tmp:
 
 with open(OUT, "w", newline="") as f:
     f.write("\r".join(rows) + "\r")
-print(f"wrote {len(rows)} rows to {OUT} ({missing} hours had no prediction)")
+print(f"wrote {len(rows)} rows to {OUT} ({missing} hours had no prediction, {failed} cases failed)")

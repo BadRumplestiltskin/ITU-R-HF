@@ -89,10 +89,16 @@ latinc 1.0
 lnginc 1.0
 DataFilePath "{DATA}"
 ''')
-    subprocess.run([os.path.join(CBUILD, "ITURHFProp"), "-s", inp, outp],
-                   env={**os.environ, "DYLD_LIBRARY_PATH": CBUILD},
-                   capture_output=True)
+    # The report path is shared by every case: remove the last one so a failed
+    # run cannot be read as this case's prediction.
+    if os.path.exists(outp): os.remove(outp)
+    rc = subprocess.run([os.path.join(CBUILD, "ITURHFProp"), "-s", inp, outp],
+                        env={**os.environ, "DYLD_LIBRARY_PATH": CBUILD},
+                        capture_output=True).returncode
     res = {}
+    if rc != 0:
+        print(f"case {case['id']}: engine exit {rc}; skipped", file=sys.stderr)
+        return res
     with open(outp) as f:
         for line in f:
             p = [x.strip() for x in line.split(",")]

@@ -109,10 +109,16 @@ latinc 1.0
 lnginc 1.0
 DataFilePath "{DATA}"
 ''')
-    subprocess.run([exe or EXE, "-s", inp, outp],
-                   env={**os.environ, **(env or {}), "DYLD_LIBRARY_PATH": libs or LIBS},
-                   capture_output=True)
+    # The report path is shared by every call: remove the last one so a failed
+    # run cannot be read as this circuit's prediction.
+    if os.path.exists(outp): os.remove(outp)
+    rc = subprocess.run([exe or EXE, "-s", inp, outp],
+                        env={**os.environ, **(env or {}), "DYLD_LIBRARY_PATH": libs or LIBS},
+                        capture_output=True).returncode
     res = {}
+    if rc != 0:
+        print(f"circuit {c['id']} {year}/{month}: engine exit {rc}; skipped", file=sys.stderr)
+        return res
     try:
         for line in open(outp, errors="surrogateescape"):
             p = [x.strip() for x in line.split(",")]
