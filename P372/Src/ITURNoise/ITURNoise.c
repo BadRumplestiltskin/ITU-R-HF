@@ -534,6 +534,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	fp_sigma_V_d = fopen(sigma_V_dfilepath, "r");
 	if (fp_sigma_V_d == NULL) {
 		printf("ITURNoise: Error: Can't open input file %s (%s)\n", sigma_V_dfilepath, strerror(errno));
+		fclose(fp_V_d);
 		return RTN_ERRSIGMA_V_DCANTOPENFILE;
 	}
 
@@ -552,6 +553,14 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			return RTN_ERRV_DCANTOPENFILE;
 		}
 
+		// c[] holds 4 seasons of 6 time blocks: exactly 24 records.
+		if (s == 4) {
+			printf("ITURNoise: Error: %s has more than 24 records\n", V_dfilepath);
+			fclose(fp_V_d);
+			fclose(fp_sigma_V_d);
+			return RTN_ERRV_DCANTOPENFILE;
+		}
+
 		for (i = 0; i < 5; i++) {
 			c[s][tb][i] = atof(strl[i]);
 		}
@@ -561,6 +570,12 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			tb = 0;
 			s += 1;
 		}
+	}
+	if ((s != 4) || (tb != 0)) {
+		printf("ITURNoise: Error: %s has fewer than 24 records\n", V_dfilepath);
+		fclose(fp_V_d);
+		fclose(fp_sigma_V_d);
+		return RTN_ERRV_DCANTOPENFILE;
 	}
 
 	tb = 0;
@@ -576,6 +591,14 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			return RTN_ERRSIGMA_V_DCANTOPENFILE;
 		}
 
+		// d[] holds 4 seasons of 6 time blocks: exactly 24 records.
+		if (s == 4) {
+			printf("ITURNoise: Error: %s has more than 24 records\n", sigma_V_dfilepath);
+			fclose(fp_V_d);
+			fclose(fp_sigma_V_d);
+			return RTN_ERRSIGMA_V_DCANTOPENFILE;
+		}
+
 		for (i = 0; i < 5; i++) {
 			d[s][tb][i] = atof(strl[i]);
 		}
@@ -585,6 +608,12 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			tb = 0;
 			s += 1;
 		}
+	}
+	if ((s != 4) || (tb != 0)) {
+		printf("ITURNoise: Error: %s has fewer than 24 records\n", sigma_V_dfilepath);
+		fclose(fp_V_d);
+		fclose(fp_sigma_V_d);
+		return RTN_ERRSIGMA_V_DCANTOPENFILE;
 	}
 
 	// End open and reading input files
