@@ -240,19 +240,19 @@ int main(int argc, char* argv[]) {
 		hour = atoi(argv[2]) - 1;
 		if ((hour < 0) || (hour > 23)) {
 			printf("ITURNoise: Error: Hour (%d (UTC)) Out of Range (1 to 24 UTC) ", hour + 1);
-			return RTN_ERRMONTH;
+			return RTN_ERRHOUR;
 		}
 
 		freq = atof(argv[3]);
 		if ((freq < 0.01) || (freq > 30)) {
 			printf("ITURNoise: Error: Frequency (%5.4f (MHz)) Out of Range (0.01 to 30 MHz) ", freq);
-			return RTN_ERRMONTH;
+			return RTN_ERRFREQ;
 		}
 
 		lat = atof(argv[4]);
 		if ((lat < -90.0) || (lat > 90.0)) {
 			printf("ITURNoise: Error: Latitude (%5.4f (degrees)) Out of Range (-90 to 90 degrees) ", lat);
-			return RTN_ERRMONTH;
+			return RTN_ERRLAT;
 		}
 		else {
 			rlat = lat * D2R;
@@ -261,13 +261,22 @@ int main(int argc, char* argv[]) {
 		lng = atof(argv[5]);
 		if ((lng < -180.0) || (lng > 180.0)) {
 			printf("ITURNoise: Error: Longitude (%5.4f (degrees)) Out of Range (-180 to 180 degrees) ", lng);
-			return RTN_ERRMONTH;
+			return RTN_ERRLNG;
 		}
 		else {
 			rlng = lng * D2R;
 		}
 
-		mmnoise = atof(argv[6]); // 
+		// atof() read a mistyped value such as "rural" as 0 without a word.
+		{
+			char *end;
+			errno = 0;
+			mmnoise = strtod(argv[6], &end);
+			if ((end == argv[6]) || (*end != '\0') || (errno == ERANGE) || !isfinite(mmnoise)) {
+				printf("ITURNoise: Error: Man-made noise (%s) is not a number ", argv[6]);
+				return RTN_ERRMMNOISE;
+			}
+		}
 
 		if ((size_t)snprintf(datafilepath, sizeof(datafilepath), "%s/", argv[7]) >= sizeof(datafilepath)) {
 			printf("ITURNoise: Error: Data file path too long\n");

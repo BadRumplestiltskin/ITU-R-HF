@@ -13,6 +13,9 @@
 #define RTN_ERRBADDATAFILEPATH          107 // ERROR: Data file path does not exist
 #define RTN_ERRV_DCANTOPENFILE			108 // ERROR: Input file .\P372\DATA\V_d.txt can't be opened
 #define RTN_ERRSIGMA_V_DCANTOPENFILE	109 // ERROR: Input file .\P372\DATA\sigma_V_d.txt can't be opened
+#define RTN_ERRLAT						110 // ERROR: Invalid Input Latitude
+#define RTN_ERRLNG						111 // ERROR: Invalid Input Longitude
+#define RTN_ERRMMNOISE					112 // ERROR: Invalid Input Man-made Noise
 
 // Successfull return codes 
 #define RTN_ITURNOISEOK					 90 // Normal successful exit
