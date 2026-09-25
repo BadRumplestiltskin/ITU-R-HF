@@ -461,25 +461,23 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 	}
 
     // Load the Noise routines in P372.dll ******************************
-#ifdef _WIN32
-	// Get the handle to the P372 DLL.
-	hLib = LoadLibrary("P372.dll");
-	if (hLib == NULL) {
-		printf("ITURHFProp: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
-		return RTN_ERRP372DLL;
+	// Same loader as P533 in main(): the ReadFamDud lookup used to be unchecked,
+	// so a libp372 without it crashed on the first call instead of failing here.
+	{
+		static const struct hfSymbol p372syms[] = {
+			{ "ReadFamDud", (void **)&dllReadFamDud },
+		};
+		HFLIBHANDLE hP372;
+
+		hP372 = hfLibOpen(HFLIB_P372);
+		if (hP372 == NULL) {
+			printf("ITURHFProp: Error %d %s not found (%s)\n", RTN_ERRP372DLL, HFLIB_P372, hfLibError());
+			return RTN_ERRP372DLL;
+		}
+		if (hfLibBind(hP372, p372syms, (int)(sizeof(p372syms)/sizeof(p372syms[0])), "ITURHFProp") == 0) {
+			return RTN_ERRP372DLL;
+		}
 	}
-	// Get the handle to the DLL library, hLib.
-	GetModuleFileName((HMODULE)hLib, (LPTSTR)mod, 512);
-	dllReadFamDud = (iReadFamDud)GetProcAddress((HMODULE)hLib, "ReadFamDud");
-#elif __linux__ || __APPLE__
-	void * hLib;
-	hLib = dlopen("libp372.so", RTLD_NOW);
-	if (!hLib) {
-		printf("Couldn't load libp372.so, exiting.\n");
-		exit(1);
-	}
-	dllReadFamDud = dlsym(hLib, "ReadFamDud");
-#endif
 	// End P372.DLL Load ************************************************
 
 	// ********************** Month Loop **********************************************************
