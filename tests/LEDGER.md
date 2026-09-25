@@ -12,6 +12,12 @@ fix starts.
 
 Status: open / fixed (commit) / not a defect (reason).
 
+Progress at 2026-09-25 end of session: U1 fixed (5f3ad5d). Also done outside
+the units: all text data and source files converted to UTF-8 (813a116,
+69073e6), guarded by cases data-text-is-utf8 and source-text-is-utf8.
+Next: U2. Local gate before each push: normal + ASan/UBSan builds, all three
+suites; then CI green on all four jobs.
+
 ## U1 NaN antenna bearing writes outside the pattern - high - FIXED
 - read-pending-nan-tx-bearing-rejected, read-pending-nan-rx-bearing-rejected:
   ValidateITURHFP.c range checks pass NaN; ReadType13.c:217 (int)NaN, :272
