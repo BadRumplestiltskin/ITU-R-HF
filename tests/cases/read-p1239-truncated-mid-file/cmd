@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; mkdir d && for f in "$P533DATA"/*; do ln -s "$f" d/; done; rm "d/P1239-3 Decile Factors.txt" && head -n 200 "$P533DATA/P1239-3 Decile Factors.txt" > "d/P1239-3 Decile Factors.txt" && sh "$L/mkin.sh" DATA=d/ > x.in && $ITURHFPROP -s x.in out

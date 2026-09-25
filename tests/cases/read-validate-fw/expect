@@ -1,0 +1,5 @@
+FW=0: exit 0
+FW=-0.01: exit 120
+FW=1000: exit 0
+FW=1000.01: exit 120
+FW=nan: exit 120

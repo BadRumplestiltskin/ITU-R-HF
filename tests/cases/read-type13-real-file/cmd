@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; cp "$CASE/../../../ITURHFProp/Data/Antenna/T13 Files/141-10_0.t13" r.t13 && sh "$L/mkin.sh" RXANT=r.t13 TXANT=r.t13 > x.in && $ITURHFPROP -s x.in out && grep -a "antenna  *AHRS" out

@@ -1,0 +1,5 @@
+TXLNG=180: exit 0
+TXLNG=180.01: exit 121
+TXLNG=-180: exit 0
+TXLNG=-180.01: exit 121
+TXLNG=nan: exit 121

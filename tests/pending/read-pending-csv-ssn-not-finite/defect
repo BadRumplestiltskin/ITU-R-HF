@@ -1,0 +1,1 @@
+CircuitCSV.c:566-567: FieldNum() marks nan/inf as bad but returns atof()'s NaN/inf, and SSNFromIndex() (CircuitCSV.c:476) casts it to int: undefined behaviour, UBSan aborts the whole batch. Should be BAD_RECORD rows. Fails only under the sanitizer build. Medium.

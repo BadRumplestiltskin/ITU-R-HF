@@ -1,0 +1,1 @@
+L=$CASE/../../cases/read-lib; sh "$L/mkant.sh" 13 | head -n 100 > trunc.t13 && sh "$L/mkin.sh" RXANT=trunc.t13 > x.in && $ITURHFPROP -s x.in out

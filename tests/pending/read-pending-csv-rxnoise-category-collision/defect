@@ -1,0 +1,1 @@
+CircuitCSV.c:641 passes -rxNoise as ManMadeNoise, so rxNoise 0, -1 ... -5 dBW become the category codes CITY ... QUIET (P533.h:158) and run as that category, reported OK. Low.

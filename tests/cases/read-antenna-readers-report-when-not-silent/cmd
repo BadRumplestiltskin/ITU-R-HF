@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkant.sh" 11 > w.11 && sh "$L/mkant.sh" 14 > y.14 && sh "$L/mkin.sh" TXANT=w.11 RXANT=y.14 > x.in && $ITURHFPROP x.in out

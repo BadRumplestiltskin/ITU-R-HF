@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; mkdir d && for f in "$P533DATA"/*; do ln -s "$f" d/; done; p=d; while [ ${#p} -lt 227 ]; do p=$p/.; done; sh "$L/mkin.sh" DATA=$p/ > x.in && $ITURHFPROP -s x.in out && grep -a "^05, 20" out

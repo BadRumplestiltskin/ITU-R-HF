@@ -1,0 +1,5 @@
+F0=0: exit 0
+F0=-0.01: exit 116
+F0=1000: exit 0
+F0=1000.01: exit 116
+F0=nan: exit 116

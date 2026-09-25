@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkin.sh" MONTH="5, 7, 5" > x.in && $ITURHFPROP -s x.in out && grep -a "^0[57], 20" out | sort | uniq -c | awk '{print $1 " x " $2}'

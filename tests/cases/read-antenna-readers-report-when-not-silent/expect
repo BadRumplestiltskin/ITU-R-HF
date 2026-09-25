@@ -1,0 +1,3 @@
+ReadAntennaPatterns: Reading transmit and receive antenna
+ReadType14: Reading antenna Synthetic yagi :type 14
+ReadType11: Reading antenna Synthetic whip :type 11 gain

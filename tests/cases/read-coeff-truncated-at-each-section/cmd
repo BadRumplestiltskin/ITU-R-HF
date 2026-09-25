@@ -1,0 +1,1 @@
+mkdir d && for f in "$P372DATA"/*; do ln -s "$f" d/; done; rm d/COEFF05W.txt; for n in 0 1 1564 1565 1566 2000 2121 2122 2123 2125 2126 2127 2150 2187 2188 2200 2221; do head -n $n "$P372DATA/COEFF05W.txt" > d/COEFF05W.txt; $ITURNOISE 5 14 1.0 40 165 0 d 3 > log; echo "lines $n: exit $? $(cat log)"; done

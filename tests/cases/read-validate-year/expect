@@ -1,0 +1,4 @@
+YEAR=1900: exit 0
+YEAR=1899: exit 100
+YEAR=2100: exit 0
+YEAR=2101: exit 100

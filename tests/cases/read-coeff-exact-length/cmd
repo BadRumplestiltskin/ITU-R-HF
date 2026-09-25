@@ -1,0 +1,1 @@
+mkdir d && for f in "$P372DATA"/*; do ln -s "$f" d/; done; rm d/COEFF05W.txt && head -n 2222 "$P372DATA/COEFF05W.txt" > d/COEFF05W.txt && $ITURNOISE 5 14 1.0 40 165 0 d 4

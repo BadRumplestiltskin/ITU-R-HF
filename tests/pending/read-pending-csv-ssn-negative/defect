@@ -1,0 +1,1 @@
+CircuitCSV.c:474 (SSNFromIndex) clamps a negative SSN column to 0; the README says only a negative T-index result is clamped and SSN is used as given, and ValidatePath() would reject it (109). Low.

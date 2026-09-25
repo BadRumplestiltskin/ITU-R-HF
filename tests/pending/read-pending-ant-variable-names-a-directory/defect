@@ -1,0 +1,1 @@
+tests/cases.sh:36 sets ANT="$root/ITURHFProp/Data/Antenna Files", which does not exist; the Type 13 files are in ITURHFProp/Data/Antenna/T13 Files. Any case using $ANT fails. Medium (test harness).

@@ -1,0 +1,5 @@
+TXPOWER=-30: exit 0
+TXPOWER=-30.01: exit 113
+TXPOWER=60: exit 0
+TXPOWER=60.01: exit 113
+TXPOWER=nan: exit 113

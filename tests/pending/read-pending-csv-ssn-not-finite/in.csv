@@ -1,0 +1,4 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays
+London,51.51,-0.13,Paris,48.86,2.35,2024,6,15,12,nan,3,500,10,-150,3000,90
+London,51.51,-0.13,Paris,48.86,2.35,2024,6,15,12,inf,3,500,10,-150,3000,90
+London,51.51,-0.13,Paris,48.86,2.35,2024,6,15,12,-inf,3,500,10,-150,3000,90

@@ -1,0 +1,6 @@
+BW=0.005: exit 0
+BW=0.0049: exit 112
+BW=3e6: exit 0
+BW=3000001: exit 112
+BW=nan: exit 112
+BW=-inf: exit 112

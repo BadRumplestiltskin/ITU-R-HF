@@ -1,0 +1,1 @@
+ReadType11/13/14() (P533/Src/P533/ReadType13.c) return RTN_ERRREADANTFILE (142) without a message, and ReadAntennaPatterns() (ITURHFProp/Src/ITURHFProp/ReadInputConfiguration.c:651-665, 697-711) passes it up silently: a truncated antenna file gives only 'Main: Error 142 from ITURHFProp'. It should name the file. Low.

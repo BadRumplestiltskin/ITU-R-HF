@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o o.csv -d "$P533DATA" > /dev/null && awk -F, 'NR>1{print "row " $18 ": " $NF}' o.csv

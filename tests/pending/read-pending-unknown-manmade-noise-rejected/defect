@@ -1,0 +1,1 @@
+ReadInputConfiguration.c:177-178: an unrecognised Path.ManMadeNoise word falls to sscanf("%*s %lf"), which fails and leaves path->noiseP.ManMadeNoise uninitialised (path is not zeroed, ITURHFProp.c:155); the run succeeds with whatever was on the stack. Should be rejected (103). Medium.

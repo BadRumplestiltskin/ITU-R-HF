@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkin.sh" MOD=DIGITAL > x.in; $ITURHFPROP -s x.in out > /dev/null; echo "MOD=DIGITAL: exit $?"; sh "$L/mkin.sh" MOD=DIGITAL SIRR=-31 > x.in; $ITURHFPROP -s x.in out > /dev/null; echo "MOD=DIGITAL SIRR=-31: exit $?"

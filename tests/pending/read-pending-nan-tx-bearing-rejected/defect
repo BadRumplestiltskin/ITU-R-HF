@@ -1,0 +1,1 @@
+ITURHFProp/Src/ITURHFProp/ValidateITURHFP.c:18 tests (x > 2*PI) || (x < 0), which NaN passes. TXBearing nan then reaches ReadType13.c:217 iMBOS = (int)(bearing*R2D): undefined behaviour (UBSan aborts); on x86-64 it gives INT_MIN and ReadType13.c:272 (iMBOS+i)%360 is negative, so ReadType13() writes outside Ant->pattern. Should be rejected with 55. High.

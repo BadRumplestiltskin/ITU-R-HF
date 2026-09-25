@@ -1,0 +1,1 @@
+ReadInputConfiguration.c:637-639 (and 684-686 for Tx) print 'Error opening Rx. antenna file' only when not silent, so with -s a missing antenna file gives only 'Main: Error 52 from ITURHFProp', while every other reader error prints under -s. Low.

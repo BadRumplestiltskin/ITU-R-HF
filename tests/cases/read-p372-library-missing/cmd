@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkin.sh" > x.in && mkdir lib && cp "$CASE/../../../P533/Linux/libp533.so" lib/ && env DYLD_LIBRARY_PATH=lib LD_LIBRARY_PATH=lib "$CASE/../../../ITURHFProp/Linux/ITURHFProp" -s x.in out
