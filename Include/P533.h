@@ -498,6 +498,15 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN);
 DLLEXPORT void InitializePath(struct PathData *path);
 
 // P533.c Prototype for the P533 propagation model engine
+//
+// THREAD SAFETY: the library is not thread safe. It holds three process-wide
+// caches with no locking - the P372 entry points (LoadP372(), reached from
+// AllocatePathMemory()), the ionospheric maps (IonMapGet()/IonMapFree()) and
+// libp372's Fam/Dud coefficients (ReadFamDud()). Callers must serialise every
+// call into the library: AllocatePathMemory(), IonMapGet(), ReadP1239(),
+// P533() and IonMapFree() must not run concurrently with one another. Note
+// that concurrent P533() calls on separate PathData structs are not safe
+// either, since each reads the shared caches that another may be refilling.
 DLLEXPORT int P533(struct PathData *path);
 // Resolves the P372 entry points once per process; see P533.c.
 int LoadP372(void);
@@ -572,6 +581,7 @@ DLLEXPORT void IsotropicPattern(struct Antenna *Ant, double G, int silent);
 DLLEXPORT int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
 // Ionospheric map cache: one parsed copy per month, shared by every circuit.
 // The maps belong to the cache; release them with IonMapFree(), not free().
+// Not thread safe: see THREAD SAFETY above P533().
 #define IONMAPHRS	24		// hours
 #define IONMAPLNG	241		// longitudes at 1.5-degree increments
 #define IONMAPLAT	121		// latitudes at 1.5-degree increments
