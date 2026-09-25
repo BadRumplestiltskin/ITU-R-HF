@@ -29,7 +29,7 @@ double DiurnalAbsorptionExponent(struct ControlPt CP, int month);
 double AbsorptionFactor(struct ControlPt CP, int month);
 double AbsorptionLayerPenetrationFactor(double T);
 double AbsorptionTerm(struct ControlPt CP, int month, double fv);
-double FindLh(struct ControlPt CP, double dh, double hour, int month);
+double FindLh(struct ControlPt CP, double D, double hour, int month);
 double PenetrationPoints(struct PathData * path, double noh, double fv);
 int WhatSeasonforLh(struct Location L, int month); 
 int SmallestCPfoF2(struct PathData path);
@@ -180,7 +180,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 					fL = fabs(path->CP[MP].fH[HR100km]*sin(path->CP[MP].dip[HR100km])); 
 
 					// Determine auroral and other signal losses
-					Lh = FindLh(path->CP[MP], dh, mpltime, path->month);
+					Lh = FindLh(path->CP[MP], path->distance, mpltime, path->month);
 				}
 				else { // (path->distance > 2000.0) There are three control points
 
@@ -201,9 +201,9 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[R1k].fH[HR100km]*sin(path->CP[R1k].dip[HR100km])))/3.0;
 
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month) +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month))/3.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month))/3.0;
 				} // (path->distance <= 2000.0)
 	
 				// All the variable have been calculated to determine
@@ -324,7 +324,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 					fL = fabs(path->CP[MP].fH[HR100km]*sin(path->CP[MP].dip[HR100km])); 
 					
 					// Determine auroral and other signal losses
-					Lh = FindLh(path->CP[MP], dh, mpltime, path->month);
+					Lh = FindLh(path->CP[MP], path->distance, mpltime, path->month);
 				}
 				else if((2000.0 < path->distance) && (path->distance <= path->dmax)) { // There are three control points
 
@@ -345,9 +345,9 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[R1k].fH[HR100km]*sin(path->CP[R1k].dip[HR100km])))/3.0;
 
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month) +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month))/3.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month))/3.0;
 				}
 				else { // There are 5 control points.
 
@@ -372,11 +372,11 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[Rd02].fH[HR100km]*sin(path->CP[Rd02].dip[HR100km])))/5.0;
 					
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month)  +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[Td02], dh, mpltime, path->month)+
-						  FindLh(path->CP[Rd02], dh, mpltime, path->month))/5.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month)  +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[Td02], path->distance, mpltime, path->month)+
+						  FindLh(path->CP[Rd02], path->distance, mpltime, path->month))/5.0;
 				} // (path->distance <= 2000.0)
 
 				// All the variable have been calculated to determine
@@ -966,14 +966,25 @@ double AbsorptionLayerPenetrationFactor(double T) {
 }
 
 
-double FindLh(struct ControlPt CP, double dh, double hour, int month) {
+double FindLh(struct ControlPt CP, double D, double hour, int month) {
 
 	/*	
-	 *	FindLh() - Finds the value of Lh from Table 2 ITU-R P.533-12 "Values of Lh giving auroral and other signal losses".
+	 *	FindLh() - Finds the value of Lh from Table 2 ITU-R P.533-14 "Values of Lh giving auroral and other signal losses".
+	 *
+	 *		P.533-14 section 5.2: "Each value is evaluated in terms of the geomagnetic
+	 *		latitude Gn ... and local time t ...: mean values for the control points of
+	 *		Table 1d) are taken." The caller averages the values this returns for each
+	 *		control point; the season is that of the control point's own hemisphere.
+	 *
+	 *		Table 2 a) and b) are for "transmission ranges" up to and beyond 2 500 km.
+	 *		The Recommendation uses "range" for the path length throughout and "hop
+	 *		length" for D/n, so the sub-table is chosen by the path length D. It was
+	 *		chosen by the hop length, which gave the modes of one path different
+	 *		sub-tables.
 	 *
 	 *		INPUT
 	 *			struct ControlPt CP
-	 *			double dh - hop distance
+	 *			double D - path length (km), the "transmission range"
 	 *			int hour - hour index
 	 *			int month - month index
 	 *
@@ -1091,11 +1102,11 @@ double FindLh(struct ControlPt CP, double dh, double hour, int month) {
 
 	// Lh[Transmission range][season][geomagnetic latitude][mid-path local time]
 	// Determine the indices
-	// Transmit range index
-	if(dh <= 2500.0) {
+	// Transmission range index, from the path length
+	if(D <= 2500.0) {
 		txrange = 0;
 	}
-	else { // (dh > 2500.0)
+	else { // (D > 2500.0)
 		txrange = 1;
 	}
 
