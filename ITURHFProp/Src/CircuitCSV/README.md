@@ -129,7 +129,7 @@ With `-F`, seven columns are inserted before `Status`; see Frequency scan.
 `-F` evaluates every circuit at a set of frequencies, given either as a range
 `start:stop:step` in MHz (values rounded to 1 kHz, `stop` included) or as a
 comma separated list such as assigned frequencies, `4.5,7.1,11.2` (sorted,
-duplicates dropped). All must lie within P.533's 1-30 MHz.
+duplicates dropped). All must be finite and lie within P.533's 1-30 MHz.
 
 Why: for each frequency P.533 gives the monthly median S/N and its upper and
 lower decile deviations (P.842 Table 1 Steps 3, 6 and 9). None of the three

@@ -730,7 +730,9 @@ static int CompareDouble(const void *a, const void *b) {
 		value is rounded to 1 kHz so that 0.1 MHz steps do not accumulate binary
 		fractions. Anything else is read as a comma separated list, sorted
 		ascending with duplicates removed. Every frequency must lie in P.533's
-		1-30 MHz, which ValidatePath() enforces.
+		1-30 MHz, which ValidatePath() enforces. NaN and infinity are refused
+		outright: a NaN compares false with everything, so it slipped past the
+		1-30 MHz test on the sorted ends.
 
 		INPUT
 			const char *spec
@@ -751,8 +753,9 @@ static int ParseScan(const char *spec) {
 	if (ScanF == NULL) return RTN_ERRCSVARGS;
 
 	if (strchr(spec, ':') != NULL) {
-		if (sscanf(spec, "%lf:%lf:%lf%c", &a, &b, &c, &tail) != 3 || c <= 0.0 || b < a) {
-			printf("CircuitCSV: Error %d -F range must be start:stop:step with step > 0 and stop >= start\n", RTN_ERRCSVARGS);
+		if (sscanf(spec, "%lf:%lf:%lf%c", &a, &b, &c, &tail) != 3 ||
+			!isfinite(a) || !isfinite(b) || !isfinite(c) || c <= 0.0 || b < a) {
+			printf("CircuitCSV: Error %d -F range must be start:stop:step, finite numbers with step > 0 and stop >= start\n", RTN_ERRCSVARGS);
 			return RTN_ERRCSVARGS;
 		}
 		for (int k = 0; ; k++) {
@@ -771,8 +774,8 @@ static int ParseScan(const char *spec) {
 		for (tok = strtok(buf, ","); tok != NULL; tok = strtok(NULL, ",")) {
 			double f = strtod(tok, &end);
 			while (*end == ' ') end++;
-			if (end == tok || *end != '\0') {
-				printf("CircuitCSV: Error %d -F list entry '%s' is not a number\n", RTN_ERRCSVARGS, tok);
+			if (end == tok || *end != '\0' || !isfinite(f)) {
+				printf("CircuitCSV: Error %d -F list entry '%s' is not a finite number\n", RTN_ERRCSVARGS, tok);
 				return RTN_ERRCSVARGS;
 			}
 			if (n >= SCANMAX) {
