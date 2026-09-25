@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <signal.h>
+#endif
+#ifdef __linux__
+#include <sys/prctl.h>
 #endif
 
 // Local includes
@@ -705,6 +709,15 @@ static int DominantMode(struct PathData *path, int *hops, char *layer) {
 static int Workers = 1;
 static int *NextBlock = NULL;
 static FILE *BlockIdx = NULL;
+#ifndef _WIN32
+// The -j parent's pid, as each worker saw it at fork: a worker whose parent
+// has changed was orphaned and stops at its next block. The workers started
+// so far, for the parent's SIGINT/SIGTERM handler to stop.
+static pid_t ParentPid = 0;
+static pid_t WorkerPid[CSVMAXWORKERS];
+static volatile sig_atomic_t NStarted = 0;
+static volatile sig_atomic_t StopSignal = 0;
+#endif
 
 struct Counts {
 	int number;			// circuits that ran
@@ -1592,6 +1605,14 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 			int blk = (nrow - 1) / CSVBLOCK;
 			// Claims only increase, so a claim behind the reader is simply
 			// taken again; a claim ahead is skipped to.
+#ifndef _WIN32
+			// Where there is no PR_SET_PDEATHSIG (macOS), this is how a worker
+			// learns that the parent died: it is re-parented.
+			if (blk > mine && getppid() != ParentPid) {
+				free(line);
+				return RTN_ERRCSVWORKER;
+			}
+#endif
 			while (blk > mine) mine = __atomic_fetch_add(NextBlock, 1, __ATOMIC_SEQ_CST);
 			if (blk < mine) continue;
 			if ((nrow - 1) % CSVBLOCK == 0) fprintf(BlockIdx, "%d\n", blk);
@@ -1709,6 +1730,30 @@ static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 }
 
 /*
+	StopWorkers() - The -j parent's SIGINT/SIGTERM handler.
+
+		Records the signal and passes SIGTERM on to every worker started, so
+		that the parent's waitpid() returns promptly; RunParallel() then
+		removes the part files and re-raises the signal. Only kill() is
+		called, which is async-signal-safe.
+
+		INPUT
+			int sig
+
+		OUTPUT
+			StopSignal
+
+		SUBROUTINES
+			None
+*/
+static void StopWorkers(int sig) {
+
+	StopSignal = sig;
+	for (int k = 0; k < NStarted; k++) kill(WorkerPid[k], SIGTERM);
+
+}
+
+/*
 	RunParallel() - Runs the rows in Workers processes and merges their output.
 
 		The parent has read the header and loaded everything that is read once;
@@ -1720,6 +1765,12 @@ static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 		its worker's part -- and -S rows by their Circuit#, since a row gives
 		none or one per frequency.
 		The parts are then removed. Any worker failing fails the run.
+
+		SIGINT or SIGTERM to the parent stops the workers, removes the parts
+		and ends the process by that signal. If fork() fails part-way, the
+		workers already started are stopped rather than left to run the job.
+		A worker dies with its parent: through PR_SET_PDEATHSIG on Linux, and
+		everywhere by checking getppid() before each block it takes.
 
 		INPUT
 			FILE *fin, const char *infile, *outfile, *scanfile
@@ -1743,7 +1794,10 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	char (*scanpart)[CSVPARTNAME] = malloc(sizeof(*scanpart) * CSVMAXWORKERS);
 	char (*idxpart)[CSVPARTNAME] = malloc(sizeof(*idxpart) * CSVMAXWORKERS);
 	int nextidx[CSVMAXWORKERS];
-	pid_t pid[CSVMAXWORKERS];
+	struct sigaction sa, oldint, oldterm;
+	sigset_t block, oldmask;
+	pid_t parent = getpid();
+	int stopped = 0;			// the workers were sent SIGTERM
 	int k, bad = 0, number = 0, failed = 0, nrow = 0;
 	FILE *fout, *fsout = NULL, *pin[CSVMAXWORKERS], *sin[CSVMAXWORKERS], *xin[CSVMAXWORKERS];
 	char pend[CSVMAXWORKERS][512];
@@ -1777,15 +1831,34 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	if (silent == FALSE) printf("CircuitCSV: %d workers\n", Workers);
 	fflush(stdout);
 
+	// The handler goes in before the first fork, with the two signals held
+	// until every worker is started and recorded in WorkerPid.
+	StopSignal = 0;
+	NStarted = 0;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = StopWorkers;
+	sigemptyset(&sa.sa_mask);
+	// A signal ignored on entry (nohup, a background job) stays ignored.
+	sigaction(SIGINT, NULL, &oldint);
+	sigaction(SIGTERM, NULL, &oldterm);
+	if (oldint.sa_handler != SIG_IGN) sigaction(SIGINT, &sa, NULL);
+	if (oldterm.sa_handler != SIG_IGN) sigaction(SIGTERM, &sa, NULL);
+	sigemptyset(&block);
+	sigaddset(&block, SIGINT);
+	sigaddset(&block, SIGTERM);
+	sigprocmask(SIG_BLOCK, &block, &oldmask);
+
 	for (k = 0; k < Workers; k++) {
-		pid[k] = fork();
-		if (pid[k] < 0) {
+		pid_t p = fork();
+		if (p < 0) {
 			printf("CircuitCSV: Error %d Can't start worker %d (%s)\n", RTN_ERRCSVWORKER, k, strerror(errno));
 			Workers = k;			// wait only for those started
+			for (int i = 0; i < k; i++) kill(WorkerPid[i], SIGTERM);
+			stopped = 1;
 			bad = 1;
 			break;
 		}
-		if (pid[k] == 0) {
+		if (p == 0) {
 			// The worker. It must not share the parent's FILE position, so it
 			// opens the input afresh and skips the header.
 			char *hdr = NULL;
@@ -1793,6 +1866,15 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			struct Counts cnt = { 0, 0, 0 };
 			FILE *in = fopen(infile, "r"), *out = fopen(outpart[k], "w");
 			int rv;
+
+			sigaction(SIGINT, &oldint, NULL);
+			sigaction(SIGTERM, &oldterm, NULL);
+			sigprocmask(SIG_SETMASK, &oldmask, NULL);
+			ParentPid = parent;
+#ifdef __linux__
+			prctl(PR_SET_PDEATHSIG, SIGTERM);
+#endif
+			if (getppid() != parent) _exit(2);	// the parent died already
 
 			BlockIdx = fopen(idxpart[k], "w");
 			if (in == NULL || out == NULL || BlockIdx == NULL || ReadRecord(in, &hdr, &hcap) != TRUE) _exit(2);
@@ -1802,6 +1884,13 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 				if (ScanOut == NULL) _exit(2);
 			}
 			rv = ProcessRows(in, out, path, col, dpath, TRUE, k, Workers, &cnt);
+			if (getppid() != parent) {
+				// Orphaned: nobody will merge or remove the parts.
+				remove(outpart[k]);
+				remove(idxpart[k]);
+				if (scanfile != NULL) remove(scanpart[k]);
+				_exit(1);
+			}
 			fclose(in);
 			if (fclose(out) != 0) rv = RTN_ERRCSVOPENOUT;
 			if (ScanOut != NULL && fclose(ScanOut) != 0) rv = RTN_ERRCSVOPENOUT;
@@ -1809,15 +1898,23 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			fflush(stdout);
 			_exit(rv == RTN_CSVOK ? 0 : 1);
 		}
+		WorkerPid[k] = p;
+		NStarted = k + 1;
 	}
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 
 	for (k = 0; k < Workers; k++) {
 		int st;
-		if (waitpid(pid[k], &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		pid_t w;
+		while ((w = waitpid(WorkerPid[k], &st, 0)) < 0 && errno == EINTR) ;
+		if (StopSignal != 0 || stopped) bad = 1;
+		else if (w < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
 			printf("CircuitCSV: Error %d worker %d failed\n", RTN_ERRCSVWORKER, k);
 			bad = 1;
 		}
 	}
+	// All reaped: a signal from here on must not reach a pid since reused.
+	NStarted = 0;
 	(void)fin;
 
 	if (bad == 0) {
@@ -1849,7 +1946,7 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			// are the next CSVBLOCK lines of that worker's part (fewer for the
 			// last block), and each row's -S lines are the lines of the same
 			// worker's -S part that carry its Circuit#.
-			for (int b = 0; bad == 0; b++) {
+			for (int b = 0; bad == 0 && StopSignal == 0; b++) {
 				for (k = 0; k < Workers && nextidx[k] != b; k++) ;
 				if (k == Workers) break;			// no such block: the end
 				for (int j = 0; j < CSVBLOCK; j++) {
@@ -1887,6 +1984,17 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	NextBlock = NULL;
 	free(outpart); free(scanpart); free(idxpart);
 	#undef CSVPARTNAME
+
+	sigaction(SIGINT, &oldint, NULL);
+	sigaction(SIGTERM, &oldterm, NULL);
+	if (StopSignal != 0) {
+		// The parts are gone; end as the signal would have ended the run.
+		printf("CircuitCSV: Interrupted, workers stopped\n");
+		fflush(stdout);
+		signal(StopSignal, SIG_DFL);
+		raise(StopSignal);
+		return RTN_ERRCSVWORKER;
+	}
 
 	if (bad != 0) return RTN_ERRCSVWORKER;
 

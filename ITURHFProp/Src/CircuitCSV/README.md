@@ -196,6 +196,13 @@ size on disk during a run. Each worker loads the months it meets, so memory is
 up to about 300 MB per worker. A failing worker fails the whole run with error
 1009.
 
+Interrupting a run (`SIGINT`, e.g. Ctrl-C, or `SIGTERM`) stops the workers,
+deletes the part files and ends the run by that signal (exit status 130 or 143
+from a shell); a signal ignored when the run starts, as under `nohup`, stays
+ignored. If a worker cannot be started, those already running are stopped at
+once. A worker whose parent dies stops too: at once on Linux, and on macOS
+before its next block of 32 rows, deleting its own part files.
+
 Measured on an Apple M4 (4 performance + 6 efficiency cores), 10,000 circuits on
 the 57-frequency grid `2:30:0.5` with `-S`:
 
