@@ -440,7 +440,7 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
     // Determine the maximum month
 	ITURHFP->imnthend = 0;
 	for(i=0; i<NMBOFMONTHS; i++) {
-		if((0 <= ITURHFP->months[i]) && (ITURHFP->months[i] <= 12.0)) ITURHFP->imnthend += 1;
+		if((0 <= ITURHFP->months[i]) && (ITURHFP->months[i] < NMBOFMONTHS)) ITURHFP->imnthend += 1;
 	}
 
     // Determine the area. If the values are all the same then do only one point. This is point-to-point mode.
