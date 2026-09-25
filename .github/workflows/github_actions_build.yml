@@ -44,7 +44,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: make
-      run: make -C Linux all OPTIMIZE=-O1 CC="gcc -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined"
+      run: make -C Linux all OPTIMIZE=-O1 CC="gcc -g -fno-omit-frame-pointer -fsanitize=address,undefined,float-cast-overflow -fno-sanitize-recover=undefined,float-cast-overflow"
     - name: regression
       run: ./tests/regression.sh
     - name: smoke
