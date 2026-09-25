@@ -66,6 +66,10 @@ a T index of 10 runs as SSN 8, and 120 as SSN 172.
 columns are echoed ahead of the results, so the output file is the input
 concatenated with the calculated fields.
 
+A row is one csv record, not one line: there is no length limit, and a quoted
+field (a site name) may contain commas, doubled quotes or line breaks. Blank
+lines are skipped and do not count as rows.
+
 Nothing is ever dropped. A row that cannot be calculated still appears, with
 empty result fields and a `Status` saying why:
 

@@ -281,6 +281,51 @@ static int SplitCSV(char *line, char **field, int maxfields) {
 }
 
 /*
+	ReadRecord() - Reads one logical csv record, of any length.
+
+		fgets() into a fixed buffer split a record longer than the buffer into
+		two rows, and a quoted field holding a newline into two as well; either
+		broke the one-row-in, one-row-out numbering. This reads up to a newline
+		that is outside quotes, growing the buffer as needed. The newline is
+		kept, as fgets() kept it. A quote left open at end of file ends the
+		record there.
+
+		INPUT
+			FILE *fp, char **buf, size_t *cap	(*buf may start NULL)
+
+		OUTPUT
+			returns TRUE with the record in *buf, FALSE at end of file, or -1
+			when memory runs out
+
+		SUBROUTINES
+			None
+*/
+static int ReadRecord(FILE *fp, char **buf, size_t *cap) {
+
+	size_t n = 0;
+	int ch, inquote = 0;
+
+	ch = getc(fp);
+	if (ch == EOF) return FALSE;
+	for (; ch != EOF; ch = getc(fp)) {
+		if (n + 2 > *cap) {
+			size_t nc = (*cap < CSVMAXLINE) ? CSVMAXLINE : *cap * 2;
+			char *nb = (char *)realloc(*buf, nc);
+			if (nb == NULL) return -1;
+			*buf = nb;
+			*cap = nc;
+		}
+		(*buf)[n++] = (char)ch;
+		if (ch == '"') inquote = !inquote;
+		else if (ch == '\n' && inquote == 0) break;
+	}
+	(*buf)[n] = '\0';
+
+	return TRUE;
+
+}
+
+/*
 	FindColumn() - Locates a named column in the header, ignoring case.
 
 		INPUT
@@ -1383,11 +1428,12 @@ static void PrintScanHeader(FILE *fp) {
 static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, const char *dpath,
 					   int silent, int worker, int nworkers, struct Counts *cnt) {
 
-	char line[CSVMAXLINE];
+	char *line = NULL;
+	size_t cap = 0;
 	char *field[CSVMAXFIELDS];
 	struct Circuit c;
 	struct Result  r;
-	int nrow = 0, loadedmonth = -1, nf, retval;
+	int nrow = 0, loadedmonth = -1, nf, retval, rc;
 	int mine = -1;			// the block this worker holds
 	char dp[256];
 
@@ -1395,7 +1441,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 
 	snprintf(dp, sizeof(dp), "%s", dpath);
 
-	while (fgets(line, sizeof(line), fin) != NULL) {
+	while ((rc = ReadRecord(fin, &line, &cap)) == TRUE) {
 
 		// Test for a blank record without touching it: Trim() unquotes a FIELD
 		// in place, so running it on the whole record stripped the closing quote
@@ -1440,6 +1486,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 				retval = csvIonMapGet(c.month - 1, dp, silent, &foF2, &M3kF2);
 				if (retval != RTN_READIONPARAOK) {
 					printf("CircuitCSV: Error %d from IonMapGet for month %d\n", retval, c.month);
+					free(line);
 					return retval;
 				}
 				// Point at the cache rather than copying 10.7 MB per switch.
@@ -1449,6 +1496,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 				retval = csvReadFamDud(&path->noiseP, dp, c.month - 1);
 				if (retval != RTN_READFAMDUDOK) {
 					printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
+					free(line);
 					return retval;
 				}
 				loadedmonth = c.month - 1;
@@ -1479,13 +1527,22 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 		if (silent == FALSE && nworkers == 1 && (nrow % 1000) == 0) printf("\rCircuit %d", nrow);
 	}
 
+	free(line);
+	if (rc < 0 || ferror(fin)) {
+		printf("CircuitCSV: Error %d reading the input after row %d\n", RTN_ERRCSVFIELD, nrow);
+		return RTN_ERRCSVFIELD;
+	}
+
 	return RTN_CSVOK;
 
 }
 
 #ifndef _WIN32
 /*
-	CopyRecord() - Copies one line from in to out, of any length.
+	CopyRecord() - Copies one record from in to out, of any length.
+
+		A quoted site name may hold a newline, so a record ends only at a
+		newline outside quotes.
 
 		INPUT
 			FILE *in, FILE *out
@@ -1496,13 +1553,14 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 */
 static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 
-	int ch;
+	int ch, inquote = 0;
 	size_t j = 0;
 
 	ch = getc(in);
 	if (ch == EOF) return FALSE;
-	for (; ch != EOF && ch != '\n'; ch = getc(in)) {
+	for (; ch != EOF && (ch != '\n' || inquote); ch = getc(in)) {
 		putc(ch, out);
+		if (ch == '"') inquote = !inquote;
 		if (ch == ',') j = 0;
 		else if (j + 1 < n) status[j++] = (char)ch;
 	}
@@ -1576,13 +1634,15 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 		if (pid[k] == 0) {
 			// The worker. It must not share the parent's FILE position, so it
 			// opens the input afresh and skips the header.
-			char hdr[CSVMAXLINE];
+			char *hdr = NULL;
+			size_t hcap = 0;
 			struct Counts cnt = { 0, 0, 0 };
 			FILE *in = fopen(infile, "r"), *out = fopen(outpart[k], "w");
 			int rv;
 
 			BlockIdx = fopen(idxpart[k], "w");
-			if (in == NULL || out == NULL || BlockIdx == NULL || fgets(hdr, sizeof(hdr), in) == NULL) _exit(2);
+			if (in == NULL || out == NULL || BlockIdx == NULL || ReadRecord(in, &hdr, &hcap) != TRUE) _exit(2);
+			free(hdr);
 			if (scanfile != NULL) {
 				ScanOut = fopen(scanpart[k], "w");
 				if (ScanOut == NULL) _exit(2);
@@ -1700,7 +1760,8 @@ int main(int argc, char *argv[]) {
 	double gos = 0.0;
 	int silent = FALSE;
 
-	char line[CSVMAXLINE];
+	char *line = NULL;
+	size_t linecap = 0;
 	char *field[CSVMAXFIELDS];
 	int col[NINPUTCOLUMNS];
 	int nhdr, retval;
@@ -1804,7 +1865,7 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVOPENIN;
 	}
 
-	if (fgets(line, sizeof(line), fin) == NULL) {
+	if (ReadRecord(fin, &line, &linecap) != TRUE) {
 		printf("CircuitCSV: Error %d %s is empty\n", RTN_ERRCSVHEADER, infile);
 		fclose(fin);
 		return RTN_ERRCSVHEADER;
@@ -1833,6 +1894,8 @@ int main(int argc, char *argv[]) {
 			return RTN_ERRCSVHEADER;
 		}
 	}
+	free(line);			// the header fields are not needed past here
+	line = NULL;
 
 	/*
 		With -j the rows go to worker processes in blocks of CSVBLOCK, each
