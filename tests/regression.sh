@@ -52,14 +52,24 @@ for in_file in *.in; do
 		continue
 	fi
 	mkdir -p "$work/$bin_dir"
-	if ! $run "$exe" -s "$in_file" "$work/$case_name.out" >"$work/$case_name.log" 2>&1; then
-		echo "FAIL $case_name (exit $?)"
+	# Capture the status directly: after "if !" $? is the negated status, 0.
+	status=0
+	$run "$exe" -s "$in_file" "$work/$case_name.out" >"$work/$case_name.log" 2>&1 || status=$?
+	if [ "$status" -ne 0 ]; then
+		echo "FAIL $case_name (exit $status)"
 		sed 's/^/      /' "$work/$case_name.log"
 		fail=$((fail + 1))
 		continue
 	fi
-	grep -Ev "$volatile" "$ref"                 >"$work/$case_name.ref.f"
-	grep -Ev "$volatile" "$work/$case_name.out" >"$work/$case_name.new.f"
+	if [ ! -s "$work/$case_name.out" ]; then
+		echo "FAIL $case_name (exit 0 but the report is missing or empty)"
+		fail=$((fail + 1))
+		continue
+	fi
+	# grep exits 1 when it selects nothing, which set -e would turn into
+	# an abort of the whole suite; the diff below judges the content.
+	grep -Ev "$volatile" "$ref"                 >"$work/$case_name.ref.f" || true
+	grep -Ev "$volatile" "$work/$case_name.out" >"$work/$case_name.new.f" || true
 	if diff -u "$work/$case_name.ref.f" "$work/$case_name.new.f" >"$work/$case_name.diff"; then
 		echo "PASS $case_name"
 		pass=$((pass + 1))
