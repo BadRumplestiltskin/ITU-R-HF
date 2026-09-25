@@ -86,7 +86,8 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	double Etw;			// Median field strength
 	double SSN;			// Sun spot number
 
-	int n;	
+	int n;
+	int m;		// Mode index for the BARF_NOMODES listings, which must not disturb n
 	double mpltime;		// Midpath local time (h)
 	// End Temp
 
@@ -520,7 +521,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 					printf(  "MSFSS: Path ID: %s\n", path->name);
 					printf(  "MSFSS: %s to %s\n", path->txname, path->rxname);
 					printf(  "MSFSS: Hour %d Month %d \n", path->hour, path->month);
-					for(n=1; n<MAXF2MDS; n++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", n+1, path->Md_F2[n].fs);
+					for(m=0; m<MAXF2MDS; m++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", m+1, path->Md_F2[m].fs);
 					printf(  "MSFSS: **** %dF2 modes are screened by the E layer ********\n", n);
 				}
             }
@@ -533,7 +534,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 		printf(  "MSFSS: Path ID: %s\n", path->name);
 		printf(  "MSFSS: %s to %s\n", path->txname, path->rxname);
 		printf(  "MSFSS: Hour %d Month %d \n", path->hour, path->month);
-		for(n=1; n<MAXF2MDS; n++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", n+1, path->Md_F2[n].fs);
+		for(m=0; m<MAXF2MDS; m++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", m+1, path->Md_F2[m].fs);
 		printf(  "MSFSS: **** No E modes and all foF2 modes are screened by the E layer ********\n");
 	}
 
@@ -549,7 +550,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 			printf(  "MSFSS: Path ID: %s\n", path->name);
 			printf(  "MSFSS: %s to %s\n", path->txname, path->rxname);
 			printf(  "MSFSS: Hour %d Month %d \n", path->hour, path->month);
-			for(n=1; n<MAXF2MDS; n++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", n+1, path->Md_F2[n].fs);
+			for(m=0; m<MAXF2MDS; m++) printf("MSFSS: %dF2 mode E layer screening freq: %7.3f\n", m+1, path->Md_F2[m].fs);
 			printf(  "MSFSS: **** No E modes and all foF2 modes are screened by the E layer ********\n");
 		}
         // Testing
