@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------
  International Telecommunications Union - Radiocommunication Sector (ITU-R)
-     ITURHFProp         Ver Sep 24 2026
+     ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 10:33:06 2026
+     Analysis Prepared  Fri Sep 25 13:10:43 2026
 
 ---------------------------------------------------------------------------
 
@@ -201,24 +201,24 @@
 **********************************************************
 *          Penetration Point -  Nearest Receiver         *
 **********************************************************
-	Latitude	=	 1.035	( 59.298)	[59 17 51]
-	Longitude	=	 0.557	( 31.887)	[31 53 14]
-	distance =  14828.696
-	Magnetic dip (100 km)  =  73.035 (deg)
-	Gyrofrequency (100 km) =  1.376 (MHz)
-	Magnetic dip (300 km)  =  72.797 (deg)
-	Gyrofrequency (300 km) =  1.264 (MHz)
-	M(3000)F2 =  3.092
-	foE   =  3.016 (MHz)
-	foF2  =  4.704 (MHz)
-	solar zenith angle =  42.637 (deg)
+	Latitude	=	 0.966	( 55.326)	[55 19 34]
+	Longitude	=	 0.112	( 6.444)	[6 26 39]
+	distance =  16408.135
+	Magnetic dip (100 km)  =  69.672 (deg)
+	Gyrofrequency (100 km) =  1.300 (MHz)
+	Magnetic dip (300 km)  =  69.473 (deg)
+	Gyrofrequency (300 km) =  1.196 (MHz)
+	M(3000)F2 =  3.064
+	foE   =  3.103 (MHz)
+	foF2  =  4.885 (MHz)
+	solar zenith angle =  37.122 (deg)
 	solar declination  =  18.660 (deg)
-	solar hour angle   =  17.813 (deg)
+	solar hour angle   = -7.630 (deg)
 	equation of time   =  3.701 (minutes)
-	local sunrise      =  1:21 (UTC)  3:21 (Local)
-	local solar noon   =  9:48 (UTC)  11:48 (Local)
-	local sunset       =  18:15 (UTC)  20:15 (Local)
-	local time         =  11:00 (UTC)  13:00 (Local)
+	local sunrise      =  3:26 (UTC)  3:26 (Local)
+	local solar noon   =  11:30 (UTC)  11:30 (Local)
+	local sunset       =  19:34 (UTC)  19:34 (Local)
+	local time         =  11:00 (UTC)  11:00 (Local)
 **********************************************************
 *               End DumpPathData()                       *
 **********************************************************

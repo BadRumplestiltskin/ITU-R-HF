@@ -318,7 +318,7 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 
 			// Copy the two extreme penetration points to control points in the path structure
 			CopyCP(CP[0][path->hour], &path->CP[T1k]);
-			CopyCP(CP[2*nL][path->hour], &path->CP[R1k]);
+			CopyCP(CP[(2*nL)+1][path->hour], &path->CP[R1k]);
 				
 			// Path dmax
 			path->dmax = 4000.0;
