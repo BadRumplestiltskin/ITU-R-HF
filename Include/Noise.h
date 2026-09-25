@@ -53,6 +53,8 @@
 #define RTN_ERRALLOCATENOISE 207
 // ERROR: Can't open output file in MakeNoise().
 #define RTN_ERRMNCANTOPENFILE 208
+// ERROR: Coefficient File Truncated or Malformed in ReadFamDud().
+#define RTN_ERRREADCOEFFFILE 209
 
 // Return OKAY > 20 and <= 30.
 // AllocatePathMemory().
