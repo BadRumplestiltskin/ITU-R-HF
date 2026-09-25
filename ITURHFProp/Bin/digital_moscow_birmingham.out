@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 20:39:22 2026
+     Analysis Prepared  Fri Sep 25 21:18:01 2026
 
 ---------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@
 	Month         : May
 	Hour          : 2 (hour UTC)
 	SSN (R12)     : 10
-	Distance      : 2562.104539 (km)
+	Distance      : 2562.100918 (km)
 	dmax          : 4000.000000 (km)
 	Tx power      : 13.000000
 	Tx Location     Moscow

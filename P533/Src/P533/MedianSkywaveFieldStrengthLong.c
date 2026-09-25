@@ -434,15 +434,19 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 				 87.4376851991085e-9)*dM +
 			     29.1996868566837e-6)*dM;
 
-	// What is the index that will be local noon (UTC) at the T + d0/2 and R - d0/2?
-	// The lat and lng of the control points are all the same so the hour is arbitrarily so use 1
-	// Subtract one from the value noon[*] since it will be used as an index and not a countable hour 
-	noon[0] =  (int)(12.0 - CP[TdM2][1].L.lng/(15.0*D2R)) - 1; // The longitude is subtracted from 12 because W is negative
-	noon[1] =  (int)(12.0 - CP[RdM2][1].L.lng/(15.0*D2R)) - 1; //
+	// Equation (32) needs fBM "for a time corresponding to local noon" at the T + dM/2
+	// and R - dM/2 control points. fBM[][t] is for t:00 UTC, as everywhere else in the
+	// engine, and local noon is where equation (35) puts the hour angle at zero,
+	// UTC = 12 - longitude/15 (hours); the nearest whole hour is taken. The index was
+	// int(12 - lng/15) - 1, truncated and then an hour early, a relic of the
+	// 1-based hours of the Fortran it came from. The control points are at the same
+	// place for every hour, so hour 0 is used for their longitude.
+	noon[0] = (int)floor(12.0 - CP[TdM2][0].L.lng/(15.0*D2R) + 0.5);
+	noon[1] = (int)floor(12.0 - CP[RdM2][0].L.lng/(15.0*D2R) + 0.5);
 
 	// Roll over the time
-	noon[0] = (noon[0]+24) % 24;
-	noon[1] = (noon[1]+24) % 24;
+	noon[0] = ((noon[0] % 24) + 24) % 24;
+	noon[1] = ((noon[1] % 24) + 24) % 24;
 
 	// Initialize the variables to find the minimum MUF in 24 hours.
 	fBMmin[0] = 100.0;
@@ -686,16 +690,12 @@ void FindfL(struct PathData *path, struct ControlPt CP[MAXCP][24], int hops, dou
 	}
     // Testing
 
-	// Find fL[] for the "present hour" for further calculations 
-	// The "present hour" is calculated at path->hour + 1. 
-	// Elsewhere in the code it is assumed that UTC 1 uses the index path->hour = 0
-	// to represent time from 0:00 to 0:59 
-	// In this calculation UTC 1 implies 1:00 to 1:59 UTC so the "present hour" 
-	// is path->hour + 1. 
-	// This is a consequence of the routine being based on the Fortran program FTZ() 
-	// which of course uses indexing beginning at 1
-	// Find the "present hour" and roll it over if necessary
-	now = (path->hour + 1 + 24) % 24;
+	// "Once all fL values in a 24-hour period are calculated, the current hour fL
+	// value is selected" (P.533-14 section 5.3.2). fL[t] is for t:00 UTC, the same
+	// hour convention as the rest of the engine, so the current hour is path->hour.
+	// This took fL[path->hour + 1], carried over from the 1-based hours of the
+	// Fortran program FTZ() the routine was based on.
+	now = path->hour;
 
 	// Set the value of fL[]
 	path->fL = fL[now]; 
