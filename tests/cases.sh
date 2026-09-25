@@ -10,7 +10,7 @@
 #               $ITURHFPROP $CIRCUITCSV $ITURNOISE  the programs
 #               $P533DATA   P533/Data (ionospheric maps, P.1239, COEFF files)
 #               $P372DATA   P372/Data
-#               $ANT        "ITURHFProp/Data/Antenna Files" (Type 13; quote it: it has a space)
+#               $ANT        "ITURHFProp/Data/Antenna/T13 Files" (Type 13; quote it: it has a space)
 #               $CASE       the case directory, read-only
 #   exit      the expected exit status, a number
 #   expect    optional: lines that must each appear in stdout+stderr
@@ -33,7 +33,7 @@ CIRCUITCSV="env DYLD_LIBRARY_PATH=$libdir LD_LIBRARY_PATH=$libdir $root/ITURHFPr
 ITURNOISE="env DYLD_LIBRARY_PATH=$libdir LD_LIBRARY_PATH=$libdir $root/P372/Src/ITURNoise/ITURNoise"
 P533DATA=$root/P533/Data
 P372DATA=$root/P372/Data
-ANT="$root/ITURHFProp/Data/Antenna Files"
+ANT="$root/ITURHFProp/Data/Antenna/T13 Files"
 export ITURHFPROP CIRCUITCSV ITURNOISE P533DATA P372DATA ANT
 
 tmp=$(mktemp -d)
