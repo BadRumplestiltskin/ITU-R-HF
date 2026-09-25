@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 // Local includes
 #include "Common.h"
@@ -10,6 +11,7 @@
 
 // Local prototypes
 void substrbtwnchar(char instr[256], char searchchar, char * outstr);
+static int ReadList(char *line, double *vals, int max, int integer);
 unsigned long OutputOption(char optstr[256]);
 void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path);
 // End local prototypes
@@ -24,8 +26,9 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 	#pragma GCC diagnostic ignored "-Wunused-result"
 	#endif
 
-	int i;
+	int i, n;
 	int retval;
+	double vals[NMBOFFREQS];	// the longest of the three lists
 
 	char line[256];
 	char instr[256];
@@ -120,80 +123,22 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				sscanf(line, "%*s %d", &path->year);
 			}
             if (strncmp("Path.month", line, 10) == 0) {
-				sscanf(line, "%*s %[^/\n]", instr);
-				// If this contains no commas, then it is a single month.
-				if (strchr(instr, ',') == NULL) {
-					sscanf(line, "%*s %d", &ITURHFP->months[0]);
-					ITURHFP->months[0] -= 1;
-				}
-				else {
-					char instr2[256];
-					char *buf[2];
-					int count = 0;
-					buf[0] = instr;
-					buf[1] = instr2;
-					i = 0;
-					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFMONTHS)) {
-						retval = sscanf(buf[count], "%d, %[0-9 ,]", &ITURHFP->months[i], buf[count^1]);
-						ITURHFP->months[i++] -= 1;
-						count ^= 1;
-					}
-					if ((i == NMBOFMONTHS) && (retval == 2)) {
-						fprintf(stderr, "ReadInputConfiguration: Path.month lists more than %d values; the rest are ignored\n", NMBOFMONTHS);
-					}
-                }
+				n = ReadList(line, vals, NMBOFMONTHS, TRUE);
+				if (n < 0) { fclose(fp); return RTN_ERRMONTH; }
+				for (i = 0; i < n; i++) ITURHFP->months[i] = (int)vals[i] - 1;
             }
             if (strncmp("Path.hour", line, 9) == 0) {
-				sscanf(line, "%*s %[^/\n]", instr);
-				// If this contains no commas, then it is a single month.
-				if (strchr(instr, ',') == NULL) {
-					sscanf(line, "%*s %d", &ITURHFP->hrs[0]);
-					ITURHFP->hrs[0] -= 1;
-				}
-				else {
-					char instr2[256];
-					char *buf[2];
-					int count = 0;
-					buf[0] = instr;
-					buf[1] = instr2;
-					i = 0;
-					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFHOURS)) {
-						retval = sscanf(buf[count], "%d, %[0-9 ,]", &ITURHFP->hrs[i], buf[count^1]);
-						ITURHFP->hrs[i++] -= 1;
-						count ^= 1; /* swap use of the two buffers */
-					}
-					if ((i == NMBOFHOURS) && (retval == 2)) {
-						fprintf(stderr, "ReadInputConfiguration: Path.hour lists more than %d values; the rest are ignored\n", NMBOFHOURS);
-					}
-                }
+				n = ReadList(line, vals, NMBOFHOURS, TRUE);
+				if (n < 0) { fclose(fp); return RTN_ERRHOUR; }
+				for (i = 0; i < n; i++) ITURHFP->hrs[i] = (int)vals[i] - 1;
             }
             if (strncmp("Path.SSN", line, 8) == 0) {
 				sscanf(line, "%*s %d", &path->SSN);
 			}
             if (strncmp("Path.frequency", line, 14) == 0) {
-				sscanf(line, "%*s %[^/\n]", instr);
-				// If this contains no commas, then it is a single month.
-				if (strchr(instr, ',') == NULL) {
-					sscanf(line, "%*s %lf", &ITURHFP->frqs[0]);
-				}
-				else {
-					char instr2[256];
-					char *buf[2];
-					int count = 0;
-					buf[0] = instr;
-					buf[1] = instr2;
-					i = 0;
-					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFFREQS)) {
-						retval = sscanf(buf[count], "%lf, %[0-9 ,.]", &ITURHFP->frqs[i++], buf[count^1]);
-						count ^= 1;
-					}
-					if ((i == NMBOFFREQS) && (retval == 2)) {
-						fprintf(stderr, "ReadInputConfiguration: Path.frequency lists more than %d values; the rest are ignored\n", NMBOFFREQS);
-					}
-                }
+				n = ReadList(line, vals, NMBOFFREQS, FALSE);
+				if (n < 0) { fclose(fp); return RTN_ERRFREQUENCY; }
+				for (i = 0; i < n; i++) ITURHFP->frqs[i] = vals[i];
             }
             if (strncmp("Path.txpower", line, 12) == 0) {
 				sscanf(line, "%*s %lf", &path->txpower);
@@ -779,3 +724,62 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	#endif
 }
 
+
+/*
+	ReadList() - Parses the comma-separated list after a keyword, e.g.
+		"Path.hour 1, 3, 5 // comment", into vals.
+
+		Values may be separated by commas or spaces and the list ends at the
+		line end or a "//" comment. Values past max are ignored with a warning.
+		Anything that is not a number (or, when integer is TRUE, not a whole
+		number) is an error naming the token: the old sscanf loop stopped at it
+		and silently dropped it and everything after it.
+
+		INPUT
+			char *line - the whole input line, keyword first
+			double *vals - receives up to max values
+			int max
+			int integer - TRUE for months and hours
+
+		OUTPUT
+			returns the number of values (at least 1), or -1 on an error
+
+*/
+static int ReadList(char *line, double *vals, int max, int integer) {
+
+	char key[64];
+	char *p, *end;
+	double v;
+	int n = 0;
+
+	sscanf(line, "%63s", key);
+	p = line + strcspn(line, " \t");	// skip the keyword
+
+	for (;;) {
+		p += strspn(p, " \t,");
+		if ((*p == '\0') || (*p == '\n') || (*p == '\r') || (*p == '/')) break;
+		v = strtod(p, &end);
+		if ((end == p) || !isfinite(v) || (integer && (v != floor(v))) ||
+			((*end != '\0') && (strchr(" \t,\r\n/", *end) == NULL))) {
+			printf("ReadInputConfiguration: ERROR %s has an invalid value \"%.*s\"\n",
+				key, (int)strcspn(p, " \t,\r\n"), p);
+			return -1;
+		}
+		if (n < max) {
+			vals[n] = v;
+		}
+		else if (n == max) {
+			fprintf(stderr, "ReadInputConfiguration: %s lists more than %d values; the rest are ignored\n", key, max);
+		}
+		n++;
+		p = end;
+	}
+
+	if (n == 0) {
+		printf("ReadInputConfiguration: ERROR %s has no values\n", key);
+		return -1;
+	}
+
+	return (n < max) ? n : max;
+
+}
