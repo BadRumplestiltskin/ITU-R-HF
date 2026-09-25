@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -730,7 +731,7 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 		Values may be separated by commas or spaces and the list ends at the
 		line end or a "//" comment. Values past max are ignored with a warning.
 		Anything that is not a number (or, when integer is TRUE, not a whole
-		number) is an error naming the token: the old sscanf loop stopped at it
+		number in int range) is an error naming the token: the old sscanf loop stopped at it
 		and silently dropped it and everything after it.
 
 		INPUT
@@ -757,7 +758,7 @@ static int ReadList(char *line, double *vals, int max, int integer) {
 		p += strspn(p, " \t,");
 		if ((*p == '\0') || (*p == '\n') || (*p == '\r') || (*p == '/')) break;
 		v = strtod(p, &end);
-		if ((end == p) || !isfinite(v) || (integer && (v != floor(v))) ||
+		if ((end == p) || !isfinite(v) || (integer && ((v != floor(v)) || (v < INT_MIN) || (v > INT_MAX))) ||
 			((*end != '\0') && (strchr(" \t,\r\n/", *end) == NULL))) {
 			printf("ReadInputConfiguration: ERROR %s has an invalid value \"%.*s\"\n",
 				key, (int)strcspn(p, " \t,\r\n"), p);
