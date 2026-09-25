@@ -639,8 +639,9 @@ void ManMadeNoise(
         c = -noiseP->ManMadeNoise + 204.0;
         d = 0.0;
         // Use the CITY category in Table 2 P.372-10 for the deciles
-        noiseP->DlM = 11.0;
-        noiseP->DuM = 6.7;
+        // (upper 11.0 dB, lower 6.7 dB; these were assigned the other way round)
+        noiseP->DuM = 11.0;
+        noiseP->DlM = 6.7;
     }
 
     // Calculate the man made noise, FaM
@@ -692,7 +693,9 @@ void GalacticNoise(
 
 	The parsed arrays are small, so all twelve months cost 306 KB. They are
 	cached on first use and copied out thereafter, which keeps ReadFamDud()'s
-	contract of filling the caller's NoiseParams unchanged.
+	contract of filling the caller's NoiseParams unchanged. Each entry records
+	the file it came from, so a call naming a different DataFilePath re-reads
+	rather than returning another directory's coefficients.
 
 	Not thread safe, in keeping with the rest of the engine.
 */
@@ -701,6 +704,7 @@ static struct {
 	double fakabp[6][2];
 	double dud[5][12][5];
 	double fam[12][14];
+	char   path[270];	// File the month was parsed from (InFilePath)
 	int    loaded;
 } FamDudCache[12];
 
@@ -743,12 +747,12 @@ static void FamDudCopyOut(struct NoiseParams *noiseP, int month) {
 			struct NoiseParams *noiseP, int month
 
 		OUTPUT
-			FamDudCache[month]
+			FamDudCache[month], tagged with the file path
 
 		SUBROUTINES
 			None
 */
-static void FamDudCopyIn(struct NoiseParams *noiseP, int month) {
+static void FamDudCopyIn(struct NoiseParams *noiseP, int month, const char *path) {
 
     int i, j, k;
 
@@ -766,6 +770,9 @@ static void FamDudCopyIn(struct NoiseParams *noiseP, int month) {
     for (j = 0; j < 12; j++)
         for (k = 0; k < 14; k++) FamDudCache[month].fam[j][k] = noiseP->fam[j][k];
 
+    // InFilePath and the cache field are the same size, and the path was
+    // length-checked when it was built.
+    strcpy(FamDudCache[month].path, path);
     FamDudCache[month].loaded = TRUE;
 
 }
@@ -808,7 +815,11 @@ int ReadFamDud(
     A is the array that is read into from the file and aids in reshaping 
     the target arrays in the Coeff structure.
     */
-    double* A;
+    double* A = NULL;
+
+    // Returned through the fail label: a read or parse failure, unless an
+    // allocation failure sets its own code first.
+    int retval = RTN_ERRREADCOEFFFILE;
 
     char line[256];
 
@@ -816,13 +827,6 @@ int ReadFamDud(
     char InFilePath[270];
 
     FILE *fp;
-
-    // Already parsed this month: copy it out and skip the file entirely.
-    if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE) {
-        FamDudCopyOut(noiseP, month);
-
-    return RTN_READFAMDUDOK;
-    }
 
     // Bounded join. P372 is the lower layer and cannot call P533's
     // BuildDataPath(), so the same rule is applied inline here: insert the
@@ -839,6 +843,13 @@ int ReadFamDud(
         }
     }
 
+    // Already parsed this month from this file: copy it out and skip the file.
+    if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE
+        && strcmp(FamDudCache[month].path, InFilePath) == 0) {
+        FamDudCopyOut(noiseP, month);
+        return RTN_READFAMDUDOK;
+    }
+
     fp = fopen(InFilePath, "r");
     if (fp == NULL) {
         printf("ReadFamDud: ERROR Can't find input file - %s\n", InFilePath);
@@ -847,68 +858,68 @@ int ReadFamDud(
     }
 
     // Read the first header line.
-    fgets(line, 256, fp);
+    if (fgets(line, 256, fp) == NULL) goto fail;
 
     //*************************************************************************
     // Skip if2(10) & xf2(13,76,2)
 
     for (n = 0; n < 400; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip ifm3(10) & xfm3(9,49,2)
 
     for (n = 0; n < 181; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip ie(10) & xe(9,22,2)
     for (n = 0; n < 84; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip iesu(10) & xesu(5,55,2)
 
     for (n = 0; n < 114; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip ies(10) & xes(7,61,2)
 
     for (n = 0; n < 175; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip iels(10) & xels(5,55,2)
 
     for (n = 0; n < 114; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip ihpo1(10) & xhpo1(13,29,2)
 
     for (n = 0; n < 155; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // Skip ihpo2(10) & xhpo2(9,55,2)
 
     for (n = 0; n < 202; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
     // ihp(10) & xhp(9,37,2)
 
     for (n = 0; n < 138; n++) {
-        fgets(line, 256, fp);
+        if (fgets(line, 256, fp) == NULL) goto fail;
     }
 
     //*************************************************************************
@@ -916,14 +927,18 @@ int ReadFamDud(
 
     // Allocate the array A that will allow for reshaping
     A = (double*)malloc(29 * 16 * 6 * sizeof(double));
+    if (A == NULL) {
+        retval = RTN_ERRALLOCATEFAKP;
+        goto fail;
+    }
 
     // Read the line "fakp(29,16,6)"
-    fgets(line, 256, fp);
+    if (fgets(line, 256, fp) == NULL) goto fail;
 
     // Read 556 lines into the array A
     for (n = 0; n < 556; n++) {
-        fgets(line, 256, fp);
-        sscanf(
+        if (fgets(line, 256, fp) == NULL) goto fail;
+        if (sscanf(
             line,
             " %lf %lf %lf %lf %lf\n",
             A + 5 * n,
@@ -931,18 +946,18 @@ int ReadFamDud(
             A + 5 * n + 2,
             A + 5 * n + 3,
             A + 5 * n + 4
-        );
+        ) != 5) goto fail;
     }
     // Read the last partial line
-    fgets(line, 256, fp);
-    sscanf(
+    if (fgets(line, 256, fp) == NULL) goto fail;
+    if (sscanf(
         line,
         " %lf %lf %lf %lf\n",
         A + 5 * n,
         A + 5 * n + 1,
         A + 5 * n + 2,
         A + 5 * n + 3
-    );
+    ) != 4) goto fail;
 
     // Reshape A into the Coeff structure
     for (i = 0; i < 6; i++) {
@@ -955,19 +970,24 @@ int ReadFamDud(
 
     // Free A
     free(A);
+    A = NULL;
     //*************************************************************************
     // fakabp(2,6)
 
     // Allocate the array A that will allow for reshaping
     A = (double*)malloc(2 * 6 * sizeof(double));
+    if (A == NULL) {
+        retval = RTN_ERRALLOCATEFAKABP;
+        goto fail;
+    }
 
     // Read the line "fakabp(2,6)"
-    fgets(line, 256, fp);
+    if (fgets(line, 256, fp) == NULL) goto fail;
 
     // Read 2 lines into the array A
     for (n = 0; n < 2; n++) {
-        fgets(line, 256, fp);
-        sscanf(
+        if (fgets(line, 256, fp) == NULL) goto fail;
+        if (sscanf(
             line,
             " %lf %lf %lf %lf %lf\n",
             A + 5 * n,
@@ -975,16 +995,16 @@ int ReadFamDud(
             A + 5 * n + 2,
             A + 5 * n + 3,
             A + 5 * n + 4
-        );
+        ) != 5) goto fail;
     }
     // Read the last partial line
-    fgets(line, 256, fp);
-    sscanf(
+    if (fgets(line, 256, fp) == NULL) goto fail;
+    if (sscanf(
         line,
         " %lf %lf\n",
         A + 5 * n,
         A + 5 * n + 1
-    );
+    ) != 2) goto fail;
 
     // Reshape A into the Coeff structure
     for (j = 0; j < 6; j++) {
@@ -995,19 +1015,24 @@ int ReadFamDud(
 
     // Free A
     free(A);
+    A = NULL;
     //*************************************************************************
     // dud(5,12,5)
 
     // Allocate the array A that will allow for reshaping.
     A = (double*)malloc(5 * 12 * 5 * sizeof(double));
+    if (A == NULL) {
+        retval = RTN_ERRALLOCATEDUD;
+        goto fail;
+    }
 
     // Read the line "dud(5,12,5)".
-    fgets(line, 256, fp);
+    if (fgets(line, 256, fp) == NULL) goto fail;
 
     // Read 60 lines into the array A.
     for (n = 0; n < 60; n++) {
-        fgets(line, 256, fp);
-        sscanf(
+        if (fgets(line, 256, fp) == NULL) goto fail;
+        if (sscanf(
             line,
             " %lf %lf %lf %lf %lf\n",
             A + 5 * n,
@@ -1015,7 +1040,7 @@ int ReadFamDud(
             A + 5 * n + 2,
             A + 5 * n + 3,
             A + 5 * n + 4
-        );
+        ) != 5) goto fail;
     }
 
     // Reshape A into the Coeff structure.
@@ -1029,20 +1054,25 @@ int ReadFamDud(
 
     // Free A
     free(A);
+    A = NULL;
 
     //*************************************************************************
     // fam(14,12)
 
     // Allocate the array A that will allow for reshaping.
     A = (double*)malloc(12 * 14 * sizeof(double));
+    if (A == NULL) {
+        retval = RTN_ERRALLOCATEFAM;
+        goto fail;
+    }
 
     // Read the line "fam(14,12)".
-    fgets(line, 256, fp);
+    if (fgets(line, 256, fp) == NULL) goto fail;
 
     // Read 33 lines into the array A.
     for (n = 0; n < 33; n++) {
-        fgets(line, 256, fp);
-        sscanf(
+        if (fgets(line, 256, fp) == NULL) goto fail;
+        if (sscanf(
             line,
             " %lf %lf %lf %lf %lf\n",
             A + 5 * n,
@@ -1050,17 +1080,17 @@ int ReadFamDud(
             A + 5 * n + 2,
             A + 5 * n + 3,
             A + 5 * n + 4
-        );
+        ) != 5) goto fail;
     }
     // Read the last partial line.
-    fgets(line, 256, fp);
-    sscanf(
+    if (fgets(line, 256, fp) == NULL) goto fail;
+    if (sscanf(
         line,
         " %lf %lf %lf\n",
         A + 5 * n,
         A + 5 * n + 1,
         A + 5 * n + 2
-    );
+    ) != 3) goto fail;
 
     // Reshape A into the Coeff structure.
     for (j = 0; j < 12; j++) {
@@ -1071,15 +1101,26 @@ int ReadFamDud(
 
     // Free A
     free(A);
+    A = NULL;
 
     // Clean up;
     fclose(fp);
 
     // Seed the cache from the freshly parsed month. This call used to sit on
     // the hit path above, where it could never run, so the cache never loaded.
-    if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month);
+    if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month, InFilePath);
 
     return RTN_READFAMDUDOK;
+
+    // A short or malformed file, or a failed allocation. noiseP may hold a
+    // partial month, so it is reported and deliberately not cached.
+fail:
+    free(A);
+    fclose(fp);
+    if (retval == RTN_ERRREADCOEFFFILE) {
+        printf("ReadFamDud: ERROR Truncated or malformed file - %s\n", InFilePath);
+    }
+    return retval;
 
 	#ifdef __GNUC__
 	#pragma GCC diagnostic pop

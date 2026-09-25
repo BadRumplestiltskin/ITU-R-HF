@@ -446,7 +446,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 
 	if (dllReadFamDud == NULL || dllP372Version == NULL || dllP372CompileTime == NULL ||
 		dllAtmosphericNoise == NULL || dllAtmosphericNoise_LT == NULL ||
-		dllFamFreqVariation == NULL) {
+		dllFamFreqVariation == NULL || dllAllocateNoiseMemory == NULL ||
+		dllFreeNoiseMemory == NULL || dllInitializeNoise == NULL) {
 		printf("ITURNoise: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
 		P372_LIB_CLOSE(hLib);
 		return RTN_ERRP372DLL;
@@ -460,6 +461,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	int dummy = 0;
 	int s, tb; // s = season and tb = timeblock counter for reading V_d and sigma_V_d data 
 	int retval;
+	int noiseAllocated = FALSE;	// dllFreeNoiseMemory() is owed at done:
 	int fn = 41; // Number of elements in the f_log array below
 
 	const char* P372ver;
@@ -511,9 +513,11 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 
 	// Create the csv directories. MakeDirPath() creates the missing parents too,
 	// which is what the old "mkdir" shell-out relied on the Windows shell to do.
-	if (MakeDirPath(acsvfilepath) == FALSE) return RTN_ERRCANTOPENFILE;
-	if (MakeDirPath(bcsvfilepath) == FALSE) return RTN_ERRCANTOPENFILE;
-	if (MakeDirPath(ccsvfilepath) == FALSE) return RTN_ERRCANTOPENFILE;
+	if ((MakeDirPath(acsvfilepath) == FALSE) || (MakeDirPath(bcsvfilepath) == FALSE)
+		|| (MakeDirPath(ccsvfilepath) == FALSE)) {
+		retval = RTN_ERRCANTOPENFILE;
+		goto done;
+	}
 
 	// End opening output file directories
 
@@ -527,15 +531,16 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	fp_V_d = fopen(V_dfilepath, "r");
 	if (fp_V_d == NULL) {
 		printf("ITURNoise: Error: Can't open input file %s (%s)\n", V_dfilepath, strerror(errno));
-		return RTN_ERRV_DCANTOPENFILE;
+		retval = RTN_ERRV_DCANTOPENFILE;
+		goto done;
 	}
 
 	snprintf(sigma_V_dfilepath, sizeof(sigma_V_dfilepath), "%s%s", datafilepath, "sigma_V_d.txt");
 	fp_sigma_V_d = fopen(sigma_V_dfilepath, "r");
 	if (fp_sigma_V_d == NULL) {
 		printf("ITURNoise: Error: Can't open input file %s (%s)\n", sigma_V_dfilepath, strerror(errno));
-		fclose(fp_V_d);
-		return RTN_ERRSIGMA_V_DCANTOPENFILE;
+		retval = RTN_ERRSIGMA_V_DCANTOPENFILE;
+		goto done;
 	}
 
 	tb = 0;
@@ -548,17 +553,15 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			&dummy, &dummy, strl[4], strl[3], strl[2], strl[1], strl[0]) != 7)
 		{
 			printf("ITURNoise: Error: Malformed record in %s: %s\n", V_dfilepath, line);
-			fclose(fp_V_d);
-			fclose(fp_sigma_V_d);
-			return RTN_ERRV_DCANTOPENFILE;
+			retval = RTN_ERRV_DCANTOPENFILE;
+			goto done;
 		}
 
 		// c[] holds 4 seasons of 6 time blocks: exactly 24 records.
 		if (s == 4) {
 			printf("ITURNoise: Error: %s has more than 24 records\n", V_dfilepath);
-			fclose(fp_V_d);
-			fclose(fp_sigma_V_d);
-			return RTN_ERRV_DCANTOPENFILE;
+			retval = RTN_ERRV_DCANTOPENFILE;
+			goto done;
 		}
 
 		for (i = 0; i < 5; i++) {
@@ -573,9 +576,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	}
 	if ((s != 4) || (tb != 0)) {
 		printf("ITURNoise: Error: %s has fewer than 24 records\n", V_dfilepath);
-		fclose(fp_V_d);
-		fclose(fp_sigma_V_d);
-		return RTN_ERRV_DCANTOPENFILE;
+		retval = RTN_ERRV_DCANTOPENFILE;
+		goto done;
 	}
 
 	tb = 0;
@@ -586,17 +588,15 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			&dummy, &dummy, strl[4], strl[3], strl[2], strl[1], strl[0]) != 7)
 		{
 			printf("ITURNoise: Error: Malformed record in %s: %s\n", sigma_V_dfilepath, line);
-			fclose(fp_V_d);
-			fclose(fp_sigma_V_d);
-			return RTN_ERRSIGMA_V_DCANTOPENFILE;
+			retval = RTN_ERRSIGMA_V_DCANTOPENFILE;
+			goto done;
 		}
 
 		// d[] holds 4 seasons of 6 time blocks: exactly 24 records.
 		if (s == 4) {
 			printf("ITURNoise: Error: %s has more than 24 records\n", sigma_V_dfilepath);
-			fclose(fp_V_d);
-			fclose(fp_sigma_V_d);
-			return RTN_ERRSIGMA_V_DCANTOPENFILE;
+			retval = RTN_ERRSIGMA_V_DCANTOPENFILE;
+			goto done;
 		}
 
 		for (i = 0; i < 5; i++) {
@@ -611,9 +611,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	}
 	if ((s != 4) || (tb != 0)) {
 		printf("ITURNoise: Error: %s has fewer than 24 records\n", sigma_V_dfilepath);
-		fclose(fp_V_d);
-		fclose(fp_sigma_V_d);
-		return RTN_ERRSIGMA_V_DCANTOPENFILE;
+		retval = RTN_ERRSIGMA_V_DCANTOPENFILE;
+		goto done;
 	}
 
 	// End open and reading input files
@@ -622,8 +621,10 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	// Allocate the memory in the noise structure
 	retval = dllAllocateNoiseMemory(&noiseP);
 	if (retval != RTN_ALLOCATEP372OK) {
-		return RTN_ERRALLOCATENOISE;
+		retval = RTN_ERRALLOCATENOISE;
+		goto done;
 	}
+	noiseAllocated = TRUE;
 
 	// Initialize Noise from the P372.dll
 	dllInitializeNoise(&noiseP);
@@ -670,9 +671,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 		// Read in the atmospheric coefficients for the particular month.
 		// The subroutine dllReadFamDud() is from P372.dll
 		retval = dllReadFamDud(&noiseP, datafilepath, m);
-		if (retval != RTN_READFAMDUDOK) {
-			return retval;
-		}
+		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h+=4) { // hour local time
 	
@@ -680,7 +679,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			fp = fopen(outputfilename, "w");
 			if (fp == NULL) {
 				printf("ITURNoise: Error: Can't open output file %s (%s)\n", outputfilename, strerror(errno));
-				return RTN_ERRCANTOPENFILE;
+				retval = RTN_ERRCANTOPENFILE;
+				goto done;
 			}
 
 			// The file is open proceed
@@ -732,9 +732,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 		// Read in the atmospheric coefficients for the particular month.
 		// The subroutine dllReadFamDud() is from P372.dll
 		retval = dllReadFamDud(&noiseP, datafilepath, m);
-		if (retval != RTN_READFAMDUDOK) {
-			return retval;
-		}
+		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h += 4) { // hour local time
 
@@ -742,7 +740,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			fp = fopen(outputfilename, "w");
 			if (fp == NULL) {
 				printf("ITURNoise: Error: Can't open output file %s (%s)\n", outputfilename, strerror(errno));
-				return RTN_ERRCANTOPENFILE;
+				retval = RTN_ERRCANTOPENFILE;
+				goto done;
 			}
 
 			// The file is open proceed
@@ -784,10 +783,12 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 					m+1,h,f_log[f],rlat*R2D,rlng*R2D,Fam[0],Fam[1],Fam[2],Fam[3],Fam[4],Fam[5],Fam[6],Fam[7],Fam[8],Fam[9],Fam[10]);
 			
 			} // End f loop
+
+			// One file per hour, so each is closed here. This close used to sit
+			// after the hour loop, leaking five of every six files.
+			fclose(fp);
+
 		} // End h loop
-
-		fclose(fp);
-
 	} // End m loop
 
 	// User feedback
@@ -807,9 +808,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 		// Read in the atmospheric coefficients for the particular month.
 		// The subroutine dllReadFamDud() is from P372.dll
 		retval = dllReadFamDud(&noiseP, datafilepath, m);
-		if (retval != RTN_READFAMDUDOK) {
-			return retval;
-		}
+		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h += 4) { // hour local time
 
@@ -820,7 +819,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 			fp = fopen(outputfilename, "w");
 			if (fp == NULL) {
 				printf("ITURNoise: Error: Can't open output file %s (%s)\n", outputfilename, strerror(errno));
-				return RTN_ERRCANTOPENFILE;
+				retval = RTN_ERRCANTOPENFILE;
+				goto done;
 			}
 
 			// The file is open proceed
@@ -852,16 +852,23 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	
 	/****************** End Generate c) Figure Data ***************/
 
-	fclose(fp_V_d);
-	fclose(fp_sigma_V_d);
-
 	// User feedback
 	printf("ITURNoise: Data for c) Figures Complete\n");
 	printf("\n*** End ITURNoise Data Generation ***\n");
 
+	retval = RTN_ATMOSFILESOK;
+
+	// Every exit after the library is loaded comes through here, so the input
+	// files, the noise arrays and the library are released on error too.
+	// Figure files are closed where they are written: no path reaches here
+	// with one open.
+done:
+	if (fp_V_d != NULL) fclose(fp_V_d);
+	if (fp_sigma_V_d != NULL) fclose(fp_sigma_V_d);
+	if (noiseAllocated == TRUE) dllFreeNoiseMemory(&noiseP);
 	P372_LIB_CLOSE(hLib);
 
-	return RTN_ATMOSFILESOK;
+	return retval;
 	   
 	 // End P372.DLL Load ************************************************
 }

@@ -85,6 +85,7 @@
 
 // Return ERROR from ReadAntennaPatterns() ReadType13()
 #define	RTN_ERRCANTOPENANTFILE	        138 // ERROR: Can Not Open Recieve Antenna File
+#define	RTN_ERRREADANTFILE		        142 // ERROR: Antenna File Truncated or Malformed
 
 // Return ERROR from ReadP1239()
 #define RTN_ERRCANTOPENP1239FILE		139 // ERROR: Can Not Open foF2 Variability file "P1239-2 Decile Factors.txt"
