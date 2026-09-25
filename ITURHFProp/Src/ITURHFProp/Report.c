@@ -741,14 +741,14 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 			if(path.DMidx < MAXEMDS) { // E mode dominant
 				sprintf(outstr,  "   %1dE ", path.DMidx+1);
 			}
-			else if((path.DMidx >= MAXEMDS) && (path.DMidx <= MAXMDS)) { // F2 mode dominant
+			else if((path.DMidx >= MAXEMDS) && (path.DMidx < MAXMDS)) { // F2 mode dominant
 				sprintf(outstr, "  %1dF2 ", path.DMidx-MAXEMDS+1);
 			}
 			else { // There is no dominant mode
 				sprintf(outstr, " NONE ");
 			}
 
-            if(path.DMidx <= MAXMDS) {
+            if((path.DMidx < MAXMDS) && (path.DMptr != NULL)) {
 				fprintf(fp,",");
 				fprintf(fp, STRFIELD, outstr);
 				fprintf(fp,",");
@@ -797,14 +797,14 @@ void function_RPT_DOMMODE(struct PathData path, int option, int *col) {
 			if(path.DMidx < MAXEMDS) { // E mode dominant
 				sprintf(outstr,  "%dE", path.DMidx+1);
 			}
-			else if((path.DMidx >= MAXEMDS) && (path.DMidx <= MAXMDS)) { // F2 mode dominant
+			else if((path.DMidx >= MAXEMDS) && (path.DMidx < MAXMDS)) { // F2 mode dominant
 				sprintf(outstr, "%dF2", path.DMidx-MAXEMDS+1);
 			}
 			else { // There is no dominant mode
 				sprintf(outstr, "NONE");
 			}
 
-            if(path.DMidx <= MAXMDS) {
+            if((path.DMidx < MAXMDS) && (path.DMptr != NULL)) {
 				fprintf(fp,",");
 				fprintf(fp, RFC4180_STRFIELD, outstr);
 				fprintf(fp,",");

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <limits.h>
 
 // Local includes
 #include "Common.h"
@@ -45,6 +47,21 @@ int ValidateITURHFP(struct ITURHFProp ITURHFP) {
 	if(ITURHFP.L_UL.lat != ITURHFP.L_UR.lat)													return RTN_ERRULAT;
 	if(ITURHFP.L_LL.lng != ITURHFP.L_UL.lng)													return RTN_ERRLLNG;
 	if(ITURHFP.L_LR.lng != ITURHFP.L_UR.lng)													return RTN_ERRRLNG;
+
+	// Area increments. ITURHFProp() divides the span by each increment and
+	// casts the point count to int, so it must be finite and positive, and
+	// the count must fit in an int. A single-point run divides a zero span,
+	// so zero is rejected there too (0/0 is NaN).
+	if(!(isfinite(ITURHFP.latinc) && (ITURHFP.latinc > 0.0)) ||
+	   !(fabs(ITURHFP.L_UL.lat - ITURHFP.L_LR.lat)/ITURHFP.latinc < (double)INT_MAX - 1.0)) {
+		printf("ValidateITURHFP: Error latinc is %g (deg); it must be greater than 0 and give fewer than %d latitude points\n", ITURHFP.latinc*R2D, INT_MAX);
+		return RTN_ERRLATINC;
+	}
+	if(!(isfinite(ITURHFP.lnginc) && (ITURHFP.lnginc > 0.0)) ||
+	   !(fabs(ITURHFP.L_LR.lng - ITURHFP.L_LL.lng)/ITURHFP.lnginc < (double)INT_MAX - 1.0)) {
+		printf("ValidateITURHFP: Error lnginc is %g (deg); it must be greater than 0 and give fewer than %d longitude points\n", ITURHFP.lnginc*R2D, INT_MAX);
+		return RTN_ERRLNGINC;
+	}
 
 	if ((ITURHFP.AntennaOrientation != MANUAL) && (ITURHFP.AntennaOrientation != TX2RX))		return RTN_ERRANTENNAORN;
 
