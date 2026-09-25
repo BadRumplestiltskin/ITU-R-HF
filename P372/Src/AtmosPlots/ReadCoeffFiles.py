@@ -9,11 +9,12 @@ deduplicate = lambda s,c: c.join([substring for substring in s.strip().split(c) 
 import sys
 # Usage: ReadCoeffFiles.py [coeff_dir]; default: this checkout's P372/Data.
 COEFFdir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'Data')
-COEFFfn = r'COEFF??W.TXT'
-
-COEFFfpath = os.path.join(COEFFdir, COEFFfn)
-
-allCOEFFfiles = gb.glob(COEFFfpath)
+# Match COEFF01W.txt .. COEFF12W.txt in any case: the shipped files end in
+# .txt, and a literal 'COEFF??W.TXT' glob finds none on a case-sensitive file
+# system. Sorted so the months come out in order.
+import re
+allCOEFFfiles = sorted(os.path.join(COEFFdir, fn) for fn in os.listdir(COEFFdir)
+                       if re.fullmatch(r'COEFF\d\dW\.txt', fn, re.IGNORECASE))
 
 outfp = open('atmosdataedges.txt', 'w')
 
@@ -25,7 +26,7 @@ for COEFFfile in allCOEFFfiles:
     COEFFfp = open(COEFFfile, 'r')
     lines = COEFFfp.readlines()
     
-    imonth = COEFFfile.split('\\')[-1].split('.')[0][5:7]
+    imonth = os.path.basename(COEFFfile)[5:7]	# not split('\\'), which fails on POSIX paths
     print(imonth, end=',', file=outfp)
     
     for iline, line in enumerate(lines):
