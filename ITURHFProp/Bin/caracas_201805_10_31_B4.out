@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 21:18:00 2026
+     Analysis Prepared  Fri Sep 25 21:49:17 2026
 
 ---------------------------------------------------------------------------
 
@@ -65,9 +65,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -20.896
-	Field Strength (7000 km < D < 9000 km) = -24.635
-	Field Strength           (D > 9000 km) = -43.624
-	Median Rx power = -152.579
+	Field Strength (7000 km < D < 9000 km) = -24.633
+	Field Strength           (D > 9000 km) = -43.606
+	Median Rx power = -152.576
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -76,14 +76,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  13.410
-	Lower Reference Frequency (MHz)      =  1.571
-	Correction Factor at T + dM/2        =  1.510
-	Correction Factor at R - dM/2        =  1.576
+	Upper Reference Frequency (MHz)      =  13.406
+	Lower Reference Frequency (MHz)      =  1.772
+	Correction Factor at T + dM/2        =  1.500
+	Correction Factor at R - dM/2        =  1.575
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        = -0.078
+	Scale factor f(f ,fL, fM, fH)        = -0.077
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  5.663
 	Atmospheric noise lower decile =  4.912
@@ -98,16 +98,16 @@
 	Total noise lower decile       =  5.140
 	Total noise                    =  40.864
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  10.558
+	Monthly median resultant signal-to-noise ratio =  10.560
 	Upper decile deviation signal-to-noise ratio   =  13.982
 	Lower decile deviation signal-to-noise ratio   =  15.373
-	Signal-to-noise exceeded for 90% of the month  = -4.816
+	Signal-to-noise exceeded for 90% of the month  = -4.813
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.494
+	Basic Circuit Reliability                      =  2.496
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -593,9 +593,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -23.060
-	Field Strength (7000 km < D < 9000 km) = -27.306
-	Field Strength           (D > 9000 km) = -49.829
-	Median Rx power = -155.168
+	Field Strength (7000 km < D < 9000 km) = -27.310
+	Field Strength           (D > 9000 km) = -49.859
+	Median Rx power = -155.171
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -604,14 +604,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  12.737
+	Upper Reference Frequency (MHz)      =  12.734
 	Lower Reference Frequency (MHz)      =  1.571
-	Correction Factor at T + dM/2        =  1.535
-	Correction Factor at R - dM/2        =  1.588
+	Correction Factor at T + dM/2        =  1.530
+	Correction Factor at R - dM/2        =  1.587
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        = -0.178
+	Scale factor f(f ,fL, fM, fH)        = -0.179
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  6.325
 	Atmospheric noise lower decile =  5.656
@@ -626,16 +626,16 @@
 	Total noise lower decile       =  5.128
 	Total noise                    =  40.874
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  7.958
+	Monthly median resultant signal-to-noise ratio =  7.955
 	Upper decile deviation signal-to-noise ratio   =  13.989
 	Lower decile deviation signal-to-noise ratio   =  15.377
-	Signal-to-noise exceeded for 90% of the month  = -7.418
+	Signal-to-noise exceeded for 90% of the month  = -7.422
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  0.222
+	Basic Circuit Reliability                      =  0.219
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -1121,9 +1121,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -15.775
-	Field Strength (7000 km < D < 9000 km) = -18.809
-	Field Strength           (D > 9000 km) = -33.380
-	Median Rx power = -146.778
+	Field Strength (7000 km < D < 9000 km) = -18.806
+	Field Strength           (D > 9000 km) = -33.363
+	Median Rx power = -146.775
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -1132,10 +1132,10 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  14.768
-	Lower Reference Frequency (MHz)      =  1.763
-	Correction Factor at T + dM/2        =  1.548
-	Correction Factor at R - dM/2        =  1.556
+	Upper Reference Frequency (MHz)      =  14.763
+	Lower Reference Frequency (MHz)      =  1.571
+	Correction Factor at T + dM/2        =  1.546
+	Correction Factor at R - dM/2        =  1.555
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
@@ -1154,16 +1154,16 @@
 	Total noise lower decile       =  5.100
 	Total noise                    =  40.904
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  16.319
+	Monthly median resultant signal-to-noise ratio =  16.321
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.500
-	Signal-to-noise exceeded for 90% of the month  = -0.182
+	Signal-to-noise exceeded for 90% of the month  = -0.179
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  10.241
+	Basic Circuit Reliability                      =  10.244
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -1649,9 +1649,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -18.107
-	Field Strength (7000 km < D < 9000 km) = -20.499
-	Field Strength           (D > 9000 km) = -31.465
-	Median Rx power = -148.955
+	Field Strength (7000 km < D < 9000 km) = -20.329
+	Field Strength           (D > 9000 km) = -30.390
+	Median Rx power = -148.790
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -1660,14 +1660,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  15.325
-	Lower Reference Frequency (MHz)      =  4.539
-	Correction Factor at T + dM/2        =  1.587
-	Correction Factor at R - dM/2        =  1.512
+	Upper Reference Frequency (MHz)      =  15.356
+	Lower Reference Frequency (MHz)      =  3.129
+	Correction Factor at T + dM/2        =  1.591
+	Correction Factor at R - dM/2        =  1.511
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.119
+	Scale factor f(f ,fL, fM, fH)        =  0.137
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  7.399
 	Atmospheric noise lower decile =  5.741
@@ -1682,16 +1682,16 @@
 	Total noise lower decile       =  5.060
 	Total noise                    =  40.961
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  14.085
+	Monthly median resultant signal-to-noise ratio =  14.249
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.488
-	Signal-to-noise exceeded for 90% of the month  = -2.404
+	Signal-to-noise exceeded for 90% of the month  = -2.239
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  7.413
+	Basic Circuit Reliability                      =  7.607
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -2177,9 +2177,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -6.466
-	Field Strength (7000 km < D < 9000 km) = -8.829
-	Field Strength           (D > 9000 km) = -19.639
-	Median Rx power = -138.623
+	Field Strength (7000 km < D < 9000 km) = -8.226
+	Field Strength           (D > 9000 km) = -15.951
+	Median Rx power = -138.024
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -2188,14 +2188,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  20.713
-	Lower Reference Frequency (MHz)      =  7.357
-	Correction Factor at T + dM/2        =  1.520
-	Correction Factor at R - dM/2        =  1.500
+	Upper Reference Frequency (MHz)      =  20.615
+	Lower Reference Frequency (MHz)      =  5.819
+	Correction Factor at T + dM/2        =  1.513
+	Correction Factor at R - dM/2        =  1.499
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.311
+	Scale factor f(f ,fL, fM, fH)        =  0.370
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  7.996
 	Atmospheric noise lower decile =  5.825
@@ -2210,16 +2210,16 @@
 	Total noise lower decile       =  4.992
 	Total noise                    =  41.065
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  24.312
+	Monthly median resultant signal-to-noise ratio =  24.911
 	Upper decile deviation signal-to-noise ratio   =  10.769
 	Lower decile deviation signal-to-noise ratio   =  17.760
-	Signal-to-noise exceeded for 90% of the month  =  6.551
+	Signal-to-noise exceeded for 90% of the month  =  7.150
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  19.351
+	Basic Circuit Reliability                      =  21.104
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -2705,9 +2705,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -13.019
-	Field Strength (7000 km < D < 9000 km) = -14.968
-	Field Strength           (D > 9000 km) = -23.633
-	Median Rx power = -143.034
+	Field Strength (7000 km < D < 9000 km) = -14.674
+	Field Strength           (D > 9000 km) = -21.887
+	Median Rx power = -142.753
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -2716,14 +2716,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  21.110
-	Lower Reference Frequency (MHz)      =  9.005
-	Correction Factor at T + dM/2        =  1.489
-	Correction Factor at R - dM/2        =  1.503
+	Upper Reference Frequency (MHz)      =  21.099
+	Lower Reference Frequency (MHz)      =  8.401
+	Correction Factor at T + dM/2        =  1.475
+	Correction Factor at R - dM/2        =  1.502
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.246
+	Scale factor f(f ,fL, fM, fH)        =  0.274
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  8.647
 	Atmospheric noise lower decile =  6.145
@@ -2738,16 +2738,16 @@
 	Total noise lower decile       =  4.898
 	Total noise                    =  41.239
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  19.727
+	Monthly median resultant signal-to-noise ratio =  20.008
 	Upper decile deviation signal-to-noise ratio   =  10.788
 	Lower decile deviation signal-to-noise ratio   =  17.754
-	Signal-to-noise exceeded for 90% of the month  =  1.972
+	Signal-to-noise exceeded for 90% of the month  =  2.253
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  9.119
+	Basic Circuit Reliability                      =  9.624
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -3233,9 +3233,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -20.577
-	Field Strength (7000 km < D < 9000 km) = -21.461
-	Field Strength           (D > 9000 km) = -25.133
-	Median Rx power = -148.963
+	Field Strength (7000 km < D < 9000 km) = -21.352
+	Field Strength           (D > 9000 km) = -24.546
+	Median Rx power = -148.860
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -3244,14 +3244,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  21.277
-	Lower Reference Frequency (MHz)      =  9.579
-	Correction Factor at T + dM/2        =  1.488
-	Correction Factor at R - dM/2        =  1.502
+	Upper Reference Frequency (MHz)      =  21.265
+	Lower Reference Frequency (MHz)      =  9.381
+	Correction Factor at T + dM/2        =  1.473
+	Correction Factor at R - dM/2        =  1.501
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.222
+	Scale factor f(f ,fL, fM, fH)        =  0.231
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  8.742
 	Atmospheric noise lower decile =  6.415
@@ -3266,16 +3266,16 @@
 	Total noise lower decile       =  4.801
 	Total noise                    =  41.406
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  13.631
+	Monthly median resultant signal-to-noise ratio =  13.734
 	Upper decile deviation signal-to-noise ratio   =  10.812
 	Lower decile deviation signal-to-noise ratio   =  17.734
-	Signal-to-noise exceeded for 90% of the month  = -4.103
+	Signal-to-noise exceeded for 90% of the month  = -4.000
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  0.693
+	Basic Circuit Reliability                      =  0.806
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -3761,9 +3761,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -23.776
-	Field Strength (7000 km < D < 9000 km) = -24.134
-	Field Strength           (D > 9000 km) = -25.574
-	Median Rx power = -152.334
+	Field Strength (7000 km < D < 9000 km) = -24.202
+	Field Strength           (D > 9000 km) = -25.923
+	Median Rx power = -152.399
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -3772,14 +3772,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  20.762
-	Lower Reference Frequency (MHz)      =  9.504
-	Correction Factor at T + dM/2        =  1.470
-	Correction Factor at R - dM/2        =  1.505
+	Upper Reference Frequency (MHz)      =  20.752
+	Lower Reference Frequency (MHz)      =  9.619
+	Correction Factor at T + dM/2        =  1.448
+	Correction Factor at R - dM/2        =  1.504
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.214
+	Scale factor f(f ,fL, fM, fH)        =  0.209
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  8.319
 	Atmospheric noise lower decile =  6.644
@@ -3794,10 +3794,10 @@
 	Total noise lower decile       =  4.721
 	Total noise                    =  41.504
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  10.162
+	Monthly median resultant signal-to-noise ratio =  10.097
 	Upper decile deviation signal-to-noise ratio   =  10.841
 	Lower decile deviation signal-to-noise ratio   =  17.683
-	Signal-to-noise exceeded for 90% of the month  = -7.521
+	Signal-to-noise exceeded for 90% of the month  = -7.587
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
@@ -4289,9 +4289,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -18.673
-	Field Strength (7000 km < D < 9000 km) = -19.375
-	Field Strength           (D > 9000 km) = -22.253
-	Median Rx power = -147.337
+	Field Strength (7000 km < D < 9000 km) = -19.640
+	Field Strength           (D > 9000 km) = -23.673
+	Median Rx power = -147.590
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -4300,14 +4300,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  21.591
-	Lower Reference Frequency (MHz)      =  8.769
-	Correction Factor at T + dM/2        =  1.464
-	Correction Factor at R - dM/2        =  1.501
+	Upper Reference Frequency (MHz)      =  21.579
+	Lower Reference Frequency (MHz)      =  9.228
+	Correction Factor at T + dM/2        =  1.438
+	Correction Factor at R - dM/2        =  1.500
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.268
+	Scale factor f(f ,fL, fM, fH)        =  0.245
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  7.566
 	Atmospheric noise lower decile =  6.309
@@ -4322,16 +4322,16 @@
 	Total noise lower decile       =  4.726
 	Total noise                    =  41.368
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  15.294
+	Monthly median resultant signal-to-noise ratio =  15.042
 	Upper decile deviation signal-to-noise ratio   =  10.821
 	Lower decile deviation signal-to-noise ratio   =  17.651
-	Signal-to-noise exceeded for 90% of the month  = -2.357
+	Signal-to-noise exceeded for 90% of the month  = -2.610
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.634
+	Basic Circuit Reliability                      =  2.326
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -4817,9 +4817,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -6.293
-	Field Strength (7000 km < D < 9000 km) = -7.380
-	Field Strength           (D > 9000 km) = -11.948
-	Median Rx power = -134.067
+	Field Strength (7000 km < D < 9000 km) = -8.042
+	Field Strength           (D > 9000 km) = -15.715
+	Median Rx power = -134.679
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -4828,14 +4828,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  25.058
-	Lower Reference Frequency (MHz)      =  6.964
-	Correction Factor at T + dM/2        =  1.462
-	Correction Factor at R - dM/2        =  1.490
+	Upper Reference Frequency (MHz)      =  25.042
+	Lower Reference Frequency (MHz)      =  8.075
+	Correction Factor at T + dM/2        =  1.433
+	Correction Factor at R - dM/2        =  1.489
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.435
+	Scale factor f(f ,fL, fM, fH)        =  0.374
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  6.275
 	Atmospheric noise lower decile =  5.256
@@ -4850,16 +4850,16 @@
 	Total noise lower decile       =  4.881
 	Total noise                    =  41.098
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  28.835
+	Monthly median resultant signal-to-noise ratio =  28.223
 	Upper decile deviation signal-to-noise ratio   =  9.364
 	Lower decile deviation signal-to-noise ratio   =  15.235
-	Signal-to-noise exceeded for 90% of the month  =  13.600
+	Signal-to-noise exceeded for 90% of the month  =  12.988
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  34.977
+	Basic Circuit Reliability                      =  31.701
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -5345,9 +5345,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           =  1.296
-	Field Strength (7000 km < D < 9000 km) = -0.400
-	Field Strength           (D > 9000 km) = -7.816
-	Median Rx power = -128.332
+	Field Strength (7000 km < D < 9000 km) = -1.008
+	Field Strength           (D > 9000 km) = -11.502
+	Median Rx power = -128.910
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -5356,14 +5356,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  22.101
-	Lower Reference Frequency (MHz)      =  3.534
-	Correction Factor at T + dM/2        =  1.462
-	Correction Factor at R - dM/2        =  1.499
+	Upper Reference Frequency (MHz)      =  22.088
+	Lower Reference Frequency (MHz)      =  5.214
+	Correction Factor at T + dM/2        =  1.432
+	Correction Factor at R - dM/2        =  1.498
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.502
+	Scale factor f(f ,fL, fM, fH)        =  0.442
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  5.411
 	Atmospheric noise lower decile =  4.582
@@ -5378,16 +5378,16 @@
 	Total noise lower decile       =  5.015
 	Total noise                    =  40.963
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  34.705
+	Monthly median resultant signal-to-noise ratio =  34.127
 	Upper decile deviation signal-to-noise ratio   =  10.731
 	Lower decile deviation signal-to-noise ratio   =  17.711
-	Signal-to-noise exceeded for 90% of the month  =  16.994
+	Signal-to-noise exceeded for 90% of the month  =  16.416
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  63.839
+	Basic Circuit Reliability                      =  62.005
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -5873,9 +5873,9 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -8.103
-	Field Strength (7000 km < D < 9000 km) = -10.141
-	Field Strength           (D > 9000 km) = -19.256
-	Median Rx power = -138.866
+	Field Strength (7000 km < D < 9000 km) = -10.244
+	Field Strength           (D > 9000 km) = -19.883
+	Median Rx power = -138.965
 **************** Rx Elevation Angle (degs)****************
 	Rx Elevation angle =  8.000
 ***************** Short Path Parameters *******************
@@ -5884,14 +5884,14 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  17.539
-	Lower Reference Frequency (MHz)      =  2.231
-	Correction Factor at T + dM/2        =  1.477
-	Correction Factor at R - dM/2        =  1.526
+	Upper Reference Frequency (MHz)      =  17.532
+	Lower Reference Frequency (MHz)      =  2.808
+	Correction Factor at T + dM/2        =  1.459
+	Correction Factor at R - dM/2        =  1.525
 	Max Antenna Gain G_tl (0 to 8 deg)   =  0.010
 	Max Antenna Gain G_w (0 to 8 deg)    =  0.010
 	Mean gyrofrequency (T + dM/2 & R - dM/2) =  1.106
-	Scale factor f(f ,fL, fM, fH)        =  0.317
+	Scale factor f(f ,fL, fM, fH)        =  0.307
 ***************** Noise Parameters (dB) *******************
 	Atmospheric noise upper decile =  5.330
 	Atmospheric noise lower decile =  4.518
@@ -5906,16 +5906,16 @@
 	Total noise lower decile       =  5.102
 	Total noise                    =  40.893
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  24.240
+	Monthly median resultant signal-to-noise ratio =  24.141
 	Upper decile deviation signal-to-noise ratio   =  13.974
 	Lower decile deviation signal-to-noise ratio   =  18.449
-	Signal-to-noise exceeded for 90% of the month  =  5.791
+	Signal-to-noise exceeded for 90% of the month  =  5.692
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  23.919
+	Basic Circuit Reliability                      =  23.662
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
