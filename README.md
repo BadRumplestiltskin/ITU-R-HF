@@ -945,17 +945,18 @@ The program ITURNoise.exe is a utility program that has two modes:
 - Mode 2 generates the data necessary to create Recommendation P.372-14 Figures 13 through 36: a), b), and c)
 
 ### Mode 1 – Noise Calculation for a Single Location
-To return the noise parameters for a single location, Mode 1 above, 7 command line arguments are required. Below is an example of running ITURNoise.exe to return noise for a single location
+To return the noise parameters for a single location, Mode 1 above, 7 command line arguments are required and an 8th is optional. Below is an example of running ITURNoise.exe to return noise for a single location
 
 ```
-C:\>ITURNoise 1 14 1.0 40.0 165.0 0 "G:\User\Data\" 0
+C:\>ITURNoise 1 14 1.0 40.0 165.0 0 "C:\Data"
 ```
 
 - Argument 1 is an integer that indicates the month (1 to 12) of interest. In the example above the desired month is January. 
-- Argument 2 is an integer that indicates the hour (1 to 24) UTC at the receive point. In most cases this will require the calculation of the time UTC from the longitude at that receive point. In the example above the receive point is 11 hours (165? E/(15?/hr) ahead of UTC so to determine the noise for the 12th local time hour the 1st hour UTC is chosen. 
-- Argument 3 is a float that indicates the latitude (degrees). In the example above the latitude desired is 40? N. 
-- Argument 4 is a float that indicates the longitude (degrees). In the example above the longitude desired is 165? E
-- Argument 5 is a float that indicates the man-made noise which can either be categorical (0-5) or value of man-made noise in dB (represented by a negative number). In the example above the value 1.0 indicates that the noise category residential. The category codes appear below. 
+- Argument 2 is an integer that indicates the hour (1 to 24) UTC at the receive point. In most cases this will require the calculation of the time UTC from the longitude at that receive point. In the example above the hour is 14 UTC, which at 165° E (11 hours ahead of UTC) is the 1st hour local time. 
+- Argument 3 is a float that indicates the frequency (MHz). In the example above the frequency is 1.0 MHz. 
+- Argument 4 is a float that indicates the latitude (degrees). In the example above the latitude desired is 40° N. 
+- Argument 5 is a float that indicates the longitude (degrees). In the example above the longitude desired is 165° E
+- Argument 6 is a float that indicates the man-made noise which can either be categorical (0-5) or value of man-made noise in dB (represented by a negative number). In the example above the value 0 indicates that the noise category is city. The category codes appear below. 
 
     |code|Noise Category|
     |----|--------------|
@@ -966,11 +967,11 @@ C:\>ITURNoise 1 14 1.0 40.0 165.0 0 "G:\User\Data\" 0
     | 4.0    | Noisy|
     | 5.0    | Quiet|
 
-    If argument 5 is give as a negative number, the man-made noise will be set to that value where the galactic and atmospheric noise calculations are not performed. This second mode is of little value for this stand-alone program, ITURNoise.exe, running, P533.dll. Overriding the P372 calculation is included here and is consistent with some analyses desired in ITURHFProp which also uses the P372.dll.
+    If argument 6 is given as a negative number, the man-made noise will be set to that value where the galactic and atmospheric noise calculations are not performed. This second mode is of little value for this stand-alone program, ITURNoise.exe, running, P533.dll. Overriding the P372 calculation is included here and is consistent with some analyses desired in ITURHFProp which also uses the P372.dll.
 
-- Argument 6 indicates the location of the required CCIR data files. The data file path must be given as a string enclosed in double quotes without trailing back slash. In the example above the location of the required CCIR data files are on drive C: in the directory Data, “C:\Data”
+- Argument 7 indicates the location of the required CCIR data files. The data file path must be given as a string enclosed in double quotes without trailing back slash. In the example above the location of the required CCIR data files are on drive C: in the directory Data, “C:\Data”
 
-- Argument 7 allows the program to provide return data from the P.372 calculation is several formats. The table below gibes the integer print flag codes. 
+- Argument 8 (optional) allows the program to provide return data from the P.372 calculation is several formats. The table below gibes the integer print flag codes. 
 
     |code|        Print Mode|
     |----|----------------|
