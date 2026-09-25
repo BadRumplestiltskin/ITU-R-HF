@@ -208,8 +208,8 @@ relevant to areas and will be ignored for point-to-point calculations as defined
 area above.
 
 ```
-latinc    Latitude increment step in decimal degrees, > 0.0
-lnginc    Longitude increment step in decimal degrees, > 0.0
+latinc    Latitude increment step in decimal degrees, > 0.0 (default 1.0; otherwise error 77)
+lnginc    Longitude increment step in decimal degrees, > 0.0 (default 1.0; otherwise error 78)
 ```
 
 | Input File Parameter Name | Data Type | Note |
@@ -718,24 +718,49 @@ struct NoiseParams {
 
 ### Return Codes ITURHFProp,P533 and P372
 
-When running ITURHFProp the typical return code is 1000. This indicates that the program has executed
-correctly. In the event that an error occurs the program will exit with one of the following error
-numbers. The following list may be useful to determine the type of error. Please note that in the event
-that the calculation by P533() fails ITURHFProp() will exit with the appropriate P533() error.
+When ITURHFProp runs correctly it exits with 0. In the event that an error occurs the program will
+exit with one of the error numbers below and print a short message. The list may be useful to
+determine the type of error. When the calculation by P533() or P372() fails, ITURHFProp exits with
+that library's error number.
 
+There are three ranges of return codes:
 
-There are two ranges of return codes from P533() and ITURHFProp()
+    ITURHFProp:  0 is a normal exit; 50 to 78 are errors in the input file or command line
+    P533():      numbers less than 100 are normal; 100 to 199 are errors
+    P372():      numbers less than 10 are normal; 200 to 209 are errors
 
-Returns from P533() are greater than or equal to 0 and less than 200
-    Return numbers less than 100 are normal and indicate no error in processing
-    Return numbers greater than 100 and less than 200 are errors
+ITURHFProp: Return numbers from 50 to 78 are errors
 
-Returns from P533() are greater than or equal to 0 and less than 210
-    Return numbers less than 10 are normal and indicate no error in processing
-    Return numbers greater than 200 and less than 210 are errors    Returns from ITURHFProp() are greater than or equal to 1000 and less than 1200
-    Return numbers greater than or less than 1000 and less than 1100 are normal and indicate
-    no error in processing
-    Return numbers greater than 1000 and less than 1200 are errors
+    50    ERROR:    Can Not Open (or Write) Output File
+    51    ERROR:    Can Not Find P533.DLL
+    52    ERROR:    Can Not Open, or Unsupported Type of, Receive Antenna File
+    53    ERROR:    Can Not Open, or Unsupported Type of, Transmit Antenna File
+    54    ERROR:    Invalid Antenna Orientation
+    55    ERROR:    Invalid Transmit Bearing
+    56    ERROR:    Invalid Receive Bearing
+    57    ERROR:    Invalid Receive Gain Offset
+    58    ERROR:    Invalid Transmit Gain Offset
+    59    ERROR:    Invalid Lower Left Latitude
+    60    ERROR:    Invalid Lower Right Latitude
+    61    ERROR:    Invalid Upper Left Latitude
+    62    ERROR:    Invalid Upper Right Latitude
+    63    ERROR:    Invalid Lower Left Longitude
+    64    ERROR:    Invalid Lower Right Longitude
+    65    ERROR:    Invalid Upper Left Longitude
+    66    ERROR:    Invalid Upper Right Longitude
+    67    ERROR:    Invalid Area Left Latitude
+    68    ERROR:    Invalid Area Right Latitude
+    69    ERROR:    Invalid Area Left Longitude
+    70    ERROR:    Invalid Area Right Longitude
+    71    ERROR:    Invalid Area Lower Latitude
+    72    ERROR:    Invalid Area Upper Latitude
+    73    ERROR:    Invalid Area Left Longitude
+    74    ERROR:    Invalid Area Right Longitude
+    75    ERROR:    Invalid Command Line
+    76    ERROR:    Missing Input File
+    77    ERROR:    Invalid Latitude Increment (latinc): not a finite number greater than 0,
+                    or so small that the area has more grid points than can be counted
+    78    ERROR:    Invalid Longitude Increment (lnginc): as for 77
 
 P533(): Return numbers less than 100 are normal and indicate no error in processing
 
