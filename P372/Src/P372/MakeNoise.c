@@ -245,7 +245,7 @@ void PrintFam(
     fprintf(fp, "\n");
     fprintf(fp, "\t[FaA]  Noise Component (Atmospheric): %5.3f\n", noiseP->FaA);
     fprintf(fp, "\t[DuA]  Upper Decile    (Atmospheric): %5.3f\n", noiseP->DuA);
-    fprintf(fp, "\t[DlA]  Upper Decile    (Atmospheric): %5.3f\n", noiseP->DlA);
+    fprintf(fp, "\t[DlA]  Lower Decile    (Atmospheric): %5.3f\n", noiseP->DlA);
     fprintf(fp, "\t[FaM]  Noise Component    (Man-Made): %5.3f\n", noiseP->FaM);
     fprintf(fp, "\t[DuM]  Upper Decile       (Man-Made): %5.3f\n", noiseP->DuM);
     fprintf(fp, "\t[DlM]  Lower Decile       (Man-Made): %5.3f\n", noiseP->DlM);

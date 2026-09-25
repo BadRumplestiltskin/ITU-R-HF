@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
 					JAN : 13 (UTC) at 40.000000 (deg lat) 165.000000 (deg long)
 					[FaA]  Noise Component (Atmospheric): 60.732650
 					[DuA]  Upper Decile    (Atmospheric): 10.600910
-					[DlA]  Upper Decile    (Atmospheric): 8.277667
+					[DlA]  Lower Decile    (Atmospheric): 8.277667
 					[FaM]  Noise Component    (Man-Made): 76.800000
 					[DuM]  Upper Decile       (Man-Made): 11.000000
 					[DlM]  Lower Decile       (Man-Made): 6.700000
@@ -962,7 +962,7 @@ void PrintCSVHeader(const char* P372ver, const char* P372compt) {
 	printf("Column 5:  Longitude (deg)\n");
 	printf("Column 6:  [FaA]  Noise Component (Atmospheric)\n");
 	printf("Column 7:  [DuA]  Upper Decile    (Atmospheric)\n");
-	printf("Column 8:  [DlA]  Upper Decile    (Atmospheric)\n");
+	printf("Column 8:  [DlA]  Lower Decile    (Atmospheric)\n");
 	printf("Column 9:  [FaM]  Noise Component    (Man-Made)\n");
 	printf("Column 10: [DuM]  Upper Decile       (Man-Made)\n");
 	printf("Column 11: [DlM]  Lower Decile       (Man-Made) \n");
