@@ -374,13 +374,20 @@ int main(int argc, char *argv[]) {
 	if(retval != RTN_ITURHFPropOK) {
 		printf(" path hour %d\n", path.hour);
 		printf("Main: Error %d from ITURHFProp\n", retval);
+		fclose(ITURHFP.rptfp);
+		dllFreePathMemory(&path);
 		return retval;
 	}
 
 
     // Clean up
-	// Close the output file
-	if(ITURHFP.rptfp != NULL) fclose(ITURHFP.rptfp); // Close report file
+	// Close the output file. fclose() writes what is still buffered, so its
+	// failure (a full disk, say) means the report is incomplete.
+	if(fclose(ITURHFP.rptfp) != 0) {
+		printf("Main: Error %d Can't write output file %s\n", RTN_ERROPENOUTPUTFILE, ITURHFP.RptFilePath);
+		dllFreePathMemory(&path);
+		return RTN_ERROPENOUTPUTFILE;
+	}
 
 	// Free all the memory
 	retval = dllFreePathMemory(&path);
