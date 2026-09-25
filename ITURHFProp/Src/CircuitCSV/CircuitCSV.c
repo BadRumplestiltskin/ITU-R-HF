@@ -2009,8 +2009,16 @@ int main(int argc, char *argv[]) {
 		}
 
 		fclose(fin);
-		fclose(fout);
-		if (ScanOut != NULL) fclose(ScanOut);
+		// A full disk shows up here, not at fprintf() time: the -j path
+		// already failed the run on it, and so must a serial one.
+		if ((ferror(fout) | fclose(fout)) != 0) {
+			printf("CircuitCSV: Error %d writing %s\n", RTN_ERRCSVOPENOUT, outfile);
+			if (retval == RTN_CSVOK) retval = RTN_ERRCSVOPENOUT;
+		}
+		if (ScanOut != NULL && (ferror(ScanOut) | fclose(ScanOut)) != 0) {
+			printf("CircuitCSV: Error %d writing %s\n", RTN_ERRCSVOPENOUT, scanfile);
+			if (retval == RTN_CSVOK) retval = RTN_ERRCSVOPENOUT;
+		}
 	}
 
 	free(ScanF);
