@@ -22,12 +22,13 @@ $(SUBDIRS):
 
 .PHONY: $(TOPTARGETS) $(SUBDIRS)
 
+# Each directory in SUBDIRS is made with the same goal, so "make install"
+# here installs the libraries and all three programs, CircuitCSV and
+# ITURNoise included. install -D is GNU-only; create the directories with
+# install -d so this also works with the BSD install on macOS.
 install: $(SUBDIRS)
 	install -d $(DESTDIR)$(man1dir)
-	install ITURHFProp.1 $(DESTDIR)$(man1dir)
+	install -m 644 ITURHFProp.1 $(DESTDIR)$(man1dir)
 	install -d $(DESTDIR)$(datadir)/iturhfprop/data
-	install -m 744 -D ../P372/Data/*.txt $(DESTDIR)$(datadir)/iturhfprop/data
-	install -m 744 -D ../P372/Data/*.bin $(DESTDIR)$(datadir)/iturhfprop/data
-
-	
-
+	install -m 644 ../P372/Data/*.txt $(DESTDIR)$(datadir)/iturhfprop/data
+	install -m 644 ../P372/Data/*.bin $(DESTDIR)$(datadir)/iturhfprop/data
