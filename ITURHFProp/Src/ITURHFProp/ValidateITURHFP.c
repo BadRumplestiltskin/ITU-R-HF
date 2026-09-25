@@ -15,20 +15,31 @@ int ValidateITURHFP(struct ITURHFProp ITURHFP) {
 
 	int i;
 	
-	if((ITURHFP.TXBearing > 2.0*PI) || (ITURHFP.TXBearing < 0.0))							return RTN_ERRTXBEARING;
-	if((ITURHFP.RXBearing > 2.0*PI) || (ITURHFP.RXBearing < 0.0))							return RTN_ERRRXBEARING;
-	if((ITURHFP.TXGOS < TINYDB) || (ITURHFP.TXGOS > 60.0))									return RTN_ERRTXGOS;
-	if((ITURHFP.RXGOS < TINYDB) || (ITURHFP.RXGOS > 60.0))									return RTN_ERRRXGOS;
+	// Written as !(lo <= x && x <= hi) so that NaN, which fails every
+	// comparison, is rejected: as (x < lo) || (x > hi) it passed, and a NaN
+	// bearing reached ReadType13() as (int)NaN, an index outside the pattern.
+	#define OUTSIDE(x, lo, hi) (!(((lo) <= (x)) && ((x) <= (hi))))
+	// A bearing is checked only when the user gave it. With TX2RX main()
+	// derives both from the path ends, which P533's ValidatePath() checks;
+	// a bad end (NaN latitude, say) must be reported as that, not as the
+	// bearing it produced.
+	if(ITURHFP.AntennaOrientation != TX2RX) {
+		if(OUTSIDE(ITURHFP.TXBearing, 0.0, 2.0*PI))	return RTN_ERRTXBEARING;
+		if(OUTSIDE(ITURHFP.RXBearing, 0.0, 2.0*PI))	return RTN_ERRRXBEARING;
+	}
+	if(OUTSIDE(ITURHFP.TXGOS, TINYDB, 60.0))		return RTN_ERRTXGOS;
+	if(OUTSIDE(ITURHFP.RXGOS, TINYDB, 60.0))		return RTN_ERRRXGOS;
 
-	if((ITURHFP.L_LL.lat < -PI/2.0) || (ITURHFP.L_LL.lat > PI/2.0))							return RTN_ERRLLLAT; 
-	if((ITURHFP.L_LR.lat < -PI/2.0) || (ITURHFP.L_LR.lat > PI/2.0))							return RTN_ERRLRLAT; 
-	if((ITURHFP.L_UL.lat < -PI/2.0) || (ITURHFP.L_UL.lat > PI/2.0))							return RTN_ERRULLAT; 
-	if((ITURHFP.L_UR.lat < -PI/2.0) || (ITURHFP.L_UR.lat > PI/2.0))							return RTN_ERRURLAT; 
+	if(OUTSIDE(ITURHFP.L_LL.lat, -PI/2.0, PI/2.0))	return RTN_ERRLLLAT;
+	if(OUTSIDE(ITURHFP.L_LR.lat, -PI/2.0, PI/2.0))	return RTN_ERRLRLAT;
+	if(OUTSIDE(ITURHFP.L_UL.lat, -PI/2.0, PI/2.0))	return RTN_ERRULLAT;
+	if(OUTSIDE(ITURHFP.L_UR.lat, -PI/2.0, PI/2.0))	return RTN_ERRURLAT;
 
-	if((ITURHFP.L_LL.lng < -PI) || (ITURHFP.L_LL.lng > PI))									return RTN_ERRLLLNG; 
-	if((ITURHFP.L_LR.lng < -PI) || (ITURHFP.L_LR.lng > PI))									return RTN_ERRLRLNG; 
-	if((ITURHFP.L_UL.lng < -PI) || (ITURHFP.L_UL.lng > PI))									return RTN_ERRULLNG; 
-	if((ITURHFP.L_UR.lng < -PI) || (ITURHFP.L_UR.lng > PI))									return RTN_ERRURLNG; 
+	if(OUTSIDE(ITURHFP.L_LL.lng, -PI, PI))			return RTN_ERRLLLNG;
+	if(OUTSIDE(ITURHFP.L_LR.lng, -PI, PI))			return RTN_ERRLRLNG;
+	if(OUTSIDE(ITURHFP.L_UL.lng, -PI, PI))			return RTN_ERRULLNG;
+	if(OUTSIDE(ITURHFP.L_UR.lng, -PI, PI))			return RTN_ERRURLNG;
+	#undef OUTSIDE
 
 	// Lower/upper checks
 	if((ITURHFP.L_LL.lat > ITURHFP.L_UL.lat) || (ITURHFP.L_LL.lat > ITURHFP.L_UR.lat))			return RTN_ERRLL;

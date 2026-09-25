@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 // Local includes
 #include "Common.h"
@@ -214,7 +215,10 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 	// pattern would be interpolated. In this implementation the pattern will be rotated to the nearest
 	// integer azimuth degree. This approximate method was chosen because of the error of having the
 	// pattern off by maximally +- 1/2 degree is considered to be minimal.
-	iMBOS = (int)(bearing*R2D);
+	// The drivers validate the bearing, but this is exported: keep the offset
+	// in 0..359 for any bearing, and treat a non-finite one as 0, since
+	// (int)NaN is undefined and a negative offset indexed outside the pattern.
+	iMBOS = isfinite(bearing) ? ((int)floor(fmod(bearing*R2D, 360.0)) + 360) % 360 : 0;
 
 	// Read a VOACAP antenna pattern Type 13 file
 	/*

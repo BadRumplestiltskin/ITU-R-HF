@@ -12,7 +12,7 @@ fix starts.
 
 Status: open / fixed (commit) / not a defect (reason).
 
-## U1 NaN antenna bearing writes outside the pattern - high
+## U1 NaN antenna bearing writes outside the pattern - high - FIXED
 - read-pending-nan-tx-bearing-rejected, read-pending-nan-rx-bearing-rejected:
   ValidateITURHFP.c range checks pass NaN; ReadType13.c:217 (int)NaN, :272
   negative index write. Should exit 55 / 56. Also every other double that
