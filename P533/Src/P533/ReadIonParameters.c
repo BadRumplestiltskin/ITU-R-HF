@@ -330,6 +330,17 @@ DLLEXPORT void IonMapFree(void) {
 
 }
 
+/*
+	IonBinFailed() - Releases what ReadIonParametersBin() holds when a read
+		fails and returns the error. free(NULL) is harmless.
+*/
+static int IonBinFailed(FILE *fp, float *readBuffer, char *InFilePath) {
+	printf("ReadIonParameters: ERROR %s is truncated or unreadable\n", InFilePath);
+	free(readBuffer);
+	fclose(fp);
+	return RTN_ERRREADIONPARAMETERS;
+}
+
 int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent) {
 	/*
 	 * ReadIonParametersBin() is a routine to read ionospheric parameters from a file into arrays necessary for the ITU-R P.533 
@@ -409,10 +420,13 @@ int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFi
 	}
 
     //The first 5 bytes of the file are overhead that FORTRAN puts in 
-	fread(&buffer, sizeof(char), 5, fp);
-
+	// Every read is checked: a short file would otherwise leave the maps holding
+	// uninitialised heap memory, which the caller caches for the whole run.
 	readBuffer = (float *) malloc(sizeof(float) * numfoF2);
-	fread(readBuffer,sizeof(float),numfoF2,fp);
+	if ((readBuffer == NULL) || (fread(&buffer, sizeof(char), 5, fp) != 5) ||
+		(fread(readBuffer, sizeof(float), numfoF2, fp) != (size_t)numfoF2)) {
+		return IonBinFailed(fp, readBuffer, InFilePath);
+	}
 
 	if(silent != TRUE) {
 		printf("ReadIonParameters: Reading foF2 (binary) into array\n");
@@ -437,14 +451,16 @@ int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFi
     free(readBuffer);
 
 	// The next 5 bytes are the tail of the foF2 record followed by 5 bytes of header for the M(3000)F2 record.
-	fread(&buffer, sizeof(char), 10, fp);
+	if (fread(&buffer, sizeof(char), 10, fp) != 10) return IonBinFailed(fp, NULL, InFilePath);
 	
 	if(silent != TRUE) {
 		printf("ReadIonParameters: Reading M3kF2 (binary) into array\n");
 	}
 
     readBuffer = (float *) malloc(sizeof(float) * numfoF2);
-	fread(readBuffer,sizeof(float),numfoF2,fp);
+	if ((readBuffer == NULL) || (fread(readBuffer, sizeof(float), numfoF2, fp) != (size_t)numfoF2)) {
+		return IonBinFailed(fp, readBuffer, InFilePath);
+	}
 
 	// Read in M3kF2
 	for(m = 0; m < ssn; m++) { // SSN
