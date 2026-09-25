@@ -1,0 +1,1 @@
+sed -e 's|@TLA@|40|;s|@TLO@|-100|;s|@RLA@|45|;s|@RLO@|-90|;s|@MON@|6|;s|@HRS@|1,7,13,19|;s|@SSN@|250|;s|@FRQ@|2,30|;s|@PWR@|60|;s|@NOISE@|QUIET|;s|@MOD@|ANALOG|;s|@TW@|1|;s|@FW@|1|;s|@SORL@|SHORTPATH|' -e "s|@DATA@|$P533DATA/|" "$CASE/../eng-lib/path.tmpl" > x.in && $ITURHFPROP -s x.in rep.txt && awk -v show="6:0" -f "$CASE/../eng-lib/prop.awk" rep.txt > out && cat out

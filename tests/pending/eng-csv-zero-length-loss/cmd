@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o o.csv -d "$P533DATA/" && awk -v show="txSite,hour,Dist:0,Mode,Losses:0" -f "$CASE/../../cases/eng-lib/csv.awk" o.csv > out && cat out && awk 'NR % 2 { a = $5; next } { d = a - $5; print (d > -3 && d < 3) ? "LOSS_CONTINUOUS" : "LOSS_JUMP " d " dB between 0 and 1 km" }' out
