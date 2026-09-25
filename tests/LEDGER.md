@@ -37,9 +37,12 @@ suites; then CI green on all four jobs.
   exits 0. Should be 111 (102, 101).
 - prop-list-month-int-min: (int)v - 1 overflows. Should be 101 without UB.
 - prop-rpt-combo-without-spaces: "RPT_D|RPT_PR" drops RPT_PR.
-- *verify*: unknown RptFileFormat option (RPT_FOO) gives an empty report, exit 0.
-- *verify*: unknown Path.SorL ignored.
-- *verify*: Path.SSN 1e12 read as 1.
+- unknown RptFileFormat option (RPT_FOO): no result columns, exit 0 (confirmed
+  2026-09-25; OutputOption returns 0). Exit code not yet decided.
+- unknown Path.SorL (e.g. "MEDIUMPATH") silently runs as short path, exit 0
+  (confirmed 2026-09-25, :209-218). Exit code not yet decided.
+- Path.SSN 1e12 read as 1 by %d, output identical to SSN 1, exit 0 (confirmed
+  2026-09-25, :137). Exit code not yet decided.
 
 ## U3 ITURHFProp command line and messages - medium/low
 - prop-cli-invalid-option: prints help, exits 0. Should be 75.
