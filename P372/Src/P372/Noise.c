@@ -639,8 +639,9 @@ void ManMadeNoise(
         c = -noiseP->ManMadeNoise + 204.0;
         d = 0.0;
         // Use the CITY category in Table 2 P.372-10 for the deciles
-        noiseP->DlM = 11.0;
-        noiseP->DuM = 6.7;
+        // (upper 11.0 dB, lower 6.7 dB; these were assigned the other way round)
+        noiseP->DuM = 11.0;
+        noiseP->DlM = 6.7;
     }
 
     // Calculate the man made noise, FaM
