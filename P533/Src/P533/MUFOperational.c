@@ -68,13 +68,18 @@ void MUFOperational(struct PathData *path) {
 	// in UTC falls before sunrise -- roughly beyond 90 degrees of longitude --
 	// the day is the interval that wraps through midnight. The earlier test
 	// required lsr < ltime < lss and so classed every such hour as night,
-	// taking the night Rop by day. Without a sunrise at all (sha is NaN) the
-	// Sun is up all day when the point and the Sun share a hemisphere.
+	// taking the night Rop by day. In polar day CalculateCPParameters() sets
+	// the sunrise/sunset hour angle sha to PI (the Sun never sets) and in polar
+	// night to 0 (it never rises); sunrise and sunset then coincide, so those
+	// two cases are decided from sha.
 	{
 		double t = path->CP[MP].ltime, sr = path->CP[MP].Sun.lsr, ss = path->CP[MP].Sun.lss;
 		int isday;
-		if(isnan(path->CP[MP].Sun.sha)) {
-			isday = (path->CP[MP].L.lat*path->CP[MP].Sun.decl > 0.0);
+		if(path->CP[MP].Sun.sha >= PI) {
+			isday = TRUE;
+		}
+		else if(path->CP[MP].Sun.sha <= 0.0) {
+			isday = FALSE;
 		}
 		else if(sr < ss) {
 			isday = (sr < t) && (t < ss);

@@ -6,6 +6,14 @@
 #include "Common.h"
 #include "P533.h"
 
+// Rounding can leave a sine or cosine a few ulp outside [-1, 1], where asin()
+// and acos() return NaN. Clamp such arguments back into the domain.
+static double ClampUnit(double x) {
+	if(x > 1.0) return 1.0;
+	if(x < -1.0) return -1.0;
+	return x;
+}
+
 DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there) {
 
 /* 
@@ -23,7 +31,12 @@ DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there
 			None
 
  */
-	return 2.0*R0*asin(sqrt(pow((sin((here.lat-there.lat)/2.0)),2.0) + cos(here.lat)*cos(there.lat)*pow((sin((here.lng - there.lng)/2.0)),2.0))); 
+	double h; // Haversine of the central angle, in [0, 1]
+
+	h = pow((sin((here.lat-there.lat)/2.0)),2.0) + cos(here.lat)*cos(there.lat)*pow((sin((here.lng - there.lng)/2.0)),2.0);
+
+	// For (near) antipodal points h can round a few ulp above 1: asin(sqrt(h)) would be NaN
+	return 2.0*R0*asin(sqrt(ClampUnit(h))); 
 
 } //  GreatCircleDistance()
 
@@ -51,10 +64,26 @@ DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, str
 */ 
 	
 	double A, B, d, x, y, z; // temp variables
+	double theta, delta, lat; // bearing, angular distance and latitude for the degenerate case
 	
 	if (distance != 0.0) {
 		midpnt->distance = distance*fraction;
 		d = distance / R0;
+		if ((d > 1.0) && (fabs(sin(d)) < 1.0e-9)) {
+			// here and there are antipodal (d = PI) or coincident on a long path of one
+			// full circumference (d = 2*PI). Every great circle through here then passes
+			// through there, so the interpolation below divides by sin(d) = 0 and returns
+			// an arbitrary point. Instead follow the great circle leaving here on the
+			// azimuth that Bearing() gives, which is the azimuth the rest of the engine
+			// uses for this path (for example the antenna bearings).
+			theta = Bearing(here, there, (d > PI) ? LONGPATH : SHORTPATH);
+			delta = fraction*d;
+			lat = asin(ClampUnit(sin(here.lat)*cos(delta) + cos(here.lat)*sin(delta)*cos(theta)));
+			midpnt->L.lat = lat;
+			midpnt->L.lng = here.lng + atan2(sin(theta)*sin(delta)*cos(here.lat), cos(delta) - sin(here.lat)*sin(lat));
+			midpnt->L.lng = atan2(sin(midpnt->L.lng), cos(midpnt->L.lng)); // Wrap to [-PI, PI]
+			return;
+		}
 		A = sin((1 - fraction)*d) / sin(d);
 		B = sin(fraction*d) / sin(d);
 		x = A*cos(here.lat)*cos(here.lng) + B*cos(there.lat)*cos(there.lng);
@@ -98,8 +127,8 @@ DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there) {
 	GeoMagNPole.lat = 78.5*D2R; 
 	GeoMagNPole.lng = -68.2*D2R;
 
-	there->lat = asin(sin(here.lat)*sin(GeoMagNPole.lat) + cos(here.lat)*cos(GeoMagNPole.lat)*cos(here.lng - GeoMagNPole.lng));
-	there->lng = asin(cos(here.lat)*sin(here.lng - GeoMagNPole.lng)/cos(there->lat));
+	there->lat = asin(ClampUnit(sin(here.lat)*sin(GeoMagNPole.lat) + cos(here.lat)*cos(GeoMagNPole.lat)*cos(here.lng - GeoMagNPole.lng)));
+	there->lng = asin(ClampUnit(cos(here.lat)*sin(here.lng - GeoMagNPole.lng)/cos(there->lat)));
 
 	return;
 
