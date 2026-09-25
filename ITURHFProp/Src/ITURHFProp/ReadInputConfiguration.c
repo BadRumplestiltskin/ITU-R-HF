@@ -136,10 +136,13 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 					buf[1] = instr2;
 					i = 0;
 					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2)) {
+					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFMONTHS)) {
 						retval = sscanf(buf[count], "%d, %[0-9 ,]", &ITURHFP->months[i], buf[count^1]);
 						ITURHFP->months[i++] -= 1;
 						count ^= 1;
+					}
+					if ((i == NMBOFMONTHS) && (retval == 2)) {
+						fprintf(stderr, "ReadInputConfiguration: Path.month lists more than %d values; the rest are ignored\n", NMBOFMONTHS);
 					}
                 }
             }
@@ -158,10 +161,13 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 					buf[1] = instr2;
 					i = 0;
 					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2)) {
+					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFHOURS)) {
 						retval = sscanf(buf[count], "%d, %[0-9 ,]", &ITURHFP->hrs[i], buf[count^1]);
 						ITURHFP->hrs[i++] -= 1;
 						count ^= 1; /* swap use of the two buffers */
+					}
+					if ((i == NMBOFHOURS) && (retval == 2)) {
+						fprintf(stderr, "ReadInputConfiguration: Path.hour lists more than %d values; the rest are ignored\n", NMBOFHOURS);
 					}
                 }
             }
@@ -182,9 +188,12 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 					buf[1] = instr2;
 					i = 0;
 					retval = 2;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2)) {
+					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2) && (i < NMBOFFREQS)) {
 						retval = sscanf(buf[count], "%lf, %[0-9 ,.]", &ITURHFP->frqs[i++], buf[count^1]);
 						count ^= 1;
+					}
+					if ((i == NMBOFFREQS) && (retval == 2)) {
+						fprintf(stderr, "ReadInputConfiguration: Path.frequency lists more than %d values; the rest are ignored\n", NMBOFFREQS);
 					}
                 }
             }
