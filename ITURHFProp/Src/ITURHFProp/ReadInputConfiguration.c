@@ -624,6 +624,39 @@ void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
 }
 
 
+/*
+	AntennaFileType() - Reads the antenna type from the fourth line of an open
+		VOACAP-style antenna file, e.g.
+			  14    [ 2] Antenna Type..: 30 x (efficiency + 91 gain values) follow
+		and rewinds the file for the type reader.
+
+		Returns the type, or -1 (after printing why) when the file has fewer
+		than four lines or the fourth does not start with an integer. Every
+		read was unchecked before, so a short or garbled file left the type
+		as whatever was on the stack.
+*/
+static int AntennaFileType(FILE *fp, const char *name) {
+
+	char line[256];
+	int lineCtr;
+	int antType;
+
+	for (lineCtr = 0; lineCtr < 4; ++lineCtr) {
+		if (fgets(line, sizeof(line), fp) == NULL) {
+			printf("ReadAntennaPatterns: Error antenna file %.200s has only %d lines; the antenna type is on line 4\n", name, lineCtr);
+			return -1;
+		}
+	}
+	if (sscanf(line, " %d", &antType) != 1) {
+		printf("ReadAntennaPatterns: Error antenna file %.200s line 4 does not start with an antenna type\n", name);
+		return -1;
+	}
+	rewind(fp);
+
+	return antType;
+
+}
+
 int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 
 	#ifdef __GNUC__
@@ -632,13 +665,9 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	#endif
 
 	int retval;
-    int antType;
-    int lineCtr;
+    int antType = -1;
 
     FILE *fp;
-	
-	char line[256];		// Read input line
-	char instr[256];	// String temp
 
 	// User feedback
 	if(ITURHFP.silent != TRUE) {
@@ -669,12 +698,11 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
             return RTN_ERRCANTOPENRXANTFILE;
 	    }
 
-        for (lineCtr = 0 ; lineCtr<4 ; ++lineCtr) {
-		    fgets(line, sizeof(line), fp);		// Scroll to line 3, Antenna type
+	    antType = AntennaFileType(fp, ITURHFP.RXAntFilePath);
+	    if (antType < 0) {
+            fclose(fp);
+            return RTN_ERRCANTOPENRXANTFILE;
 	    }
-
-	    sscanf(line, " %d %s\n", &antType, instr);
-        rewind(fp);
 
 	    if(antType == 11) {
 		    retval = dllReadType11Func(&path->A_rx, fp, ITURHFP.silent);
@@ -695,7 +723,8 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 				    return retval;
 		    }
         } else {
-            printf("Unsuppported antenna type: %d\n",antType);
+            printf("ReadAntennaPatterns: Error unsupported antenna type %d in %.200s\n", antType, ITURHFP.RXAntFilePath);
+            fclose(fp);
             return RTN_ERRCANTOPENRXANTFILE;
         }
     } // end of the rx antenna type
@@ -715,12 +744,11 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 			}
             return RTN_ERRCANTOPENTXANTFILE;
 	    }
-        for (lineCtr = 0 ; lineCtr<4 ; ++lineCtr) {
-		    fgets(line, sizeof(line), fp);		// Antenna type
+	    antType = AntennaFileType(fp, ITURHFP.TXAntFilePath);
+	    if (antType < 0) {
+            fclose(fp);
+            return RTN_ERRCANTOPENTXANTFILE;
 	    }
-	    sscanf(line, " %d %s\n", &antType, instr);
-
-        rewind(fp);
 
 	    if(antType == 11) {
 		    retval = dllReadType11Func(&path->A_tx, fp, ITURHFP.silent);
@@ -741,7 +769,8 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 				    return retval;
 		    }
         } else {
-			printf("Unsuppported antenna type: %d\n",antType);
+			printf("ReadAntennaPatterns: Error unsupported antenna type %d in %.200s\n", antType, ITURHFP.TXAntFilePath);
+            fclose(fp);
             return RTN_ERRCANTOPENTXANTFILE;
 	    }
     }
