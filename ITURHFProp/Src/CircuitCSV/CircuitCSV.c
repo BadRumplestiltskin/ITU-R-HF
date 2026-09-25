@@ -242,9 +242,52 @@ static char *Trim(char *s) {
 }
 
 /*
+	CsvStep() - Advances the csv quote state by one character.
+
+		The one quoting rule shared by SplitCSV(), ReadRecord() and
+		CopyRecord(), per RFC 4180: a quote opens a quoted field only when it
+		is the first character of the field other than white space; inside
+		one, a doubled quote is a literal quote and a single one closes it. A
+		quote anywhere else, as in  Perth 12" dish , is an ordinary character.
+		Every quote used to toggle the state, so that one such name ran on to
+		the next quote in the file, however many rows later, and swallowed
+		every row in between. A line break or a comma separates only outside
+		an open quoted field (CSV_QUOTED); the caller tests that.
+
+		INPUT
+			int st, the state before ch; int ch
+
+		OUTPUT
+			returns the state after ch
+
+		SUBROUTINES
+			None
+*/
+enum { CSV_START, CSV_PLAIN, CSV_QUOTED, CSV_CLOSED, CSV_AFTER };
+
+static int CsvStep(int st, int ch) {
+
+	switch (st) {
+		case CSV_START:
+			if (ch == ' ' || ch == '\t') return CSV_START;
+			if (ch == '"') return CSV_QUOTED;
+			return (ch == ',') ? CSV_START : CSV_PLAIN;
+		case CSV_QUOTED:
+			return (ch == '"') ? CSV_CLOSED : CSV_QUOTED;
+		case CSV_CLOSED:	// a quote inside a quoted field: doubled, or the close
+			if (ch == '"') return CSV_QUOTED;
+			if (ch == ' ' || ch == '\t' || ch == '\r') return CSV_CLOSED;
+			return (ch == ',') ? CSV_START : CSV_AFTER;
+		default:			// CSV_PLAIN, or text after a closing quote
+			return (ch == ',') ? CSV_START : st;
+	}
+
+}
+
+/*
 	SplitCSV() - Splits one record into fields on commas.
 
-		Quoted fields are handled so that a site name may contain a comma.
+		A comma inside a quoted field (see CsvStep()) does not split.
 
 		INPUT
 			char *line		the record, modified in place
@@ -255,24 +298,25 @@ static char *Trim(char *s) {
 			returns the number of fields found
 
 		SUBROUTINES
-			Trim()
+			CsvStep(), Trim()
 */
 static int SplitCSV(char *line, char **field, int maxfields) {
 
 	int n = 0;
-	int inquote = 0;
+	int st = CSV_START;
 	char *p = line;
 
 	field[n++] = line;
 	for (; *p != '\0'; p++) {
-		if (*p == '"') inquote = !inquote;
-		else if (*p == ',' && inquote == 0) {
+		if (*p == ',' && st != CSV_QUOTED) {
 			*p = '\0';
+			st = CSV_START;
 			// Stop collecting, but still fall through to the trim below: an
 			// early return here left every field untrimmed, quotes and all.
 			if (n >= maxfields) break;
 			field[n++] = p + 1;
 		}
+		else st = CsvStep(st, *p);
 	}
 
 	for (int i = 0; i < n; i++) field[i] = Trim(field[i]);
@@ -287,24 +331,38 @@ static int SplitCSV(char *line, char **field, int maxfields) {
 		fgets() into a fixed buffer split a record longer than the buffer into
 		two rows, and a quoted field holding a newline into two as well; either
 		broke the one-row-in, one-row-out numbering. This reads up to a newline
-		that is outside quotes, growing the buffer as needed. The newline is
-		kept, as fgets() kept it. A quote left open at end of file ends the
-		record there.
+		that is outside a quoted field (see CsvStep()), growing the buffer as
+		needed. The newline is kept, as fgets() kept it.
+
+		A quoted field that runs over a line break is taken as malformed, so
+		that one bad row can never swallow the rows after it, when it is still
+		open at end of file, when it spans more than CSVMAXQLINES line breaks,
+		or when its closing quote is followed by anything but white space, a
+		comma or the end of the line (as when a stray opening quote pairs with
+		the first quote of a later row). The record is then only its first
+		line, returned as CSVBADQUOTE for the caller to report as BAD_RECORD,
+		and reading resumes at the next line. A quote left open at the end of
+		the file's last line is CSVBADQUOTE too.
 
 		INPUT
 			FILE *fp, char **buf, size_t *cap	(*buf may start NULL)
 
 		OUTPUT
-			returns TRUE with the record in *buf, FALSE at end of file, or -1
-			when memory runs out
+			returns TRUE with the record in *buf, CSVBADQUOTE with a malformed
+			record's first line in *buf, FALSE at end of file, or -1 when memory
+			runs out or the file cannot be repositioned
 
 		SUBROUTINES
-			None
+			CsvStep()
 */
+#define CSVBADQUOTE		2
+#define CSVMAXQLINES	64
+
 static int ReadRecord(FILE *fp, char **buf, size_t *cap) {
 
-	size_t n = 0;
-	int ch, inquote = 0;
+	size_t n = 0, first = 0;
+	long resume = -1;
+	int ch, st = CSV_START, lines = 0, bad = FALSE;
 
 	ch = getc(fp);
 	if (ch == EOF) return FALSE;
@@ -317,12 +375,27 @@ static int ReadRecord(FILE *fp, char **buf, size_t *cap) {
 			*cap = nc;
 		}
 		(*buf)[n++] = (char)ch;
-		if (ch == '"') inquote = !inquote;
-		else if (ch == '\n' && inquote == 0) break;
+		if (ch == '\n') {
+			if (st != CSV_QUOTED) break;
+			if (lines++ == 0) {
+				first = n;
+				resume = ftell(fp);
+			}
+			if (lines > CSVMAXQLINES) { bad = TRUE; break; }
+		}
+		else {
+			st = CsvStep(st, ch);
+			if (st == CSV_AFTER && lines > 0) { bad = TRUE; break; }
+		}
+	}
+	if (ch == EOF && st == CSV_QUOTED) bad = TRUE;
+	if (bad == TRUE && lines > 0) {
+		if (resume < 0 || fseek(fp, resume, SEEK_SET) != 0) return -1;
+		n = first;
 	}
 	(*buf)[n] = '\0';
 
-	return TRUE;
+	return (bad == TRUE) ? CSVBADQUOTE : TRUE;
 
 }
 
@@ -1497,7 +1570,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 
 	snprintf(dp, sizeof(dp), "%s", dpath);
 
-	while ((rc = ReadRecord(fin, &line, &cap)) == TRUE) {
+	while ((rc = ReadRecord(fin, &line, &cap)) > 0) {
 
 		// Test for a blank record without touching it: Trim() unquotes a FIELD
 		// in place, so running it on the whole record stripped the closing quote
@@ -1521,6 +1594,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 		nf = SplitCSV(line, field, CSVMAXFIELDS);
 		ReadCircuit(&c, field, nf, col);
 		c.row = nrow;
+		if (rc == CSVBADQUOTE) c.parsed = FALSE;	// a quote left open
 
 		memset(&r, 0, sizeof(r));
 
@@ -1598,7 +1672,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 	CopyRecord() - Copies one record from in to out, of any length.
 
 		A quoted site name may hold a newline, so a record ends only at a
-		newline outside quotes.
+		newline outside a quoted field, by the rule ReadRecord() reads with.
 
 		INPUT
 			FILE *in, FILE *out
@@ -1609,15 +1683,16 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 */
 static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 
-	int ch, inquote = 0;
+	int ch, st = CSV_START;
 	size_t j = 0;
 
 	ch = getc(in);
 	if (ch == EOF) return FALSE;
-	for (; ch != EOF && (ch != '\n' || inquote); ch = getc(in)) {
+	for (; ch != EOF && (ch != '\n' || st == CSV_QUOTED); ch = getc(in)) {
 		putc(ch, out);
-		if (ch == '"') inquote = !inquote;
-		if (ch == ',') j = 0;
+		if (ch == ',' && st != CSV_QUOTED) st = CSV_START;
+		else st = CsvStep(st, ch);
+		if (ch == ',' && st == CSV_START) j = 0;
 		else if (j + 1 < n) status[j++] = (char)ch;
 	}
 	putc('\n', out);
@@ -1940,8 +2015,12 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVOPENIN;
 	}
 
-	if (ReadRecord(fin, &line, &linecap) != TRUE) {
-		printf("CircuitCSV: Error %d %s is empty\n", RTN_ERRCSVHEADER, infile);
+	retval = ReadRecord(fin, &line, &linecap);
+	if (retval != TRUE) {
+		if (retval == CSVBADQUOTE)
+			printf("CircuitCSV: Error %d %s header has an unclosed quote\n", RTN_ERRCSVHEADER, infile);
+		else printf("CircuitCSV: Error %d %s is empty\n", RTN_ERRCSVHEADER, infile);
+		free(line);
 		fclose(fin);
 		return RTN_ERRCSVHEADER;
 	}

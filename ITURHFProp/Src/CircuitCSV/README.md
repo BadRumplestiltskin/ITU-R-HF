@@ -70,6 +70,15 @@ A row is one csv record, not one line: there is no length limit, and a quoted
 field (a site name) may contain commas, doubled quotes or line breaks. Blank
 lines are skipped and do not count as rows.
 
+Quoting follows RFC 4180: a quote opens a quoted field only as the first
+character of the field (after any spaces), so a quote inside a name, as in
+`Perth 12" dish`, is just a character. A quoted field that crosses a line break
+is taken as malformed if it is still open at the end of the file, spans more
+than 64 line breaks, or has anything but spaces after its closing quote before
+the next comma or line end. That row is then only its first line, reported
+`BAD_RECORD`, and the following lines are read as rows of their own, so one
+stray quote never swallows the rows after it.
+
 Nothing is ever dropped. A row that cannot be calculated still appears, with
 empty result fields and a `Status` saying why:
 
@@ -77,7 +86,7 @@ empty result fields and a `Status` saying why:
 |---|---|
 | `OK` | calculated normally |
 | `NO_MODE` | ran, but no propagation mode is supported; geometry columns are still filled |
-| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers), or a site name was over 255 characters |
+| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers), a site name was over 255 characters, or a quoted field was left open (see above) |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
 | `FREQ_RANGE` | every characteristic frequency fell outside P.533's 1-30 MHz, so nothing was evaluated |
