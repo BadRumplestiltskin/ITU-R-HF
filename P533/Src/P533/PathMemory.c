@@ -10,11 +10,23 @@
 static int FreeAntenna(struct Antenna *ant, int retval);
 
 /*
- * Allocates the Antenna structure (Part of the PathData struct).  This 
+ * AllocateAntennaMemory() - Allocates the Antenna structure (Part of the PathData struct).  This 
  * function is called when the antenna types have been defined which in
  * turn define the dimensions of the required data structure.
  * Only 360 azimuths by 91 elevations is accepted. Any existing pattern is
  * freed first, so the antenna must not hold uninitialised pointers.
+ *
+ *	INPUT
+ *		struct Antenna *ant - the antenna to (re)allocate; empty (NULL pointers) or allocated
+ *		int freqn - number of frequency blocks (>= 1)
+ *		int azin - number of azimuths, must be 360 (1-degree steps, 0 - 359)
+ *		int elen - number of elevations, must be 91 (1-degree steps, 0 - 90)
+ *
+ *	OUTPUT
+ *		ant->freqn, ant->freqs[freqn] (uninitialised), ant->pattern[freqn][azin][elen]
+ *		(uninitialised gains)
+ *		returns RTN_ALLOCATEP533OK (11), or RTN_ERRALLOCATEANT (137) for a bad shape (the antenna
+ *		is then untouched) or a failed allocation (the antenna is then left empty)
  */
 DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen) {
 	int m, n;
@@ -89,6 +101,14 @@ static int FreeAntenna(struct Antenna *ant, int retval) {
 /*
 	FreefoF2var() - Releases the foF2 variability array, NULL-tolerant at every
 		level, and leaves path->foF2var NULL so a second call is harmless.
+		The array is foF2var[3 seasons][24 hours][19 latitudes][3 R12 ranges][2 deciles],
+		as built by AllocatePathMemory().
+
+		INPUT
+			struct PathData *path
+
+		OUTPUT
+			path->foF2var is freed and set to NULL
 
 */
 static void FreefoF2var(struct PathData *path) {
@@ -151,14 +171,26 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	  AllocatePathMemory() - Allocates the memory necessary for the path structure. The data must be read into these structures elsewhere.
 	 
 	 		INPUT
-	 			struct PathData *path	
+	 			struct PathData *path - its array pointers need not be initialised, except that
+					the caller must not pass a path whose arrays are already allocated (they would
+					leak): foF2, M3kF2 and foF2var are overwritten, not freed
 	 		
 	 		OUTPUT
-	 			path->foF2
-	 			path->M3kF2
-	 			path->foF2var
-	 			path->dud
-	 			path->fam 
+	 			path->foF2[24][241][121][2] - foF2 map (MHz), zero-filled; [hour][longitude][latitude][R12 = 0, 100]
+	 			path->M3kF2[24][241][121][2] - M(3000)F2 map, zero-filled, same layout
+	 			path->foF2var[3][24][19][3][2] - P.1239 decile factors, zero-filled;
+					[season][local hour][latitude 0 - 90 by 5 degrees][R12 range][lower, upper decile]
+				path->A_tx, path->A_rx - set empty (pattern and freqs NULL, freqn 0); patterns are
+					allocated later by the antenna readers
+	 			path->noiseP - the P372 noise arrays (dud, fam, ...) via dllAllocateNoiseMemory()
+				returns RTN_ALLOCATEP533OK (11) on success; RTN_ERRALLOCATEFOF2 (131),
+				RTN_ERRALLOCATEM3KF2 (132) or RTN_ERRALLOCATEFOF2VAR (133) on a failed allocation
+				(everything built so far is then released); RTN_ERRP372DLL if the P372 library
+				cannot be loaded, or RTN_ERRALLOCATENOISE if its allocation fails (the maps are
+				then kept, and FreePathMemory() releases them)
+
+			NOTES
+				Loads the P372 library (LoadP372()) the first time it is called in a process. 
 	 
 	 		SUBROUTINES
 	 			None
@@ -355,13 +387,21 @@ DLLEXPORT void FreeIonMaps(struct PathData *path) {
 DLLEXPORT int FreePathMemory(struct PathData *path) {	
 	/*
 
-	 	FreePath() - Frees the memory that was dynamically (m) allocated for the structure PathData path
+	 	FreePathMemory() - Frees the memory that was dynamically (m) allocated for the structure PathData path
 	 
 	 		INPUT
-	 			struct PathData *path
+	 			struct PathData *path - as left by AllocatePathMemory() and the readers; a foF2 or
+					M3kF2 pointer that is NULL (the path used the IonMapGet() cache) is skipped
 	 
 	 		OUTPUT
-	 			void
+	 			path->foF2, path->M3kF2, path->foF2var, the antenna patterns and the noise arrays
+				are released; the pointers are set to NULL (noise arrays: as dllFreeNoiseMemory() leaves them)
+				returns RTN_PATHFREED (12), or the P372 FreeNoiseMemory() code if that is not
+				RTN_NOISEFREED
+
+			NOTES
+				Calls dllFreeNoiseMemory(), so the P372 library must have been loaded
+				(AllocatePathMemory() does this).
 	 
 	 		SUBROUTINES
 	 			None

@@ -220,32 +220,39 @@
  *
  */
 
+// A geographic position, in radians (see "Conventions" above).
 struct Location {
-	double lat, lng;
+	double lat, lng;	// latitude (north +), longitude (east +), radians
 };
 
+// Solar geometry at a point for the middle of the month and a UTC hour, set by SolarParameters().
+// The long model uses sza for equation (34) of P.533-14 and the short model for chi_j of equation (20).
 struct SolarParameters {
-	double ha;		// hour angle (radians)
-	double sha;		// Sunrise/sunset hour angle (radians)
+	double ha;		// hour angle (radians), from the true solar time
+	double sha;		// Sunrise/sunset hour angle (radians); PI in polar day, 0 in polar night
 	double sza;		// Solar zenith angle (radians)
 	double decl;	// Solar declination (radians)
 	double eot;		// Equation of time (minutes)
-	double lsr;		// local sunrise (hours)
-	double lsn;		// local solar noon (hours)
-	double lss;		// local sunset (hours)
+	double lsr;		// local sunrise (UTC hours, 0 - 24)
+	double lsn;		// local solar noon (UTC hours, 0 - 24)
+	double lss;		// local sunset (UTC hours, 0 - 24)
 };
 
+// A control point (P.533-14 Table 1) or, in the long model and PenetrationPoints(), a 90 km
+// penetration point. The ionospheric and solar values are for the hour last evaluated.
 struct ControlPt {
-	struct Location L;
+	struct Location L;	// Position (radians)
 	double distance;// This is the distance (km) from the transmitter to the CP and not the hop range
 	double foE;		// E layer critical frequency (MHz)
 	double foF2;	// F2 layer critical frequency (MHz)
-	double M3kF2;	// F2 layer critical frequency @ 3000 km (MHz)
-	double dip[2];	// Magnetic dip (radians)
-	double fH[2];	// Gyrofrequency (MHz)
-	double ltime;	// Local time (hours)
-	double hr;		// Mirror reflection point (km)
-	double x;		// foE/foF2 ratio used in the calculation of the F2MUF
+	double M3kF2;	// M(3000)F2, the F2-layer propagation factor for 3000 km (dimensionless)
+	double dip[2];	// Magnetic dip (radians), [HR100km] and [HR300km]
+	double fH[2];	// Gyrofrequency (MHz), [HR100km] and [HR300km]
+	double ltime;	// Despite the name, the UTC hour the point was evaluated for (hours);
+					// LocalMeanTime() gives the local mean time
+	double hr;		// Mirror reflection height (km); 90 for penetration points
+	double x;		// foF2/foE, or 2 whichever is larger: x of P.533-14 equations (5) and (6)
+					// (set by CalcB() in MUFBasic.c; the section 5.1 x = foF2/foE is computed locally)
 	// Solar parameters
 	struct SolarParameters Sun;
 };
@@ -264,17 +271,19 @@ struct Mode {
 	double deltal;	// Lower decile for the MUF calculations
 	double deltau;	// Upper decile for the MUF calculations
 	// Other parameters associated with the mode
-	double hr;		// Reflection height for the mode
-	double fs;		// E-Layer screening frequency for F2 modes only(MHz)
-	double Lb;		// < 9000 km path basic loss
-	double Ew;		// < 9000 km field strength(dB(1 uV/m))
-	double ele;		// Elevation angle
-	double Prw;		// Receiver power (dBW)
-	double Grw;		// Receive antenna gain (dBi)
-	double tau;		// Time delay
-	int MC;
+	double hr;		// Mirror reflection height for the mode (km)
+	double fs;		// E-Layer screening frequency for F2 modes only (MHz), P.533-14 equation (11)
+	double Lb;		// <= 9000 km ray path basic transmission loss (dB), equation (18)
+	double Ew;		// <= 9000 km field strength (dB(1 uV/m)), equation (17)
+	double ele;		// Elevation angle (radians), equation (13)
+	double Prw;		// Available receiver power (dBW), equation (43)
+	double Grw;		// Receive antenna gain (dBi) at ele
+	double tau;		// Time delay (ms), equation (47)
+	int MC;			// TRUE if the mode is included in Es (equation (28)), set by
+					// MedianSkywaveFieldStrengthShort()
 };
 
+// An antenna beam direction and gain. Not used anywhere else in this repository.
 struct Beam {
 	double azm;		// Azimuth
 	double ele;		// Elevation angle
@@ -316,13 +325,15 @@ struct PathData {
 
 	int year;
 	int month;			// Note: This is 0 - 11
-	int hour;			// Note: This is an hour index 0 - 23
-						//       Where 1 - 24 UTC is required add one and rollover
-	int SSN;			// 12-month smoothed sun sport number a.k.a. R12
+	int hour;			// Note: This is an hour index 0 - 23: path->hour = h means h:00 UTC.
+						//       The ionospheric maps and every 24-hour array in the engine
+						//       (fBM[][t], fL[t], CP[][t]) use the same convention.
+	int SSN;			// 12-month smoothed sun spot number a.k.a. R12 (>= 0, no upper limit;
+						// foF2 and M(3000)F2 limit it to MAXSSN themselves)
 
-	int Modulation;		// Modulation flag
+	int Modulation;		// Modulation flag: ANALOG or DIGITAL
 
-	int SorL;			//  Short or long path switch
+	int SorL;			//  Short or long path switch: SHORTPATH or LONGPATH great circle
 
 	double frequency;	// Frequency (MHz)
 	double BW;			// Bandwidth (Hz)
@@ -334,6 +345,7 @@ struct PathData {
 	double SIRr;		// Required signal-to-interference ratio (dB)
 
 	// Parameters for approximate basic circuit reliability for digital modulation
+	// (used by CircuitReliability() only when both are non-zero)
 	double F0;			// Frequency dispersion at a level -10 dB relative to the peak signal amplitude
 	double T0;			// Time spread at a level -10 dB relative to the peak signal amplitude
 
@@ -342,8 +354,8 @@ struct PathData {
 	double TW;			// Time window (msec)
 	double FW;			// Frequency window (Hz)
 
-	struct Location L_tx, L_rx;
-	struct Antenna A_tx, A_rx;
+	struct Location L_tx, L_rx;	// Transmitter and receiver locations (radians)
+	struct Antenna A_tx, A_rx;	// Transmit and receive antenna patterns (dBi)
 
 	// End User Provided Input *********************************************************************
 
@@ -355,20 +367,27 @@ struct PathData {
 	// current month. If the month changes foF2 and M3kF2 will have to be reloaded, while the pointer
 	// foF2var does not since it is for the entire year
 	// Pointers to array extracted from the coefficients in ~/IonMap directory
-	float ****foF2;			// foF2
+	// [hour 0-23 (h:00 UTC)][longitude 0-240, 1.5 deg from 180 W][latitude 0-120, 1.5 deg from 90 S][R12 = 0, 100]
+	float ****foF2;			// foF2 (MHz)
 	float ****M3kF2;		// M(3000)F2
-	// Pointer to array extracted from the file "P1239-2 Decile Factors.txt"
-	double *****foF2var;	// foF2 Variablity from ITU-R P.1239-2 TABLE 2 and TABLE 3
+	// Pointer to array extracted from the file "P1239-3 Decile Factors.txt"
+	// [season WINTER/EQUINOX/SUMMER][local hour 0-23][latitude 0-90 by 5 deg][R12 < 50, 50-100, > 100][DL, DU]
+	double *****foF2var;	// foF2 Variablity from ITU-R P.1239 TABLE 2 and TABLE 3
 
  	// End Array Pointers *************************************************************************
 
 	// Calculated Parameters **********************************************************************
-	int season;			// This is used for MUF calculations
+	int season;			// P.1239 season index (WINTER, EQUINOX, SUMMER) at the mid-path, for the
+						// foF2 decile factors and P.1240 Rop in the MUF calculations
 	double distance;	// This is the great circle distance (km) between the rx and tx
-	double ptick;		// Slant range
-	double dmax;		// d sub max (km) determined as a function of the midpoint of the path and other parameter
-	double B;			// Intermediate value when calculating dmax also determined at midpoint of the path
-	double ele;			// For paths that are longer than 9000 km this is the composite elevation angle
+	double ptick;		// Virtual slant range p' (km), equation (19): of the last short-path mode
+						// calculated, replaced for D >= 7000 km by the long-model (fM hop) value
+	double dmax;		// d sub max (km), equation (5) at the midpoint of the path, limited to 4000 km
+	double B;			// Intermediate value when calculating dmax, equation (6). Initialised to 99.9
+						// by InitializePath(); no routine currently stores a value here
+	double ele;			// Elevation angle (radians): of the dominant mode for D <= 7000 km, otherwise
+						// that of the largest 0 - 8 degree receive gain; for D > 9000 km the long
+						// model first stores the fM hop elevation, which the receive gain replaces
 
 	// MUFs
 	double BMUF;	// Basic MUF (MHz)
@@ -381,29 +400,31 @@ struct PathData {
 	// Highest probable frequency, HPF, is 10% MUF (MHz)
 	// Optimum working frequency, FOT, is 90% MUF (MHz)
 
-	int n0_F2;		// Lowest order F2 mode ( 0 to MAXF2MODES )
-	int n0_E;		// Lowest order E mode ( 0 to 2 )
+	int n0_F2;		// Index (hops - 1) of the lowest-order F2 mode (0 to MAXN0F2), or NOLOWESTMODE
+	int n0_E;		// Index (hops - 1) of the lowest-order E mode, or NOLOWESTMODE
 
 	// Signal powers
-	double Es;	// The overall resultant equivalent median sky-wave field strength for path->distance < 7000 km
-	double El;	// The overall resultant median field strength for paths->distance > 9000 km
-	double Ei;	// For paths->distance between 7000 and 9000 km the interpolated resultant median field strength
+	// All field strengths in dB(1 uV/m); TINYDB (-307) means no mode.
+	double Es;	// The overall resultant equivalent median sky-wave field strength for path->distance <= 9000 km, equation (28)
+	double El;	// The overall resultant median field strength for paths->distance >= 7000 km, equation (39)
+	double Ei;	// For paths->distance between 7000 and 9000 km the interpolated resultant median field strength, equation (42)
 	double Ep;	// The Path Field Strength (dBu) Depending on the path distance this is either Es, El or Ei.
-	double Pr;	// Median available receiver power
+	double Pr;	// Median available receiver power (dBW), section 6
 
 	// Short path (< 7000 km) parameters
-	double Lz;		// 	"Not otherwise included" loss
+	double Lz;		// 	"Not otherwise included" loss (dB), 8.72
 
 	// Long path (> 9000 km) parameters
-	double E0;		// The free-space field strength for 3 MW EIRP
-	double Gap;		// Focusing on long distance gain (dB)
-	double Ly;		// "Not otherwise included" loss
-	double fM;		// Upper reference frequency
-	double fL;		// Lower reference frequency
-	double F;		// f(f, fH, fL, fM) in eqn 28 P.533-12
-	double fH;		// Mean gyrofrequency
-	double Gtl;		// Largest antenna gain in the range 0 to 8 degrees
-	double K[2];	// Correction factor
+	double E0;		// The free-space field strength for 3 MW EIRP (dB(1 uV/m)), equation (40)
+	double Gap;		// Focusing on long distance gain (dB), equation (41), at most 15 dB
+	double Ly;		// "Not otherwise included" loss (dB), -0.14
+	double fM;		// Upper reference frequency, operational MUF (MHz), equation (31)
+	double fL;		// Lower reference frequency, LUF (MHz), equations (33) - (38), current hour
+	double F;		// The factor 1 - [...] multiplying E0 in equation (39) P.533-14
+					// (a function of f, fH, fL and fM; eqn 28 in P.533-12)
+	double fH;		// Mean gyrofrequency (MHz) at the two Table 1a) control points, 300 km
+	double Gtl;		// Largest tx antenna gain in the range 0 to 8 degrees (dBi)
+	double K[2];	// Correction factor K, equation (32), at T + dM/2 [0] and R - dM/2 [1]
 
 	// Signal-to-noise ratio
 	double SNR;	 // Median resultant signal-to-noise ratio (dB) for bandwidth b (Hz)
@@ -443,13 +464,14 @@ struct PathData {
 	// Transmitter EIRP
 	double EIRP;
 
-	// There are a maximum of 5 CP from P.533-12 Table 1d)
+	// There are a maximum of 5 CP from P.533-14 Table 1d)
 	// See #define above for "Control point index names for readability"
 	struct ControlPt CP[5];
 
-	// ITU-R P.533-12 5.2.1 modes considered "Up to three E modes (for paths up to 4000 km) and
+	// ITU-R P.533-14 5.2.1 modes considered "Up to three E modes (for paths up to 4 000 km) and
 	// up to six F2 modes are selected"
-	// In part three of P.533-12 it would have been easier to make all nine modes in one array for digitally
+	// Slot i holds the (i+1)-hop mode; see MAXEMDS and MAXF2MDS above.
+	// In part three of P.533-14 it would have been easier to make all nine modes in one array for digitally
 	// modulated systems. To increase the readability and because the method often treats layers differently
 	// the modes are separated by layer.
 	struct Mode Md_F2[MAXF2MDS];
@@ -457,8 +479,9 @@ struct PathData {
 
 	// The following are conveniences for examining data
 	// The variables *DMptr and DMidx are set in MedianAvailableReceiverPower()
-	struct Mode *DMptr; // Pointer to the dominant mode
-	int DMidx;			// Index to the dominant mode (0-2) E layer (3-8) F2 layer
+	struct Mode *DMptr; // Pointer to the dominant mode (largest Prw), D <= 7000 km only
+	int DMidx;			// Index to the dominant mode: E slot (0 to MAXEMDS-1) or MAXEMDS + F2 slot;
+						// NODOMINANTMODE (99) if none
 
 	// Noise Structure
 	struct NoiseParams noiseP;
@@ -480,8 +503,8 @@ struct PathData {
 // Any subroutines prototyped here are used external to the file that contains them. There may be local subroutines in
 // each program file, consult them for more details. These subroutines were developed as the code was being written
 // in the order necessary. If the order is maintained then the correspondence will be be preserved between the code and
-// the recommendation ITU-R P.533-12. In that regard the order of execution of the subroutines is important since
-// calculations in P.533-12 build on one another.
+// the recommendation ITU-R P.533-14. In that regard the order of execution of the subroutines is important since
+// calculations in P.533-14 build on one another.
 
 // CalculateCPParameters.c Prototype
 void CalculateCPParameters(struct PathData *path, struct ControlPt *here);
@@ -512,6 +535,7 @@ DLLEXPORT int P533(struct PathData *path);
 int LoadP372(void);
 // Joins a data directory and a file name into a bounded buffer; see P533.c.
 DLLEXPORT int BuildDataPath(char *out, size_t n, const char *dir, const char *file);
+// Returns the version string P533VER.
 DLLEXPORT char const * P533Version(void);
 
 // Geometry.c Prototypes
@@ -566,14 +590,21 @@ void MedianAvailableReceiverPower(struct PathData *path);
 void CircuitReliability(struct PathData *path);
 
 // PathMemory.c prototype
+// Allocates the ionospheric maps, foF2 variability array and noise arrays of a path
+// (RTN_ALLOCATEP533OK on success); FreePathMemory() releases them (RTN_PATHFREED).
 DLLEXPORT int AllocatePathMemory(struct PathData *path);
 DLLEXPORT int FreePathMemory(struct PathData *path);
+// Allocates an antenna pattern of freqn x 360 x 91 (RTN_ALLOCATEP533OK or RTN_ERRALLOCATEANT).
 DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen);
 
 // InputDump. c Prototype
 DLLEXPORT int InputDump(struct PathData *path);
 
 //Antenna file AND COEFFICIENT routines
+// ReadType11/13/14 read VOACAP antenna files from an open FILE (RTN_READANTENNAPATTERNSOK on
+// success); bearing is in radians. IsotropicPattern() sets a constant gain G (dBi).
+// ReadIonParametersBin()/ReadIonParametersTxt() read the monthly ionos MM .bin/.txt maps
+// (RTN_READIONPARAOK); month is the 0-based index. See ReadType13.c and ReadIonParameters.c.
 DLLEXPORT int ReadType11(struct Antenna *Ant, FILE *fp, int silent);
 DLLEXPORT int ReadType13(struct Antenna *Ant, FILE *fp, double bearing, int silent);
 DLLEXPORT int ReadType14(struct Antenna *Ant, FILE *fp, int silent);
@@ -591,10 +622,13 @@ DLLEXPORT void IonMapFree(void);
 // Releases only path->foF2/M3kF2, so the path can instead point at the cache.
 DLLEXPORT void FreeIonMaps(struct PathData *path);
 DLLEXPORT int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int silent) ;
+// Reads the P.1239 foF2 decile factors into path->foF2var (RTN_READP1239OK).
 DLLEXPORT int ReadP1239(struct PathData *path, const char * DataFilePath);
+// Sets one gain (dBi) at a whole-degree azimuth and elevation of the tx (TXorRX == 0) or rx pattern.
 DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value);
 
 //Testing Routines
+// Returns sizeof(struct PathData), for checking a foreign-language copy of the layout.
 DLLEXPORT int sizeofPathDataStruct(void);
 
 

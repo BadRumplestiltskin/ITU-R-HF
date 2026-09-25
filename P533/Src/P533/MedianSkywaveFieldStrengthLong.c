@@ -62,24 +62,68 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 
 	/*
 	 
-	  MedianSkywaveFieldStrengthLong() - Determines the signal strength for paths greater than 9000 km in accordance with 
-	 		P.533-12 Section 5.3 "Paths longer than 7000 km". This routine is patterned after the FTZ() method found in REC533(). 
-	 		The basis of this routine here and in the algorithm in P.533-12 is from work by	Thomas Dambolt and Peter Suessman. 
-	 
+	  MedianSkywaveFieldStrengthLong() - Determines the median field strength El (called Etl in the text) for
+	 		paths of 7000 km and longer in accordance with P.533-14 section 5.3 "Paths longer than 7 000 km".
+			For D > 9000 km this is the only method; for 7000 <= D <= 9000 km El is later interpolated with Es
+			by Between7000kmand9000km() (section 5.4). This routine is patterned after the FTZ() method found
+			in REC533(). The basis of this routine here and in the algorithm in P.533-14 is from work by
+			Thomas Damboldt and Peter Suessmann.
+
+			Steps, all in P.533-14 section 5.3:
+			  - fM geometry (section 5.3.1): the fewest equal hops dM <= 4000 km, elevation angle from
+			    equation (13) with hr = 300 km; hops are added until the angle is at least 3 degrees
+			    (MINELEANGLEL). Control points T + dM/2 and R - dM/2 (Table 1a) with d0 = dM).
+			  - fL geometry (section 5.3.2): the fewest equal hops dL <= 3000 km, hr = 300 km, two 90 km
+			    penetration points per hop.
+			  - 24 hours of control and penetration point parameters (foF2, M(3000)F2, fH, solar zenith
+			    angle), used by FindMUFsandfM() (equations (29) - (32)) and FindfL() (equations (33) - (38)).
+			  - p' from equation (19) with the fM hops dM and elevation angle (equation (13), hr = 300 km),
+			    E0 from equation (40), Gtl, Gap from equation (41) limited to 15 dB, Ly = -0.14 dB, and
+			    finally Etl from equation (39).
+
 	 		INPUT
 	 			struct PathData *path
-	 
+					path->distance - path length D (km); nothing is done for D < 7000 km
+					path->L_tx, path->L_rx - terminal locations (radians)
+					path->hour - hour index, path->hour = h means h:00 UTC
+					path->month - 0-based month index
+					path->SSN - R12 (not limited to MAXSSN in equation (33))
+					path->frequency - f (MHz), path->txpower - Pt (dB(1 kW)), path->A_tx
+					path->CP[MP] - mid-path point (used for the azimuth of Table 3 and Aw of Table 5)
+
 	 		OUTPUT
-	 			path->El - Median field strength (dB(1uV/m))
-	 
+	 			path->El - Median field strength Etl (dB(1 uV/m)), equation (39)
+				path->ptick - virtual slant range p' (km), equation (19), fM hop geometry
+				path->E0 - free-space field strength for 3 MW e.i.r.p. (dB(1 uV/m)), equation (40)
+				path->Gtl - largest tx antenna gain at 0 - 8 degrees elevation (dBi)
+				path->Gap - focusing gain (dB), equation (41), limited to 15 dB
+				path->Ly - -0.14 dB (NOIL)
+				path->fH - mean of fH (300 km) at the two Table 1a) control points at the current hour (MHz)
+				path->F - the dimensionless factor 1 - [...] that multiplies E0 in equation (39)
+				path->fM, path->K[] (FindMUFsandfM()), path->fL (FindfL())
+				For D > 9000 km only: path->ele (fM hop elevation angle, radians), path->dmax = 4000,
+				path->BMUF, MUF50/10/90, OPMUF/10/90 (FindMUFsandfM()), and path->CP[Td02], CP[Rd02]
+				(the T + dM/2 and R - dM/2 control points), CP[T1k], CP[R1k] (the first and last 90 km
+				penetration points), all at the current hour. See the note on the control point indices
+				in P533.h.
+
+			NOTES
+				path->hour is temporarily set to each of 0 - 23 while the 24 hours of point parameters are
+				calculated, and restored afterwards.
+				Equation (34) is evaluated with the full solar geometry of SolarParameters() (declination
+				and hour angle for the middle of the month, including the equation of time), not with the
+				Table 4 / equation (35) approximations ("can be approximated by"); owner's ruling.
+
 	 		SUBROUTINES
 				ElevationAngle()
+				IncidenceAngle()
 				ZeroCP()
 				GreatCirclePoint()
 				CalculateCPParameters()
 				AntennaGain08()
-				findfM()
-				findfL()
+				FindMUFsandfM()
+				FindfL()
+				CopyCP()
 
 	 */
 
@@ -184,7 +228,7 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
            Both the calculation of the upper and lower reference frequencies, fM and fL respectively,
            require 24 hours of data. 
            For the calculation of fM, the 24 hours of data are required at the control points described in 
-           Table 1a) P.533-12. 
+           Table 1a) P.533-14.
            For the calculation of fL, the 24 hours of data are required at the 90 km penetration points. There are 
            potentially 13 hops tx to rx since the circumference of the earth is 40,075.16 and the hop length 
            for this routine is 3000. For every hop there are two penetrations of the 90 km D layer.
@@ -370,29 +414,52 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 
 	/*
 	 
-	  FindfM() Finds the upper reference frequency, fM, from 24 hours of calculated MUFs.
-		Determines the the basic and operation MUFs for the long path. This routine also
-		finds the 10% and 90% decile values for the MUF
-	 
+	  FindMUFsandfM() Finds the upper reference frequency, fM, from 24 hours of calculated basic MUFs.
+		Determines the basic and operational MUFs for the long path. This routine also
+		finds the 10% and 90% decile values for the MUF.
+		P.533-14 section 5.3.1: at each of the two Table 1a) control points (T + dM/2, R - dM/2)
+			f4 = 1.1 foF2 M(3000)F2,  fz = foF2 + fH/2                        (text below eq. (29))
+			fBM = fz + (f4 - fz) fD                                              equation (29)
+			fD = polynomial in dM with the coefficients C0 - C6                  equation (30)
+			fM = K fBM                                                           equation (31)
+			K = 1.2 + W fBM/fBM,noon + X[(fBM,noon/fBM)^(1/3) - 1] + Y[fBM,min/fBM,noon]^2   equation (32)
+		with W, X, Y from Table 3, linearly interpolated in the azimuth of the great-circle path
+		between the East-West and North-South values. The lower fM of the two control points is the
+		path fM; the lower fBM is the path basic MUF.
+
 	 		INPUT
 	 			struct PathData *path
-	 			struct ControlPt CP[MAXCP][24] - 24 hours of control point data
-	 			int hops - Number of hops
-				double dh - hop length
-	 
+					path->hour - current hour index (h:00 UTC)
+					path->CP[MP].L, path->L_rx - for the azimuth at the path centre
+					path->distance - D (km)
+	 			struct ControlPt CP[MAXCP][24] - 24 hours of control point data; CP[TdM2][t] and CP[RdM2][t]
+						must hold foF2 (MHz), M(3000)F2 and fH[HR300km] (MHz) for t:00 UTC
+	 			int hops - Number of hops (unused)
+				double dM - fM hop length dM (km)
+
 	 		OUTPUT
-	 			path->BMUF
-				path->MUF50
-				path->MUF10
-				path->MUF90
-				path->OPMUF
-				path->OPMUF10 
-				path->OPMUF90
-				path->fM
+				path->K[0], path->K[1] - K at T + dM/2 and R - dM/2, equation (32)
+				path->fM - operational MUF fM (MHz): min over the two points of K fBM at the current hour
+			  Only when path->distance > 9000 km:
+	 			path->BMUF, path->MUF50 - lower fBM of the two points at the current hour (MHz)
+				path->MUF10, path->MUF90 - MUF50 times the P.1239-4 Table 3 / Table 2 decile factors
+				path->OPMUF - fM (MHz)
+				path->OPMUF10, path->OPMUF90 - fM times the same decile factors
+			  The decile factors are looked up at the local mean time and latitude of the control point
+			  with the lower fBM (P.533-14 sections 3.6 and 3.7).
+
+			NOTES
+				fBM,noon is fBM at the whole UTC hour nearest 12 - longitude/15 (the local noon of
+				equation (35) at the control point); fBM,min is the lowest of the 24 hourly values.
+				fBMmin starts at 100 MHz, so it can never exceed 100 MHz.
+				The azimuth used is the bearing from the path mid-point to the receiver; it is folded
+				so that 0 is East-West and PI/2 North-South before the linear interpolation.
+				For 7000 <= D <= 9000 km the MUFs are left to MUFBasic() and the other Part 1 routines.
 
 			SUBROUTINES
 				Bearing()
 				FindfoF2var()
+				LocalMeanTime()
 	 */
 
 	int t;					// Local time counter
@@ -407,7 +474,7 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 	int decile;				// decile flag
 	int smallerCP;			// Index that indicates the control point where the smaller basic MUF 
 
-	double fBMmin[2];		// The lowest value of f4 in 24 hours at control points
+	double fBMmin[2];		// The lowest value of fBM in 24 hours at control points (fBM,min)
 	
 	// Values used in the determination of K
 	double W[2] = {0.1, 0.2}; 
@@ -575,19 +642,41 @@ void FindfL(struct PathData *path, struct ControlPt CP[MAXCP][24], int hops, dou
 
 	/*
 	 
-	 	FindfL() - Determines the lower reference frequency from 24 hours of solar zenith angles.
-	 
+	 	FindfL() - Determines the lower reference frequency fL (the LUF) from 24 hours of solar zenith
+			angles at the 90 km penetration points. P.533-14 section 5.3.2:
+			  fL = (5.3 [ (1 + 0.009 R12) sum_m cos^0.5(chi) / (cos(i90) ln(9.5e6/p')) ]^0.5 - fH)(Aw + 1)
+			                                                                            equation (33)
+			  cos(chi) from equation (34), evaluated by SolarParameters() with the full solar geometry
+			  (owner's ruling: Table 4 and equation (35) are approximations);
+			  Aw from Table 5 (WinterAnomaly());
+			  night-LUF fLN = sqrt(D/3000)                                             equation (36)
+			  each hour takes the larger of equation (33) and fLN;
+			  the day-to-night transition hour tr and the decay of equations (37) and (38), with
+			  e^-0.23 = 0.7945; a recalculated value replaces the initial one only if larger.
+			The value for the current hour, fL[path->hour], is returned in path->fL.
+
 	 		INPUT
 	 			struct PathData *path
-	 			struct ControlPt CP[MAXCP][24] - 24 hours of control point data including solar zenith angles
-	 			int hops - Number of hops
-	 			double dh - Hop distance
-	 			double ptick - Slant range
-	 			double fH - Mean gyrofrequency
-	 			double i90 - Incident angle at 90 km
-	 
+					path->distance - D (km), path->SSN - R12 (not limited), path->month - 0-based month,
+					path->hour - current hour index (h:00 UTC), path->CP[MP].L.lat - for Aw
+	 			struct ControlPt CP[MAXCP][24] - 24 hours of penetration point data; CP[i][t].Sun.sza is the
+						solar zenith angle (radians) of point i at t:00 UTC, for i = 0 .. 2*hops+1
+	 			int hops - Number of fL hops minus one (nL); there are 2*(hops+1) penetration points
+	 			double dh - Hop distance (unused)
+	 			double ptick - virtual slant range p' (km). The caller passes the fM hop value (equation (19)
+						with dM); the text only says "p': slant path length".
+	 			double fH - Mean gyrofrequency at the two Table 1a) control points (MHz)
+	 			double i90 - angle of incidence at 90 km (radians) for the fL hops
+
 	 		OUTPUT
-	 			return fL the upper reference frequency
+	 			path->fL - the lower reference frequency (MHz) for the current hour (nothing is returned)
+
+			NOTES
+				A penetration point contributes to the sum only for 0 < chi < 90 degrees (the text sets
+				cos^0.5 to zero for chi > 90 degrees).
+				tr is the first hour (searching from 0:00 UTC, with wrap-around) where
+				fL[tr-1] >= 2 fLN and fL[tr] <= 2 fLN; only one transition is treated. At night the sum
+				is 0, equation (33) gives -fH (Aw + 1) < 0, and the hour takes fLN.
 	 
 			SUBROUTINE
 				WinterAnomaly()
@@ -722,16 +811,22 @@ double WinterAnomaly(double lat, int month) {
 
 	/*
 
-	  WinterAnomaly() calculates the winter anomaly factor for long paths (> 9000 km).
-	 		This function uses the Table 5 P.533-12 to find Aw for any latitude.
-	 		Values other than 60 degrees latitude are determined by interpolation.
-	 
+	  WinterAnomaly() calculates the winter anomaly factor Aw for the long path model (section 5.3.2,
+			equation (33)). This function uses Table 5 of P.533-14 (values at 60 degrees geographic
+			latitude, by month and hemisphere) to find Aw for any latitude. The text: Aw is "unity for
+			geographic latitudes 0 to 30 degrees and at 90 degrees, and reaches the maximum values given
+			in Table 5 at 60 degrees. The values at intermediate latitudes are determined through linear
+			interpolation." Here the value returned is on the scale of Table 5, so the factor (Aw + 1) of
+			equation (33) is 1 at 0 - 30 and at 90 degrees: Aw is 0 there and is interpolated linearly
+			to the Table 5 value at 60 degrees.
+
 	 		INPUT
-	 			double lat - Latitude of the point of interest
-	 			double month - The month of interest
-	 
+	 			double lat - Geographic latitude of the path mid-point (radians, south negative);
+						the hemisphere row of Table 5 is chosen by its sign (0 counts as northern)
+	 			int month - 0-based month index (0 = January)
+
 	 		OUTPUT
-	 			return Aw the interpolated winter anomaly factor 
+	 			return Aw the interpolated winter anomaly factor (dimensionless, 0 - 0.30)
 	 
 			SUBROUTINES
 				None
@@ -786,13 +881,19 @@ double AntennaGain08(struct PathData path, struct Antenna Ant, int direction, do
 			0 and 8 degrees should not be altered under the assumption that it is improbable that the 
 			antenna gain determined by the proceedure would be less than 3 degrees. 
 
+			Used for Gtl in equation (39) (P.533-14 section 5.3.3, "largest value of transmitting
+			antenna gain at the required azimuth in the elevation range 0 to 8 degrees") and for Grw
+			beyond 7000 km (section 6). The gain is sampled at the whole degrees 0, 1, ..., 8 only.
+
 			INPUT
-				struct PathData path
-				struct Antenna Ant
-				int direction
+				struct PathData path - supplies the terminal locations, path.SorL and path.frequency
+				struct Antenna Ant - the antenna pattern (dBi)
+				int direction - TXTORX (azimuth from the transmitter) or RXTOTX (from the receiver)
+				double *elevation - receives the elevation (radians, a whole degree) of the maximum;
+						left unchanged if no sample exceeds TINYDB
 
 			OUTPUT
-				largest antenna gain in the range 0 to 8 degrees elevation
+				returns the largest antenna gain in the range 0 to 8 degrees elevation (dBi)
 
 			SUBROUTINES
 				AntennaGain()
@@ -823,6 +924,18 @@ double AntennaGain08(struct PathData path, struct Antenna Ant, int direction, do
 }
 
 // Testing
+/*
+	PrintControlPointData() - Diagnostic print of one control or penetration point, used only when
+		BARF or BARFCP is TRUE. Not part of the Recommendation.
+
+		INPUT
+			struct ControlPt CP - the point
+			int i - its index in the local CP[][] array (TdM2 and RdM2 are labelled as such)
+			int j - the hour index (j:00 UTC)
+
+		OUTPUT
+			None (writes to stdout)
+*/
 void PrintControlPointData(struct ControlPt CP, int i, int j) {
 
 	double tz, ltime;
@@ -870,15 +983,16 @@ void PrintControlPointData(struct ControlPt CP, int i, int j) {
 void CopyCP(struct ControlPt thisCP, struct ControlPt *thatCP) {
 	/*
 
-	  CopyCp() Copies one control point to another for the situation where they can not point
-	        to the same memeory location.
+	  CopyCP() Copies one control point to another for the situation where they can not point
+	        to the same memory location. Every member of struct ControlPt is copied (L, distance,
+			foE, foF2, M3kF2, dip[], fH[], ltime, hr, x and all of Sun).
 	 
 	 		INPUT
 	 			struct ControlPt thisCP - The source control point that contains the information to copy 
-	 			struct ControlPt thatCP - The target conntrol point that will be coppied to. 
-	 
+	 			struct ControlPt *thatCP - The target control point that will be copied to.
+
 	 		OUTPUT
-	 			None 
+	 			*thatCP is overwritten
 	 
 			SUBROUTINES
 				None
@@ -918,6 +1032,10 @@ void CopyCP(struct ControlPt thisCP, struct ControlPt *thatCP) {
 
 
 // Testing
+// Diagnostic helpers for PrintControlPointData(); not part of the Recommendation.
+// degrees(), minutes() and seconds() split a coordinate in decimal degrees into the whole
+// degrees (signed) and the magnitudes of the whole minutes and seconds.
+// hrs() and mns() split a time in decimal hours into whole hours (mod 24) and minutes.
 int degrees(double coord) { // Returns the degrees of coordinates
 	return (int)coord;
 }
