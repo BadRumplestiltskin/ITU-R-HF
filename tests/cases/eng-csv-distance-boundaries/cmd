@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o o.csv -d "$P533DATA/" && awk -v show="Circuit#,Dist:0,Mode,BUF:1,Status" -v mono=Dist -f "$CASE/../eng-lib/csv.awk" o.csv > out && cat out

@@ -1,0 +1,4 @@
+# Exactly on the 2000/4000/7000/9000 km model boundaries. Which side a
+# float lands on can differ by platform, so only the distance and the
+# absence of NaN/inf/sentinels are asserted here; the +-1 km rows in
+# eng-csv-distance-boundaries pin the behaviour either side.

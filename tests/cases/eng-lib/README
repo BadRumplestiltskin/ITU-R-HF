@@ -1,0 +1,16 @@
+Shared helpers for the eng-* cases (no cmd file, so cases.sh skips this
+directory). Cases use them as "$CASE/../eng-lib/<file>".
+
+csv.awk   checks a CircuitCSV output file and prints selected columns rounded.
+          -v show="Col:decimals,Col,..."  columns to print (no decimals = as is)
+          -v mono=Col                     Col must not decrease down the file
+          Prints BAD lines for NaN/inf, the 99.9 sentinel, magnitudes over 1e6
+          and unknown Status values; cases reject "BAD".
+prop.awk  checks the "Calculated Parameters" block of an ITURHFProp report:
+          BAD for NaN/inf or the 99.9 sentinel, then prints the requested
+          1-based columns rounded: -v show="4:0,16,..."
+          It also prints BAD when the dominant mode's loss (column 52) is
+          below free space over twice its reflection height (column 54),
+          which the slant range of eq. (19) can never be. That needs the
+          RPT_ALLMODES column layout that path.tmpl selects.
+path.tmpl an ITURHFProp input with @...@ placeholders filled in by sed.
