@@ -13,6 +13,8 @@ jobs:
         make all
     - name: regression
       run: ./tests/regression.sh
+    - name: smoke
+      run: ./tests/smoke.sh
 
   buildOSX:
     runs-on: macOS-latest
@@ -24,6 +26,8 @@ jobs:
         make all
     - name: regression
       run: ./tests/regression.sh
+    - name: smoke
+      run: ./tests/smoke.sh
 
   buildWindows:
     runs-on: windows-latest
