@@ -104,6 +104,7 @@ void CircuitReliability(struct PathData *path) {
 	double DlIh;	// Lower decile deviation of interference (dB)
 	double DuIh;	// Upper decile deviation of interference (dB)
 	double Tm;		// Time spread
+	double spread;	// 1 - (f/fb)^2, clamped at 0
 	double Fm;		// Frequency spread
 	double D;		// path distance
 	double Isum;	// Interference sum
@@ -201,7 +202,14 @@ void CircuitReliability(struct PathData *path) {
 	}
 
     // Find the basic MUF index to retrieve the values from P.842-4 Table 2
-	fBMUFR = path->frequency/path->BMUF;
+	// A zero basic MUF means nothing propagates, so any frequency is far above it:
+	// take the top row explicitly rather than rely on f/0 = inf.
+	if(path->BMUF > 0.0) {
+		fBMUFR = path->frequency/path->BMUF;
+	}
+	else {
+		fBMUFR = 5.0; // Selects BMUF = 9 (f/fb > 4.0) below
+	}
 
 	BMUF = 9; // Initialize just in case
 
@@ -280,12 +288,22 @@ void CircuitReliability(struct PathData *path) {
 		//		Du = path->DuSN
 
 		// Time spread
+		// The spread scales with 1 - (f/fb)^2, the spread of modes below the basic
+		// MUF, fb. At or above fb (or with no MUF at all) there are no such modes, so
+		// the factor is clamped at 0 rather than going negative, which would give a
+		// negative time spread and negative decile deviations.
 		D = path->distance; // for readability
-		if(D <= 2000.0) {
-			Tm = min((2.5e7*(1.0 - pow((path->frequency/path->BMUF),2))*pow(D,-2)), (7.0 - 0.00175*D));	
+		if(path->BMUF > 0.0) {
+			spread = max(1.0 - pow((path->frequency/path->BMUF),2), 0.0);
 		}
-		else { // path->distance <= 2000.0
-			Tm = min((4.27e-2*(1.0 - pow((path->frequency/path->BMUF),2))*pow(D,0.65)), 3.5);	
+		else {
+			spread = 0.0;
+		}
+		if(D <= 2000.0) {
+			Tm = min((2.5e7*spread*pow(D,-2)), (7.0 - 0.00175*D));	
+		}
+		else { // path->distance > 2000.0
+			Tm = min((4.27e-2*spread*pow(D,0.65)), 3.5);	
 		}
 
         // Frequency spread
@@ -312,6 +330,9 @@ void CircuitReliability(struct PathData *path) {
 		if(Tm >= path->T0) {
 			path->RT = min((130.0 - 80.0/(1.0 + (path->T0 - Tm)/DTl)), 100.0);
 		}
+		else if(DTu == 0.0) { // Tm = 0: no time spread, so T0 is never exceeded
+			path->RT = 100.0;
+		}
 		else { // (Tm < path->T0)
 			path->RT = max((80.0/(1.0 + (Tm - path->T0)/DTu) - 30.0), 0.0);
 		}
@@ -320,6 +341,9 @@ void CircuitReliability(struct PathData *path) {
 		// signal amplitude
 		if(Fm >= path->F0) {
 			path->RF = min((130.0 - 80.0/(1.0 + (path->F0 - Fm)/DFl)), 100.0);
+		}
+		else if(DFu == 0.0) { // Fm = 0: no frequency spread, so F0 is never exceeded
+			path->RF = 100.0;
 		}
 		else { // (Fm < path->F0)
 			path->RF = max((80.0/(1.0 + (Fm - path->F0)/DFu) - 30.0), 0.0);
