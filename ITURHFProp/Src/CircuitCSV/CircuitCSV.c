@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <math.h>
 #include <time.h>
 #ifndef _WIN32
@@ -400,6 +401,55 @@ static int SSNFromIndex(double index, int isT) {
 }
 
 /*
+	FieldNum(), FieldInt() - Parse one numeric field strictly.
+
+		atof()/atoi() read an empty or non-numeric field as 0, so such a row
+		ran with zeros and reported OK. These accept only a finite number with
+		nothing but white space around it; FieldInt() also needs a whole
+		number in int range ("4" or "4.0", not "4.5"). On failure *ok is
+		cleared and the value is still the best-effort atof() one, for the echo.
+
+		INPUT
+			const char *s, int *ok
+
+		OUTPUT
+			returns the value
+
+		SUBROUTINES
+			None
+*/
+static double FieldNum(const char *s, int *ok) {
+
+	char *end;
+	double v;
+
+	errno = 0;
+	v = strtod(s, &end);
+	if (end != s) while (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n') end++;
+	if (end == s || *end != '\0' || errno == ERANGE || !isfinite(v)) {
+		*ok = FALSE;
+		return atof(s);
+	}
+
+	return v;
+
+}
+
+static int FieldInt(const char *s, int *ok) {
+
+	int good = TRUE;
+	double v = FieldNum(s, &good);
+
+	if (good == FALSE || v != floor(v) || v < INT_MIN || v > INT_MAX) {
+		*ok = FALSE;
+		return atoi(s);
+	}
+
+	return (int)v;
+
+}
+
+/*
 	ReadCircuit() - Fills a Circuit from one split record.
 
 		INPUT
@@ -415,7 +465,8 @@ static int ReadCircuit(struct Circuit *c, char **f, int nf, int *col) {
 
 	// Parse on a best-effort basis: a short record still yields a Circuit, with
 	// the missing fields left empty, so that it can be echoed back and matched
-	// to its input row. The return value says whether anything was missing.
+	// to its input row. c->parsed says whether anything was missing, empty or
+	// not a number.
 	int complete = TRUE;
 	for (int i = 0; i < NINPUTCOLUMNS; i++) {
 		if (col[i] >= nf) complete = FALSE;
@@ -424,23 +475,23 @@ static int ReadCircuit(struct Circuit *c, char **f, int nf, int *col) {
 	#define CSVFLD(i) ((col[i] < nf) ? f[col[i]] : "")
 
 	snprintf(c->txSite, sizeof(c->txSite), "%s", CSVFLD(0));
-	c->txLat    = atof(CSVFLD(1));
-	c->txLon    = atof(CSVFLD(2));
+	c->txLat    = FieldNum(CSVFLD(1), &complete);
+	c->txLon    = FieldNum(CSVFLD(2), &complete);
 	snprintf(c->rxSite, sizeof(c->rxSite), "%s", CSVFLD(3));
-	c->rxLat    = atof(CSVFLD(4));
-	c->rxLon    = atof(CSVFLD(5));
-	c->year     = atoi(CSVFLD(6));
-	c->month    = atoi(CSVFLD(7));
-	c->day      = atoi(CSVFLD(8));
-	c->hour     = atoi(CSVFLD(9));
-	c->index    = atof(CSVFLD(COLINDEX));
+	c->rxLat    = FieldNum(CSVFLD(4), &complete);
+	c->rxLon    = FieldNum(CSVFLD(5), &complete);
+	c->year     = FieldInt(CSVFLD(6), &complete);
+	c->month    = FieldInt(CSVFLD(7), &complete);
+	c->day      = FieldInt(CSVFLD(8), &complete);
+	c->hour     = FieldInt(CSVFLD(9), &complete);
+	c->index    = FieldNum(CSVFLD(COLINDEX), &complete);
 	c->ssn      = SSNFromIndex(c->index, IndexIsT);
-	c->minTOA   = atof(CSVFLD(11));
-	c->txPow    = atof(CSVFLD(12));
-	c->reqSN    = atof(CSVFLD(13));
-	c->rxNoise  = atof(CSVFLD(14));
-	c->bandW    = atof(CSVFLD(15));
-	c->percDays = atof(CSVFLD(16));
+	c->minTOA   = FieldNum(CSVFLD(11), &complete);
+	c->txPow    = FieldNum(CSVFLD(12), &complete);
+	c->reqSN    = FieldNum(CSVFLD(13), &complete);
+	c->rxNoise  = FieldNum(CSVFLD(14), &complete);
+	c->bandW    = FieldNum(CSVFLD(15), &complete);
+	c->percDays = FieldNum(CSVFLD(16), &complete);
 
 	#undef CSVFLD
 
