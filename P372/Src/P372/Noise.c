@@ -692,7 +692,9 @@ void GalacticNoise(
 
 	The parsed arrays are small, so all twelve months cost 306 KB. They are
 	cached on first use and copied out thereafter, which keeps ReadFamDud()'s
-	contract of filling the caller's NoiseParams unchanged.
+	contract of filling the caller's NoiseParams unchanged. Each entry records
+	the file it came from, so a call naming a different DataFilePath re-reads
+	rather than returning another directory's coefficients.
 
 	Not thread safe, in keeping with the rest of the engine.
 */
@@ -701,6 +703,7 @@ static struct {
 	double fakabp[6][2];
 	double dud[5][12][5];
 	double fam[12][14];
+	char   path[270];	// File the month was parsed from (InFilePath)
 	int    loaded;
 } FamDudCache[12];
 
@@ -743,12 +746,12 @@ static void FamDudCopyOut(struct NoiseParams *noiseP, int month) {
 			struct NoiseParams *noiseP, int month
 
 		OUTPUT
-			FamDudCache[month]
+			FamDudCache[month], tagged with the file path
 
 		SUBROUTINES
 			None
 */
-static void FamDudCopyIn(struct NoiseParams *noiseP, int month) {
+static void FamDudCopyIn(struct NoiseParams *noiseP, int month, const char *path) {
 
     int i, j, k;
 
@@ -766,6 +769,9 @@ static void FamDudCopyIn(struct NoiseParams *noiseP, int month) {
     for (j = 0; j < 12; j++)
         for (k = 0; k < 14; k++) FamDudCache[month].fam[j][k] = noiseP->fam[j][k];
 
+    // InFilePath and the cache field are the same size, and the path was
+    // length-checked when it was built.
+    strcpy(FamDudCache[month].path, path);
     FamDudCache[month].loaded = TRUE;
 
 }
@@ -821,13 +827,6 @@ int ReadFamDud(
 
     FILE *fp;
 
-    // Already parsed this month: copy it out and skip the file entirely.
-    if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE) {
-        FamDudCopyOut(noiseP, month);
-
-    return RTN_READFAMDUDOK;
-    }
-
     // Bounded join. P372 is the lower layer and cannot call P533's
     // BuildDataPath(), so the same rule is applied inline here: insert the
     // separator only when the caller's directory does not already end in one.
@@ -841,6 +840,13 @@ int ReadFamDud(
             printf("ReadFamDud: ERROR Data file path too long\n");
             return RTN_ERROPENCOEFFFILE;
         }
+    }
+
+    // Already parsed this month from this file: copy it out and skip the file.
+    if (month >= 0 && month < 12 && FamDudCache[month].loaded == TRUE
+        && strcmp(FamDudCache[month].path, InFilePath) == 0) {
+        FamDudCopyOut(noiseP, month);
+        return RTN_READFAMDUDOK;
     }
 
     fp = fopen(InFilePath, "r");
@@ -1101,7 +1107,7 @@ int ReadFamDud(
 
     // Seed the cache from the freshly parsed month. This call used to sit on
     // the hit path above, where it could never run, so the cache never loaded.
-    if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month);
+    if (month >= 0 && month < 12) FamDudCopyIn(noiseP, month, InFilePath);
 
     return RTN_READFAMDUDOK;
 
