@@ -13,9 +13,20 @@ static int FreeAntenna(struct Antenna *ant, int retval);
  * Allocates the Antenna structure (Part of the PathData struct).  This 
  * function is called when the antenna types have been defined which in
  * turn define the dimensions of the required data structure.
+ * Only 360 azimuths by 91 elevations is accepted. Any existing pattern is
+ * freed first, so the antenna must not hold uninitialised pointers.
  */
 DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen) {
 	int m, n;
+
+	// The engine indexes every pattern as [freq][0..359][0..90] and
+	// FreeAntenna() releases 360 azimuths, so no other shape is usable.
+	// Rejected before anything is touched, so an existing pattern survives.
+	if ((freqn < 1) || (azin != 360) || (elen != 91)) return RTN_ERRALLOCATEANT;
+
+	// Release any pattern already here; re-allocating used to leak it. The
+	// antenna must be empty or allocated: AllocatePathMemory() sets it empty.
+	FreeAntenna(ant, 0);
 
 	// Built on the antenna as it goes, so on failure FreeAntenna() can release
 	// the partial structure and leave the antenna empty rather than half-set.

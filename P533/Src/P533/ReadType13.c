@@ -16,6 +16,9 @@ DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azim
 	If the pattern datastructure has not been initialied before calling this 
 	function, a single frequency data structure will be allocated.
 
+	azimuth must be 0 - 359 and elevation 0 - 90 (degrees); a call with
+	either out of range writes nothing.
+
 	INPUT
 		struct PathData
 		int TXorRX
@@ -25,6 +28,11 @@ DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azim
 
 	*/
 	int frequencyIndex = 0;
+
+	// Patterns are 360 azimuths by 91 elevations. An index outside that is
+	// ignored rather than written past the arrays; the function returns void,
+	// so there is no error to report.
+	if ((azimuth < 0) || (azimuth > 359) || (elevation < 0) || (elevation > 90)) return;
 	
 	//If TXorRX == 0 set the transmitter's antenna pattern value.
 	if (TXorRX == 0){
