@@ -150,7 +150,7 @@
 //		ValidateITURHFP()
 //      main()
 
-// Return ERROR >= 50 and < 80
+// Return ERROR >= 50 and < 100 (P533's own errors start at 100)
 
 #define RTN_ERROPENOUTPUTFILE		50 // ERROR: Can Not Open Output File
 #define RTN_ERRP533DLL				51 // ERROR: Can Not Find P533.DLL
@@ -179,6 +179,9 @@
 #define RTN_ERRUR					74 // ERROR: Invalid Area Right Longitude
 #define RTN_ERRLATINC				77 // ERROR: Invalid Latitude Increment (latinc)
 #define RTN_ERRLNGINC				78 // ERROR: Invalid Longitude Increment (lnginc)
+#define RTN_ERRRPTFILEFORMAT		79 // ERROR: Unknown or empty RptFileFormat option
+#define RTN_ERRSORL					80 // ERROR: Path.SorL is neither "SHORTPATH" nor "LONGPATH"
+#define RTN_ERRSSNVALUE				81 // ERROR: Path.SSN is not a whole number in int range
 
 // Returns ERROR for ITURHFProp - main()
 #define RTN_ERRCOMMANDLINEARG		75 // ERROR: Invalid Command Line
@@ -197,11 +200,6 @@
 #define NMBOFHOURS		24
 #define NMBOFFREQS		32
 #define NMBOFMONTHS		12
-
-// Marks an unused slot in the hrs[], frqs[] and months[] lists. The lists are
-// filled from index 0; the first unused slot ends the list. It is chosen so no
-// value a user can type (hour/month minus 1, or a frequency) collides with it.
-#define LISTUNSET		(-9999)
 
 // End returns for ITURHFProp Demonstration Program - main()
 
@@ -247,7 +245,10 @@ struct ITURHFProp {
 	double RXBearing;		// This is where the main beam of the rx antenna is pointing.
 	double RXGOS;			// The pattern gain offset
 
-	// Hours
+	// Hours, frequencies and months. Each list holds ihrend, ifrqend and
+	// imnthend entries, set by ReadInputConfiguration() from the input file.
+	// Hours (1 to 24) and months (1 to 12) are held as the user typed them;
+	// ITURHFProp() subtracts 1 where it hands them to P533().
 	int hrs[NMBOFHOURS]; // Hours array
 	int ihr;	 // Hours index
 	int ihrend;  // Total number of hours to process

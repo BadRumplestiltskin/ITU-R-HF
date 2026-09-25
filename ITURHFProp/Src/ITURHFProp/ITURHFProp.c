@@ -425,27 +425,14 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 
 	 */
 
-	int i;
 	int retval; // Return value
 	int count;
 
 	// Initialize the output record counter.
 	count = 1;
 
-	// Determine the maximum hour
-	// The lists run from index 0 to the first unused slot. ValidateITURHFP()
-	// has already rejected any entry that is out of range, so every entry
-	// counted here is one the loops below may run.
-	for(i=0; (i<NMBOFHOURS) && (ITURHFP->hrs[i] != LISTUNSET); i++);
-	ITURHFP->ihrend = i;
-
-    // Determine the maximum frequency
-	for(i=0; (i<NMBOFFREQS) && (ITURHFP->frqs[i] != LISTUNSET); i++);
-	ITURHFP->ifrqend = i;
-
-    // Determine the maximum month
-	for(i=0; (i<NMBOFMONTHS) && (ITURHFP->months[i] != LISTUNSET); i++);
-	ITURHFP->imnthend = i;
+	// The hour, frequency and month list lengths (ihrend, ifrqend, imnthend)
+	// were set by ReadInputConfiguration() and checked by ValidateITURHFP().
 
     // Determine the area. If the values are all the same then do only one point. This is point-to-point mode.
 	ITURHFP->ilatend = 0;
@@ -490,7 +477,7 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 	// ********************** Month Loop **********************************************************
 	for(ITURHFP->imnth=0; ITURHFP->imnth<ITURHFP->imnthend; ITURHFP->imnth++) { // months
 		// Save the month of interest to the path structure for processing.
-		path->month = ITURHFP->months[ITURHFP->imnth];
+		path->month = ITURHFP->months[ITURHFP->imnth] - 1;	// P533() months are 0 to 11
 
 
 		// Read in the ionospheric parameters for the particular month for the call to P533.
@@ -513,7 +500,7 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 
         // ******************* Hours loop ******************************************************
 		for(ITURHFP->ihr=0; ITURHFP->ihr<ITURHFP->ihrend; ITURHFP->ihr++) { // hours
-			path->hour = ITURHFP->hrs[ITURHFP->ihr];
+			path->hour = ITURHFP->hrs[ITURHFP->ihr] - 1;	// P533() hours are 0 to 23
 
 			// **************** Frequency loop *************************************************
 			for(ITURHFP->ifrq=0; ITURHFP->ifrq<ITURHFP->ifrqend; ITURHFP->ifrq++) { // freqs

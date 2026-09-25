@@ -76,26 +76,38 @@ int ValidateITURHFP(struct ITURHFProp ITURHFP) {
 
 	if ((ITURHFP.AntennaOrientation != MANUAL) && (ITURHFP.AntennaOrientation != TX2RX))		return RTN_ERRANTENNAORN;
 
-	// Hour, frequency and month lists. Each is filled from index 0 up to the
-	// first unused slot; every entry before that must be in range. A bad entry
-	// is an error rather than skipped, because ITURHFProp() runs the first N
-	// entries and a skipped one would be run anyway. Hours and months are
-	// stored minus 1, so they are reported plus 1 as the user typed them.
-	for(i=0; (i<NMBOFHOURS) && (ITURHFP.hrs[i] != LISTUNSET); i++) {
-		if((ITURHFP.hrs[i] < 0) || (ITURHFP.hrs[i] >= 24)) {
-			printf("ValidateITURHFP: Error Path.hour entry %d is %d; hours must be 1 to 24\n", i+1, ITURHFP.hrs[i]+1);
+	// Hour, frequency and month lists. ReadInputConfiguration() sets each
+	// list's length; a list the input file never gave is empty, and a run
+	// without it would do nothing and still report success. Every entry must
+	// be in range: ITURHFProp() runs them all. Hours and months are held as
+	// typed, 1-based.
+	if(ITURHFP.ihrend == 0) {
+		printf("ValidateITURHFP: Error Path.hour is missing\n");
+		return RTN_ERRHOUR;
+	}
+	for(i=0; i<ITURHFP.ihrend; i++) {
+		if((ITURHFP.hrs[i] < 1) || (ITURHFP.hrs[i] > 24)) {
+			printf("ValidateITURHFP: Error Path.hour entry %d is %d; hours must be 1 to 24\n", i+1, ITURHFP.hrs[i]);
 			return RTN_ERRHOUR;
 		}
 	}
-	for(i=0; (i<NMBOFFREQS) && (ITURHFP.frqs[i] != LISTUNSET); i++) {
+	if(ITURHFP.ifrqend == 0) {
+		printf("ValidateITURHFP: Error Path.frequency is missing\n");
+		return RTN_ERRFREQUENCY;
+	}
+	for(i=0; i<ITURHFP.ifrqend; i++) {
 		if(!((ITURHFP.frqs[i] >= 1.0) && (ITURHFP.frqs[i] <= 30.0))) {
 			printf("ValidateITURHFP: Error Path.frequency entry %d is %g; frequencies must be 1 to 30 MHz\n", i+1, ITURHFP.frqs[i]);
 			return RTN_ERRFREQUENCY;
 		}
 	}
-	for(i=0; (i<NMBOFMONTHS) && (ITURHFP.months[i] != LISTUNSET); i++) {
-		if((ITURHFP.months[i] < 0) || (ITURHFP.months[i] >= NMBOFMONTHS)) {
-			printf("ValidateITURHFP: Error Path.month entry %d is %d; months must be 1 to 12\n", i+1, ITURHFP.months[i]+1);
+	if(ITURHFP.imnthend == 0) {
+		printf("ValidateITURHFP: Error Path.month is missing\n");
+		return RTN_ERRMONTH;
+	}
+	for(i=0; i<ITURHFP.imnthend; i++) {
+		if((ITURHFP.months[i] < 1) || (ITURHFP.months[i] > NMBOFMONTHS)) {
+			printf("ValidateITURHFP: Error Path.month entry %d is %d; months must be 1 to 12\n", i+1, ITURHFP.months[i]);
 			return RTN_ERRMONTH;
 		}
 	}

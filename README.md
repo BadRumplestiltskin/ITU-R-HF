@@ -81,14 +81,14 @@ is enclosed in double quotes.
 | Path.year | int | Path year, between 1900 and 2100 |
 | Path.month | int | Path month, from 1 to 12 |
 | Path.hour | int or list | Path hour in UTC, from 1 to 24. This can be a comma separated list of integers i.e, 1,4,7,18 |
-| Path.SSN | int | Sunspot number R12, between 1 and 311 |
+| Path.SSN | int | Sunspot number R12, a whole number 0 or greater (a negative value is error 109, a non-whole value error 81). The foF2 and M(3000)F2 maps use at most 160 (P.1239). |
 | Path.frequency | float or list | Frequency (MHz), between 1.6 and 30.0. This can be a comma separated list of decimal values i.e, 3.45, 11.553, 17.7756, 23.0008 |
 | Path.txpower | float | Transmit power (dB(kW)), between -30.0 and 60.0 |
 | Path.BW | float | Bandwidth (Hz), between 0.005 to 3000000.0 |
 | Path.SNRr | float | Required Signal-to-noise ratio (dB), between -30.0 and 200.0 |
 | Path.SNRXXp | int | Percent of month in which signal-to-noise exceed, between 1 and 99 | 
 | Path.ManMadeNoise | "" | Path noise environment, "CITY", "RESIDENTIAL", "RURAL", "QUIETRURAL", "QUIET", "NOISY" or in dB, between 100.0 AND 200.0 |
-| Path.SorL | "" | Path between the Transmitter and Receiver either "SHORTPATH" or "LONGPATH" |
+| Path.SorL | "" | Path between the Transmitter and Receiver either "SHORTPATH" or "LONGPATH"; any other value is an error (80) |
 | Path.Modulation | "" | Modulation type, "ANALOG" or "DIGITAL" |
 
 The following six options (`Path.SIRr`, `Path.A`, `Path.TW`, `Path.FW`, `Path.T0` and `Path.F0`) are
@@ -108,7 +108,7 @@ Specification of the output report in the input file has a great many options.
 | Input File Parameter Name | Data Type | Note |
 | --- | --- | --- |
 | RptFilePath | "" | "c:\provide_full_path_to\Reports\"<br/>The program outputs CSV text files starting with the prefix RPT for a report file and PDD for a path dump text file. <br/>A time stamped txt file is only created in the directory indicated by `RptFilePath` if no filename is given on the command line.<br/> The RPT or PDD filename format described below for `DUMPPATH`. <br/>The output OPTIONS defined by the input variable `RptFileFormat` are given below. |
-| RptFileFormat | "OPTION1 [ \| OPTION2 \| OPTION3 \| OPTION4 \| OPTION5 ... ]" | |
+| RptFileFormat | "OPTION1 [ \| OPTION2 \| OPTION3 \| OPTION4 \| OPTION5 ... ]" | Options are separated by \| with or without spaces. An unknown option, or none, is an error (79). |
 
 The `RptFileFormat` indicates to ITURHFProp what data outputs are desired. The OPTIONs can be entered in any order, except OPTION `RPT_DUMPPATH` which must appear alone. The output file will indicate how the desired output parameters are ordered. The order that the desired output parameters appear in the output file is fixed.
 
@@ -836,42 +836,47 @@ P372(): Return numbers greater than 200 and less than 210 are errors
     208    ERROR:    Can Not Open Output File in MakeNoise()
     209    ERROR:    Coefficient (COEFF) File Truncated or Malformed
 
-ITURHFProp(): Return numbers greater than or less than 1000 and less than 1100 are normal and indicate no error in processing
+ITURHFProp(): Return numbers less than 50 are normal and indicate no error in processing. The program exits 0 when the calculation completes; 32 to 34 are the internal success values of its stages.
 
-    1000    NO ERROR:    Okay Calculation Completed 
-    1001    NO ERROR:    ITURHFProp()
-    1002    NO ERROR:    ValidateITURHFP()
-    1003    NO ERROR:    ReadInputConfiguration()
+    0       NO ERROR:    Okay Calculation Completed
+    32      NO ERROR:    ITURHFProp()
+    33      NO ERROR:    ReadInputConfiguration()
+    34      NO ERROR:    ValidateITURHFP()
 
-ITURHFProp(): Return numbers greater than or less than 1000 and less than 1100 are errors
+ITURHFProp(): Return numbers from 50 to 99 are errors. Errors found by P533() and P372() in the input (for example 101 month, 102 hour, 110 modulation, 111 frequency) are returned as listed for those programs above.
 
-    1100    ERROR:    Can Not Open Output File
-    1101    ERROR:    Can Not Find P533.DLL
-    1102    ERROR:    Can Not Open Receive Antenna File
-    1103    ERROR:    Can Not Open Transmit Antenna File
-    1104    ERROR:    Antenna Orientation    
-    1105    ERROR:    Transmit Bearing 
-    1106    ERROR:    Receive Bearing
-    1107    ERROR:    Receive Gain Offset
-    1108    ERROR:    Transmit Gain Offset
-    1109    ERROR:    Invalid Lower Left Latitude
-    1110    ERROR:    Invalid Lower Right Latitude
-    1111    ERROR:    Invalid Upper Left Latitude
-    1112    ERROR:    Invalid Upper Right Latitude
-    1113    ERROR:    Invalid Lower Left Longitude
-    1114    ERROR:    Invalid Lower Right Longitude
-    1115    ERROR:    Invalid Upper Left Longitude
-    1116    ERROR:    Invalid Upper Right Longitude
-    1117    ERROR:    Invalid Area Left Latitude
-    1118    ERROR:    Invalid Area Right Latitude
-    1119    ERROR:    Invalid Area Left Longitude
-    1120    ERROR:    Invalid Area Right Longitude
-    1121    ERROR:    Invalid Area Lower Latitude
-    1122    ERROR:    Invalid Area Upper Latitude
-    1123    ERROR:    Invalid Area Left Longitude
-    1124    ERROR:    Invalid Area Right Longitude
-    1200    ERROR:    Invalid Command Line 
-    1201    ERROR:    Missing Input File
+    50      ERROR:    Can Not Open Output File
+    51      ERROR:    Can Not Find P533.DLL
+    52      ERROR:    Can Not Open Receive Antenna File
+    53      ERROR:    Can Not Open Transmit Antenna File
+    54      ERROR:    Antenna Orientation (AntennaOrientation is not TX2RX, ARBITRARY or MANUAL)
+    55      ERROR:    Transmit Bearing
+    56      ERROR:    Receive Bearing
+    57      ERROR:    Receive Gain Offset
+    58      ERROR:    Transmit Gain Offset
+    59      ERROR:    Invalid Lower Left Latitude
+    60      ERROR:    Invalid Lower Right Latitude
+    61      ERROR:    Invalid Upper Left Latitude
+    62      ERROR:    Invalid Upper Right Latitude
+    63      ERROR:    Invalid Lower Left Longitude
+    64      ERROR:    Invalid Lower Right Longitude
+    65      ERROR:    Invalid Upper Left Longitude
+    66      ERROR:    Invalid Upper Right Longitude
+    67      ERROR:    Invalid Area Left Latitude
+    68      ERROR:    Invalid Area Right Latitude
+    69      ERROR:    Invalid Area Left Longitude
+    70      ERROR:    Invalid Area Right Longitude
+    71      ERROR:    Invalid Area Lower Latitude
+    72      ERROR:    Invalid Area Upper Latitude
+    73      ERROR:    Invalid Area Left Longitude
+    74      ERROR:    Invalid Area Right Longitude
+    75      ERROR:    Invalid Command Line
+    76      ERROR:    Missing Input File
+    77      ERROR:    Invalid Latitude Increment (latinc)
+    78      ERROR:    Invalid Longitude Increment (lnginc)
+    79      ERROR:    Unknown or Empty RptFileFormat Option
+    80      ERROR:    Path.SorL is neither "SHORTPATH" nor "LONGPATH"
+    81      ERROR:    Path.SSN is not a whole number
 
 ### ITURNoise Description - P372.dll driver program and associated tools for generation P.372-14 Section 5 style figures
 
