@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 13:10:43 2026
+     Analysis Prepared  Fri Sep 25 21:18:02 2026
 
 ---------------------------------------------------------------------------
 
@@ -46,8 +46,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  17038.272
-	slant range =  17767.288
+	distance =  17038.248
+	slant range =  17767.264
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  11.294
@@ -118,7 +118,7 @@
 **********************************************************
 	Latitude	=	-0.512	(-29.326)	[-29 19 33]
 	Longitude	=	 2.569	( 147.192)	[147 11 31]
-	distance =  630.136
+	distance =  630.135
 	Magnetic dip (100 km)  = -60.435 (deg)
 	Gyrofrequency (100 km) =  1.504 (MHz)
 	Magnetic dip (300 km)  = -60.391 (deg)
@@ -139,7 +139,7 @@
 **********************************************************
 	Latitude	=	-0.410	(-23.482)	[-23 28 55]
 	Longitude	=	 2.490	( 142.682)	[142 40 56]
-	distance =  1419.856
+	distance =  1419.854
 	Magnetic dip (100 km)  = -54.217 (deg)
 	Gyrofrequency (100 km) =  1.418 (MHz)
 	Magnetic dip (300 km)  = -54.238 (deg)
@@ -160,7 +160,7 @@
 **********************************************************
 	Latitude	=	 0.535	( 30.630)	[30 37 46]
 	Longitude	=	 1.874	( 107.344)	[107 20 39]
-	distance =  8519.136
+	distance =  8519.124
 	Magnetic dip (100 km)  =  44.692 (deg)
 	Gyrofrequency (100 km) =  1.322 (MHz)
 	Magnetic dip (300 km)  =  44.431 (deg)
@@ -182,7 +182,7 @@
 **********************************************************
 	Latitude	=	 1.011	( 57.954)	[57 57 14]
 	Longitude	=	 0.322	( 18.467)	[18 28 1]
-	distance =  15618.416
+	distance =  15618.394
 	Magnetic dip (100 km)  =  71.559 (deg)
 	Gyrofrequency (100 km) =  1.333 (MHz)
 	Magnetic dip (300 km)  =  71.344 (deg)
@@ -203,7 +203,7 @@
 **********************************************************
 	Latitude	=	 0.966	( 55.326)	[55 19 34]
 	Longitude	=	 0.112	( 6.444)	[6 26 39]
-	distance =  16408.135
+	distance =  16408.112
 	Magnetic dip (100 km)  =  69.672 (deg)
 	Gyrofrequency (100 km) =  1.300 (MHz)
 	Magnetic dip (300 km)  =  69.473 (deg)

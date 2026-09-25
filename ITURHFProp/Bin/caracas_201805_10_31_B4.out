@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 20:39:22 2026
+     Analysis Prepared  Fri Sep 25 21:18:00 2026
 
 ---------------------------------------------------------------------------
 
@@ -20,8 +20,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -46,8 +46,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  9.349
@@ -98,7 +98,7 @@
 	Total noise lower decile       =  5.140
 	Total noise                    =  40.864
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  10.557
+	Monthly median resultant signal-to-noise ratio =  10.558
 	Upper decile deviation signal-to-noise ratio   =  13.982
 	Lower decile deviation signal-to-noise ratio   =  15.373
 	Signal-to-noise exceeded for 90% of the month  = -4.816
@@ -107,7 +107,7 @@
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  2.493
+	Basic Circuit Reliability                      =  2.494
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -452,7 +452,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -473,7 +473,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -495,7 +495,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -516,7 +516,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -548,8 +548,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -574,8 +574,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  8.807
@@ -593,7 +593,7 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -23.060
-	Field Strength (7000 km < D < 9000 km) = -27.307
+	Field Strength (7000 km < D < 9000 km) = -27.306
 	Field Strength           (D > 9000 km) = -49.829
 	Median Rx power = -155.168
 **************** Rx Elevation Angle (degs)****************
@@ -980,7 +980,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -1001,7 +1001,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -1023,7 +1023,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -1044,7 +1044,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -1076,8 +1076,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -1102,8 +1102,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  10.623
@@ -1154,7 +1154,7 @@
 	Total noise lower decile       =  5.100
 	Total noise                    =  40.904
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  16.318
+	Monthly median resultant signal-to-noise ratio =  16.319
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.500
 	Signal-to-noise exceeded for 90% of the month  = -0.182
@@ -1508,7 +1508,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -1529,7 +1529,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -1551,7 +1551,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -1572,7 +1572,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -1604,8 +1604,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -1630,8 +1630,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  10.733
@@ -1649,7 +1649,7 @@
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
 	Field Strength (7000 km > D)           = -18.107
-	Field Strength (7000 km < D < 9000 km) = -20.500
+	Field Strength (7000 km < D < 9000 km) = -20.499
 	Field Strength           (D > 9000 km) = -31.465
 	Median Rx power = -148.955
 **************** Rx Elevation Angle (degs)****************
@@ -1682,7 +1682,7 @@
 	Total noise lower decile       =  5.060
 	Total noise                    =  40.961
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  14.084
+	Monthly median resultant signal-to-noise ratio =  14.085
 	Upper decile deviation signal-to-noise ratio   =  14.860
 	Lower decile deviation signal-to-noise ratio   =  16.488
 	Signal-to-noise exceeded for 90% of the month  = -2.404
@@ -1757,7 +1757,7 @@
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  169.174 (dB)
 	Median Field Strength     = -19.906 (dB(1 uV/m))
-	Receiver Power            = -150.284 (dBW)
+	Receiver Power            = -150.283 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  7.748 (degs)
 	Reflection height =  394.258 (km)
@@ -2036,7 +2036,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -2057,7 +2057,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -2079,7 +2079,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -2100,7 +2100,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -2132,8 +2132,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -2158,8 +2158,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  15.538
@@ -2390,7 +2390,7 @@
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  193.993 (dB)
 	Median Field Strength     = -37.475 (dB(1 uV/m))
-	Receiver Power            = -160.599 (dBW)
+	Receiver Power            = -160.598 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  27.500 (degs)
 	Reflection height =  307.578 (km)
@@ -2564,7 +2564,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -2585,7 +2585,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -2607,7 +2607,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -2628,7 +2628,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -2660,8 +2660,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -2686,8 +2686,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  15.827
@@ -2738,7 +2738,7 @@
 	Total noise lower decile       =  4.898
 	Total noise                    =  41.239
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  19.726
+	Monthly median resultant signal-to-noise ratio =  19.727
 	Upper decile deviation signal-to-noise ratio   =  10.788
 	Lower decile deviation signal-to-noise ratio   =  17.754
 	Signal-to-noise exceeded for 90% of the month  =  1.972
@@ -2812,7 +2812,7 @@
 	Upper decile =  1.170
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  165.048 (dB)
-	Median Field Strength     = -15.296 (dB(1 uV/m))
+	Median Field Strength     = -15.295 (dB(1 uV/m))
 	Receiver Power            = -145.188 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  8.242 (degs)
@@ -2842,9 +2842,9 @@
 **********************************************************
 *                      F2 Mode 5                         *
 **********************************************************
-	basic MUF  =  11.689 (MHz)
+	basic MUF  =  11.688 (MHz)
 	10% MUF    =  13.676 (MHz)
-	50% MUF    =  11.689 (MHz)
+	50% MUF    =  11.688 (MHz)
 	90% MUF    =  9.250 (MHz)
 	OPMUF      =  12.857 (MHz)
 	10% OPMUF  =  15.043 (MHz)
@@ -2857,7 +2857,7 @@
 	Median Field Strength     = -25.849 (dB(1 uV/m))
 	Receiver Power            = -150.172 (dBW)
 	Delay                     =  0.000 (mS)
-	Elevation angle   =  18.960 (degs)
+	Elevation angle   =  18.961 (degs)
 	Reflection height =  327.484 (km)
 	Receiver Gain =  5.799 (dBi)
 **********************************************************
@@ -2879,7 +2879,7 @@
 	Receiver Power            = -156.010 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.426 (degs)
-	Reflection height =  322.426 (km)
+	Reflection height =  322.425 (km)
 	Receiver Gain =  6.645 (dBi)
 **********************************************************
 *                      F2 Mode 7                         *
@@ -3092,7 +3092,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -3113,7 +3113,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -3135,7 +3135,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -3156,7 +3156,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -3188,8 +3188,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -3214,8 +3214,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  15.866
@@ -3275,7 +3275,7 @@
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  0.692
+	Basic Circuit Reliability                      =  0.693
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -3427,7 +3427,7 @@
 	Median Field Strength     = -44.263 (dB(1 uV/m))
 	Receiver Power            = -167.359 (dBW)
 	Delay                     =  0.000 (mS)
-	Elevation angle   =  28.356 (degs)
+	Elevation angle   =  28.357 (degs)
 	Reflection height =  370.419 (km)
 	Receiver Gain =  7.027 (dBi)
 **********************************************************
@@ -3620,7 +3620,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -3641,7 +3641,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -3663,7 +3663,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -3684,7 +3684,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -3716,8 +3716,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -3742,8 +3742,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  15.514
@@ -3772,7 +3772,7 @@
 	Free-space Field Strength 3 MW e.i.r.p. (dB(1uV/m) =  61.784
 	Increased Long Distance Field Strength due to Focusing (dB) =  1.026
 	"Not otherwise included loss" (dB) = -0.140
-	Upper Reference Frequency (MHz)      =  20.763
+	Upper Reference Frequency (MHz)      =  20.762
 	Lower Reference Frequency (MHz)      =  9.504
 	Correction Factor at T + dM/2        =  1.470
 	Correction Factor at R - dM/2        =  1.505
@@ -3797,7 +3797,7 @@
 	Monthly median resultant signal-to-noise ratio =  10.162
 	Upper decile deviation signal-to-noise ratio   =  10.841
 	Lower decile deviation signal-to-noise ratio   =  17.683
-	Signal-to-noise exceeded for 90% of the month  = -7.522
+	Signal-to-noise exceeded for 90% of the month  = -7.521
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
@@ -3889,7 +3889,7 @@
 	Upper decile =  1.179
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  183.380 (dB)
-	Median Field Strength     = -29.715 (dB(1 uV/m))
+	Median Field Strength     = -29.714 (dB(1 uV/m))
 	Receiver Power            = -155.694 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  14.188 (degs)
@@ -4019,7 +4019,7 @@
 	Receiver Power            = -307.000 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  0.000 (degs)
-	Reflection height =  351.524 (km)
+	Reflection height =  351.523 (km)
 	Receiver Gain = -307.000 (dBi)
 **********************************************************
 *                      F2 Mode 11                         *
@@ -4148,7 +4148,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -4169,7 +4169,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -4191,7 +4191,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -4212,7 +4212,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -4244,8 +4244,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -4270,8 +4270,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  16.318
@@ -4288,7 +4288,7 @@
 ************************ Season ***************************
 	season = Summer
 ****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
-	Field Strength (7000 km > D)           = -18.674
+	Field Strength (7000 km > D)           = -18.673
 	Field Strength (7000 km < D < 9000 km) = -19.375
 	Field Strength           (D > 9000 km) = -22.253
 	Median Rx power = -147.337
@@ -4417,7 +4417,7 @@
 	Upper decile =  1.176
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  175.248 (dB)
-	Median Field Strength     = -21.981 (dB(1 uV/m))
+	Median Field Strength     = -21.980 (dB(1 uV/m))
 	Receiver Power            = -148.358 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.344 (degs)
@@ -4500,7 +4500,7 @@
 	Lower decile =  0.813
 	Upper decile =  1.176
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  205.138 (dB)
+	Basic Loss (< 7000 km)    =  205.137 (dB)
 	Median Field Strength     = -48.567 (dB(1 uV/m))
 	Receiver Power            = -171.641 (dBW)
 	Delay                     =  0.000 (mS)
@@ -4676,7 +4676,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -4697,7 +4697,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -4719,7 +4719,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -4740,7 +4740,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -4772,8 +4772,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -4798,8 +4798,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  19.217
@@ -4853,13 +4853,13 @@
 	Monthly median resultant signal-to-noise ratio =  28.835
 	Upper decile deviation signal-to-noise ratio   =  9.364
 	Lower decile deviation signal-to-noise ratio   =  15.235
-	Signal-to-noise exceeded for 90% of the month  =  13.599
+	Signal-to-noise exceeded for 90% of the month  =  13.600
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  34.976
+	Basic Circuit Reliability                      =  34.977
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -4988,7 +4988,7 @@
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  179.002 (dB)
 	Median Field Strength     = -23.096 (dB(1 uV/m))
-	Receiver Power            = -146.827 (dBW)
+	Receiver Power            = -146.826 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  21.744 (degs)
 	Reflection height =  299.803 (km)
@@ -5007,7 +5007,7 @@
 	Lower decile =  0.821
 	Upper decile =  1.167
 	E Layer Screen Frequency  =  0.000 (MHz)
-	Basic Loss (< 7000 km)    =  186.500 (dB)
+	Basic Loss (< 7000 km)    =  186.499 (dB)
 	Median Field Strength     = -30.095 (dB(1 uV/m))
 	Receiver Power            = -153.336 (dBW)
 	Delay                     =  0.000 (mS)
@@ -5204,7 +5204,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -5225,7 +5225,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -5247,7 +5247,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -5268,7 +5268,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -5278,7 +5278,7 @@
 	foF2  =  5.621 (MHz)
 	solar zenith angle =  76.173 (deg)
 	solar declination  =  18.741 (deg)
-	solar hour angle   =  90.507 (deg)
+	solar hour angle   =  90.506 (deg)
 	equation of time   =  3.696 (minutes)
 	local sunrise      =  5:18 (UTC)  4:18 (Local)
 	local solar noon   =  12:57 (UTC)  11:57 (Local)
@@ -5300,8 +5300,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -5326,8 +5326,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  16.652
@@ -5378,7 +5378,7 @@
 	Total noise lower decile       =  5.015
 	Total noise                    =  40.963
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  34.704
+	Monthly median resultant signal-to-noise ratio =  34.705
 	Upper decile deviation signal-to-noise ratio   =  10.731
 	Lower decile deviation signal-to-noise ratio   =  17.711
 	Signal-to-noise exceeded for 90% of the month  =  16.994
@@ -5540,7 +5540,7 @@
 	Receiver Power            = -151.004 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  26.141 (degs)
-	Reflection height =  338.283 (km)
+	Reflection height =  338.284 (km)
 	Receiver Gain =  6.920 (dBi)
 **********************************************************
 *                      F2 Mode 8                         *
@@ -5732,7 +5732,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -5753,7 +5753,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -5775,7 +5775,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -5796,7 +5796,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)
@@ -5828,8 +5828,8 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Caracas
-	Tx latitude  =  0.183 ( 10.480) [ 10 28 47]
-	Tx longitude = -1.168 (-66.900) [-66 53 59]
+	Tx latitude  =  0.183 ( 10.480) [ 10 28 48]
+	Tx longitude = -1.168 (-66.900) [-66 54 0]
 	Rx Location Birmingham
 	Rx latitude  =  0.916 ( 52.486) [ 52 29 10]
 	Rx longitude = -0.033 (-1.890) [-1 53 25]
@@ -5854,8 +5854,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  7404.893
-	slant range =  7776.574
+	distance =  7404.883
+	slant range =  7776.563
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  12.756
@@ -5915,7 +5915,7 @@
 	Upper decile deviation of the signal-to-interference ratio = -307.000
 	Lower decile deviation of the signal-to-interference ratio = -307.000
 ******************** Reliability Parameters (%) *******************************
-	Basic Circuit Reliability                      =  23.918
+	Basic Circuit Reliability                      =  23.919
 	Multimode Interference                         = -307.000
 	Overall Circuit Reliability without scattering =  0.000
 	Overall Circuit Reliability with scattering    =  0.000
@@ -6005,7 +6005,7 @@
 	Receiver Power            = -141.857 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  13.914 (degs)
-	Reflection height =  370.776 (km)
+	Reflection height =  370.777 (km)
 	Receiver Gain =  4.019 (dBi)
 **********************************************************
 *                      F2 Mode 5                         *
@@ -6260,7 +6260,7 @@
 **********************************************************
 	Latitude	=	 0.336	( 19.252)	[19 15 6]
 	Longitude	=	-1.045	(-59.856)	[-59 51 20]
-	distance =  1234.149
+	distance =  1234.147
 	Magnetic dip (100 km)  =  50.674 (deg)
 	Gyrofrequency (100 km) =  1.155 (MHz)
 	Magnetic dip (300 km)  =  50.560 (deg)
@@ -6281,7 +6281,7 @@
 **********************************************************
 	Latitude	=	 0.623	( 35.683)	[35 41 0]
 	Longitude	=	-0.749	(-42.915)	[-42 54 55]
-	distance =  3702.447
+	distance =  3702.441
 	Magnetic dip (100 km)  =  60.521 (deg)
 	Gyrofrequency (100 km) =  1.256 (MHz)
 	Magnetic dip (300 km)  =  60.592 (deg)
@@ -6303,7 +6303,7 @@
 **********************************************************
 	Latitude	=	 0.849	( 48.627)	[48 37 38]
 	Longitude	=	-0.320	(-18.321)	[-18 19 16]
-	distance =  6170.744
+	distance =  6170.736
 	Magnetic dip (100 km)  =  66.119 (deg)
 	Gyrofrequency (100 km) =  1.270 (MHz)
 	Magnetic dip (300 km)  =  66.047 (deg)
@@ -6324,7 +6324,7 @@
 **********************************************************
 	Latitude	=	 0.864	( 49.532)	[49 31 54]
 	Longitude	=	-0.269	(-15.418)	[-15 25 3]
-	distance =  6404.893
+	distance =  6404.883
 	Magnetic dip (100 km)  =  66.514 (deg)
 	Gyrofrequency (100 km) =  1.271 (MHz)
 	Magnetic dip (300 km)  =  66.420 (deg)

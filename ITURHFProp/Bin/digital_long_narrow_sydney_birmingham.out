@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------
  International Telecommunications Union - Radiocommunication Sector (ITU-R)
-     ITURHFProp         Ver Sep 24 2026
+     ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 10:33:05 2026
+     Analysis Prepared  Fri Sep 25 21:18:01 2026
 
 ---------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@
 	Month         : May
 	Hour          : 2 (hour UTC)
 	SSN (R12)     : 10
-	Distance      : 17040.532792 (km)
+	Distance      : 17040.508729 (km)
 	dmax          : 4000.000000 (km)
 	Tx power      : 13.000000
 	Tx Location     Sydney
@@ -43,7 +43,7 @@
 	Transmit antenna bearing     : 322.259715
 	Transmit antenna gain offset : 0.000000
 	Receive antenna                ISOTROPIC
-	Receive antenna bearing      : 56.571393
+	Receive antenna bearing      : 56.571392
 	Receive antenna gain offset  : 0.000000
 
 ************************ End P533 Input Parameters *****************************
@@ -80,10 +80,10 @@ Column 11: MIR - Multimode Interference (%)
 
 ************************ Calculated Parameters ****************************
 
-05, 02,   14.000, 17040.53,-139.07, -10.71,   0.00,   0.00,   0.00,   0.00,   0.00
-05, 08,   14.000, 17040.53,-136.73,  -8.46,   0.00,   0.00,   0.00,   0.00,   0.00
-05, 14,   14.000, 17040.53,-126.91,   0.91,   8.46,   0.00,   0.00,   0.00,   0.00
-05, 20,   14.000, 17040.53,-121.63,   6.50,  16.87,   0.00,   0.00,   0.00,   0.00
+05, 02,   14.000, 17040.51,-139.07, -10.71,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 08,   14.000, 17040.51,-136.73,  -8.46,   0.00,   0.00,   0.00,   0.00,   0.00
+05, 14,   14.000, 17040.51,-126.91,   0.91,   8.46,   0.00,   0.00,   0.00,   0.00
+05, 20,   14.000, 17040.51,-121.63,   6.50,  16.87,   0.00,   0.00,   0.00,   0.00
 
 **************************End Calculated Parameters ***********************
 

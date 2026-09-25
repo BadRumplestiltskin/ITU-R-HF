@@ -6,6 +6,9 @@
 #include "Common.h"
 #include "P533.h"
 
+// Reference radius of the magnetic field model, P.1239-4 equation (8) (km)
+#define RMAG 6371.2
+
 void magfit(struct ControlPt *here, double height) {
 
 	/*
@@ -101,7 +104,9 @@ void magfit(struct ControlPt *here, double height) {
 
     
 /*******************************************************************************************************/
-	AR = R0/(R0+height);	
+	// P.1239-4 equation (8): R = 6371.2/(6371.2 + hr). The field model's own
+	// radius; it used the path geometry's R0.
+	AR = RMAG/(RMAG+height);	
 	
 	Fz=0.0;
 	Fx=0.0;

@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 13:55:27 2026
+     Analysis Prepared  Fri Sep 25 21:17:57 2026
 
 ---------------------------------------------------------------------------
 
@@ -20,8 +20,8 @@
 	SSN (R12) = 18
 	Tx power =  0.000 (dB(1kW))
 	Tx Location TX
-	Tx latitude  =  0.867 ( 49.670) [ 49 40 11]
-	Tx longitude =  0.110 ( 6.320) [ 6 19 11]
+	Tx latitude  =  0.867 ( 49.670) [ 49 40 12]
+	Tx longitude =  0.110 ( 6.320) [ 6 19 12]
 	Rx Location RX
 	Rx latitude  =  0.892 ( 51.120) [ 51 7 11]
 	Rx longitude =  0.127 ( 7.270) [ 7 16 11]

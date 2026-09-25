@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 20:39:23 2026
+     Analysis Prepared  Fri Sep 25 21:18:01 2026
 
 ---------------------------------------------------------------------------
 
@@ -21,10 +21,10 @@
 	Tx power =  0.000 (dB(1kW))
 	Tx Location KRANJI      
 	Tx latitude  =  0.025 ( 1.420) [ 1 25 11]
-	Tx longitude =  1.810 ( 103.730) [ 103 43 47]
+	Tx longitude =  1.810 ( 103.730) [ 103 43 48]
 	Rx Location BEIJING     
-	Rx latitude  =  0.698 ( 40.000) [ 39 59 59]
-	Rx longitude =  2.032 ( 116.400) [ 116 23 59]
+	Rx latitude  =  0.698 ( 40.000) [ 40 0 0]
+	Rx longitude =  2.032 ( 116.400) [ 116 24 0]
 	local time Rx   =  9 
 	local time Tx   =  8 
 	Frequency =  6.200 (MHz)
@@ -46,8 +46,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  4477.003
-	slant range =  6298.566
+	distance =  4476.997
+	slant range =  6298.561
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  31.218
@@ -89,7 +89,7 @@
 	Monthly median resultant signal-to-noise ratio =  7.474
 	Upper decile deviation signal-to-noise ratio   =  8.960
 	Lower decile deviation signal-to-noise ratio   =  14.430
-	Signal-to-noise exceeded for 1% of the month  =  23.739
+	Signal-to-noise exceeded for 1% of the month  =  23.740
 ********************** SIR Parameters (dB) *************************************
 	Signal-to-interference ratio = -307.000
 	Upper decile deviation of the signal-to-interference ratio = -307.000
@@ -203,7 +203,7 @@
 	E Layer Screen Frequency  =  0.000 (MHz)
 	Basic Loss (< 7000 km)    =  201.514 (dB)
 	Median Field Strength     = -49.066 (dB(1 uV/m))
-	Receiver Power            = -158.394 (dBW)
+	Receiver Power            = -158.393 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  31.914 (degs)
 	Reflection height =  189.461 (km)
@@ -440,7 +440,7 @@
 **********************************************************
 	Latitude	=	 0.194	( 11.135)	[11 8 4]
 	Longitude	=	 1.857	( 106.384)	[106 23 3]
-	distance =  1119.251
+	distance =  1119.249
 	Magnetic dip (100 km)  =  4.890 (deg)
 	Gyrofrequency (100 km) =  1.088 (MHz)
 	Magnetic dip (300 km)  =  4.862 (deg)
@@ -461,7 +461,7 @@
 **********************************************************
 	Latitude	=	 0.363	( 20.824)	[20 49 27]
 	Longitude	=	 1.906	( 109.223)	[109 13 24]
-	distance =  2238.501
+	distance =  2238.498
 	Magnetic dip (100 km)  =  26.837 (deg)
 	Gyrofrequency (100 km) =  1.168 (MHz)
 	Magnetic dip (300 km)  =  26.650 (deg)
@@ -483,7 +483,7 @@
 **********************************************************
 	Latitude	=	 0.532	( 30.461)	[30 27 38]
 	Longitude	=	 1.963	( 112.455)	[112 27 19]
-	distance =  3357.752
+	distance =  3357.748
 	Magnetic dip (100 km)  =  44.493 (deg)
 	Gyrofrequency (100 km) =  1.306 (MHz)
 	Magnetic dip (300 km)  =  44.203 (deg)
@@ -504,7 +504,7 @@
 **********************************************************
 	Latitude	=	 0.549	( 31.483)	[31 28 57]
 	Longitude	=	 1.969	( 112.835)	[112 50 4]
-	distance =  3477.003
+	distance =  3476.997
 	Magnetic dip (100 km)  =  46.095 (deg)
 	Gyrofrequency (100 km) =  1.322 (MHz)
 	Magnetic dip (300 km)  =  45.796 (deg)
