@@ -35,7 +35,7 @@ void CircuitReliability(struct PathData *path) {
 	 		The calculation is broken down into 11 steps. Many of the parameters necessary for the computation have already been 
 	 		calculated elsewhere in this project. The median available receiver power of the wanted signal, which is 
 	 		Step 1 in Table 1 P.842-4, is calculated in the subroutine MedianAvailableReceiverPower(). The subroutine 
-	 		MedianAvailableReceiverPower() implements the calculation in P.533-12 Section 6 Median available receiver.
+	 		MedianAvailableReceiverPower() implements the calculation in P.533-12 (P.533-14) Section 6 Median available receiver power.
 	 		Table 1 P.842-4 Steps 2, 5 and 8 are calculated in subroutine Noise() and summarized below.
 	 
 	 				 P.842-4 Table 1 Step
@@ -56,35 +56,74 @@ void CircuitReliability(struct PathData *path) {
 	 		This subroutine also determines the overall circuit reliability, OCR, via the method given in ITU-R P.P.842-4 Table 3
 	 		for digital systems. 
 	  
-	 		This subroutine also determines the equatorial scattering occurrence probability and then calculates the OCR in the 
+	 		This subroutine also determines the equatorial scattering occurrence probability and then calculates the OCR in the
 	 		presence of scattering
-	 
+
+			Verified references (P.533-14 and P.842-5; the P.842-4 citations above are historical):
+				- S/N: P.533-14 section 7, equation (45), S/N = Pr - Fa - 10 log10 b + 204, with Fa
+				  the total P.372 noise FamT (P.842-5 Table 1 step 3 writes the plain power sum
+				  of the three medians instead; see the note in the body)
+				- BCR: P.533-14 section 10.1 -> P.842-5 Table 1, steps 3, 4, 6, 7, 9, 11, with the
+				  day-to-day signal deciles of P.842-5 Table 2 and the within-the-hour 5 / 8 dB
+				  of Table 1 steps 4 and 7 (also P.533-14 section 8)
+				- Digital signal: P.533-14 section 10.2.3 steps 1-4 (DigitalModulationSignalandInterferers())
+				- MIR and OCR: P.533-14 section 10.2.3 step 5 -> P.842-5 Table 3 steps 4-14,
+				  protection ratio replaced by A, day-to-day deviations (steps 5, 8) set to 0 dB
+				- Beyond 9000 km: P.533-14 section 10.2.3 last paragraph (3 ms at 7000 km rising
+				  linearly to 5 ms at 20000 km)
+				- Scattering: P.533-14 section 10.3 steps 7-10, equation (48), Attachment 1
+				  (EquatorialScattering())
+				- The "simplified approximate BCR" block (RSN, RT, RF, the Tm and Fm formulae) cites
+				  P.842-4 section 9, which is not in P.842-5 and was not available: unverified.
+				- SNRXX uses a normal-distribution scaling of the decile deviations (NORM[],
+				  CCIR Report 322 reference below); not from the texts available.
+
 	 			INPUT
-	 				struct PathData *path
-	 
+	 				struct PathData *path - reads Modulation (ANALOG/DIGITAL), Pr (dBW), BW (Hz),
+						frequency (MHz), BMUF (MHz), distance (km), L_tx, L_rx, noiseP (FamT,
+						FaA/FaM/FaG and their deciles DlA.., DuA.., dB), SNRr, SIRr (dB), SNRXXp
+						(%, 1-99), A (dB), TW (ms), FW (Hz), T0 (ms), F0 (Hz), SSN, month, dmax,
+						the modes Md_E[], Md_F2[] and control points CP[]
+
 	 			OUTPUT
-	 				path->SNR - Signal-to-noise ratio
-	 				path->DuSN - Upper decile deviation signal-to-noise ratio
-	 				path->DlSN - Lower decile deviation signal-to-noise ratio
-					path->SNRXX - Signal-to-noise ratio at the desired reliability 
-	 				path->SIR - Signal-to-interference ratio
-	 				path->DuSI - Upper decile deviation signal-to-interference ratio
-	 				path->DlSI - Lower decile deviation signal-to-interference ratio
-	 				path->BCR - Basic circuit reliability
-	 				path->OCR - Overall circuit reliability without scattering
-	 				path->OCRs - Overall circuit reliability with scattering
-	 				path->MIR - Multimode interference ratio
-	 				path->RSN - Probability that the required signal-to-noise ratio, SN0, is achieved 
-	 				path->RT - Probability that the required time spread, T0, is not exceeded
-	 				path->RF - Probability that the required frequency dispersion is not exceeded.
-	 
+	 				path->SNR - Signal-to-noise ratio (dB), median, in bandwidth BW
+	 				path->DuSN - Upper decile deviation signal-to-noise ratio (dB)
+	 				path->DlSN - Lower decile deviation signal-to-noise ratio (dB)
+					path->SNRXX - Signal-to-noise ratio at the desired reliability (dB), exceeded
+						for SNRXXp % of the time
+	 				path->SIR - Signal-to-interference ratio (dB); digital, D <= 9000 km only;
+						-TINYDB (+307 dB) when there is no interfering mode
+	 				path->DuSI - Upper decile deviation signal-to-interference ratio (dB)
+	 				path->DlSI - Lower decile deviation signal-to-interference ratio (dB)
+	 				path->BCR - Basic circuit reliability (%)
+	 				path->OCR - Overall circuit reliability without scattering (%), digital only
+						(this is the DCR of P.533-14 section 10.2.3 step 5)
+	 				path->OCRs - Overall circuit reliability with scattering (%), digital only
+	 				path->MIR - Multimode interference ratio (%), digital only
+	 				path->RSN - Probability that the required signal-to-noise ratio, SN0, is achieved (%)
+	 				path->RT - Probability that the required time spread, T0, is not exceeded (%)
+	 				path->RF - Probability that the required frequency dispersion is not exceeded (%).
+						(RSN, RT, RF only for DIGITAL with T0 and F0 both non-zero)
+					path->probocc - via EquatorialScattering() (%)
+
 	 				via DigitalModulationSignalandInterferers()
-	 				path->Md_F2[].tau - F2 layer mode delay
-	 				path->Md_E[].tau - E layer mode delay
-	 
+	 				path->Md_F2[].tau - F2 layer mode delay (seconds)
+	 				path->Md_E[].tau - E layer mode delay (seconds)
+
+				NOTES
+					- Analog circuits get SNR, DuSN, DlSN, BCR and SNRXX only; OCR, OCRs, MIR,
+					  SIR keep their InitializePath() values.
+					- P.842-5 Table 2 column: owner ruling, paths of 2000 km or less use the
+					  < 60 deg values (there are no 1000 km control points to bound the segment of
+					  note (1)); longer paths are sampled at most every 50 km between T + 1000 km
+					  and R - 1000 km with the P.1239-4 section 5 geomagnetic pole (78.3 N, 69.0 W).
+					- P.842-5 Table 2 is tabulated at f/fb = <=0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0,
+					  3.0, 4.0, >=5.0; the code takes the row at or above f/fb (no interpolation),
+					  e.g. 0.8 < f/fb <= 1.0 uses the 1.0 row. A zero BMUF uses the >= 5.0 row.
+
 	 			SUBROUTINES
 					DigitalModulationSignalandInterferers()
-					GeomagneticCoords()
+					GreatCirclePoint()
 					EquatorialScattering()
 
 	 */
@@ -160,7 +199,7 @@ void CircuitReliability(struct PathData *path) {
 	}
 	else { // path->Modulation == DIGITAL
 		// The signal for digital modulation requires the calculation given in 
-		// ITU-R P.533-12 Section 10.2.3 Reliability prediction procedure.
+		// ITU-R P.533-12 (and P.533-14) Section 10.2.3 Reliability prediction procedure.
 		S = DigitalModulationSignalandInterferers(path, iS, iI);
 	}
 
@@ -259,7 +298,7 @@ void CircuitReliability(struct PathData *path) {
 
 	path->DuSN = sqrt(pow(10.0*log10(x/y),2) + pow(DuSd,2) + pow(DuSh,2));
 
-	// Step 9: "Upper decile deviation of resultant signal-to-noise ratio (dB)"
+	// Step 9: "Lower decile deviation of resultant signal-to-noise ratio (dB)"
 	// The value in variable x can be reused from Step 6 above.
 	y = pow(10.0, ((noiseP.FaA+ noiseP.DuA)/10.0)) + pow(10.0, ((noiseP.FaM+ noiseP.DuM)/10.0)) + pow(10.0, ((noiseP.FaG+ noiseP.DuG)/10.0));
 
@@ -503,13 +542,20 @@ void ModeSort(struct Mode *M[MAXMDS], int order[MAXMDS], int criteria) {
 	/*
 	 
 	  ModeSort() is used to return the index to the mode of interest.
-	  
+			It lists the existing modes (BMUF != 0) and sorts them, for the steps of
+			P.533-14 section 10.2.3 (step 1, the dominant mode; step 3, the first arriving).
+
 	 		INPUT
 	 			struct Mode *M[MAXMDS] - 3 E modes and 6 F2 modes in one array
+					(now MAXEMDS = 4 E modes at 0-3 and MAXF2MDS = 11 F2 modes at 4-14)
 	 			int criteria - Flag that is either DOMINANT or SOONEST
-	 
+
 	 		OUTPUT
 	 			int order[MAXMDS] - Index array of the modes in the order desired
+					DOMINANT: descending field strength Ew, so order[0] is the strongest mode
+					SOONEST: ascending delay tau, so order[0] is the earliest mode
+					The caller must fill order[] with NOTINDEX (99) first: only the first
+					(number of existing modes) entries are written, the rest must stay NOTINDEX.
 
 			SUBROUTINES
 				None
@@ -568,12 +614,13 @@ int NumberofModes(struct PathData path) {
 	/*
 	 
 	  NumberofModes() - Counts the number of modes in the path structure
-	 
+
 	 		INPUT
-	 			struct PathData path
-	 
+	 			struct PathData path - reads Md_E[].BMUF and Md_F2[].BMUF
+
 	 		OUTPUT
-	 			returns the number of modes that exist
+	 			returns the number of modes that exist (E plus F2 with BMUF != 0), 0 to MAXMDS.
+				E-screened modes are counted too: existence is by basic MUF only.
 	 
 	 		SUBROUTINES
 				None
@@ -604,16 +651,39 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 
 	/*
 	 
-	 	DigitalModulationSignalandInterferers() Returns the signal that satisfies the amplitude ratio, A, 
+	 	DigitalModulationSignalandInterferers() Returns the signal that satisfies the amplitude ratio, A,
 	 		and the time window, Tw. It also returns the indicies of the interfering modes in the array, iI[9]
 	 		The latter is used in the calculation of overall circuit reliability, OCR
-	 
+			Implements P.533-14 section 10.2.2, equation (47) with the virtual slant range p'
+			of equation (19) (elevation from equation (13)), and section 10.2.3 steps 1-4
+			(step 5's interferers are returned in iI[]); for 7000 < D < 9000 km the step 4
+			interpolation of section 5.4, equation (42).
+
 	 		INPUT
-	 			struct PathData *path
-	 			
+	 			struct PathData *path - reads distance (km), A (dB), TW (ms), frequency (MHz),
+					Pr, El (dB(1 uV/m)), Grw (dBi), n0_E, n0_F2, and per mode BMUF, hr (km),
+					Ew (dB(1 uV/m)), Prw (dBW), MC
+
 	 		OUTPUT
 	 			int iS[MAXMDS] - Index array of the modes that meet the signal criteria
 	 			int iI[MAXMDS] - Index array of the modes that meet the interference criteria
+					Both use the combined numbering (E 0..MAXEMDS-1, F2 MAXEMDS..MAXMDS-1), sorted
+					ascending and padded with NOTINDEX (99); all NOTINDEX when D > 9000 km or
+					fewer than two modes exist.
+				path->Md_E[].tau, path->Md_F2[].tau - mode delay (seconds, not ms) for every
+					existing mode from n0 up; D <= 9000 km only
+				returns S, the wanted-signal power (dBW): the power sum of the in-window modes'
+					Prw (TINYDB if none), interpolated towards El + Grw - 20 log f - 107.2 for
+					7000 < D < 9000 km; path->Pr when fewer than two modes exist or D > 9000 km
+
+			NOTES
+				- A mode is "active" if BMUF != 0 and MC (it was summed into Es, i.e. not
+				  E-screened). The step 2 amplitude test is Ew >= Ew(dominant) - A, on field
+				  strength; the window opens at the first-arriving active mode passing it
+				  and closes TW later; active modes passing step 2 but arriving later are
+				  the interferers.
+				- The dominant mode for step 1 is found among all existing modes (ModeSort()
+				  DOMINANT), including E-screened ones.
 	 
 	 		SUBROUTINES
 				ElevationAngle()
@@ -697,7 +767,7 @@ double DigitalModulationSignalandInterferers(struct PathData *path, int iS[MAXMD
 				M[n+MAXEMDS] = &path->Md_F2[n];
 			}
 
-            // P.533-12 Section 10.2.3 Reliability prediction procedure
+            // P.533-12 (and P.533-14) Section 10.2.3 Reliability prediction procedure
 			// Step 1: Determination of the dominant mode, Ew
 			ModeSort(M, iEw, DOMINANT); // iEw[0] is the dominant mode
 
@@ -823,12 +893,31 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
 	 
 	 		INPUT
 	 			struct PathData *path
-	 			int iS[MAXMDS] - Index array of the signal modes (0-2 E, 3-8 F2), from
+	 			int iS[MAXMDS] - Index array of the signal modes (0 to MAXEMDS-1 = 0-3 E,
+					MAXEMDS to MAXMDS-1 = 4-14 F2), from
 	 				DigitalModulationSignalandInterferers(), NOTINDEX-terminated
-	 
+				path - reads distance (km), dmax (km), TW (ms), FW (Hz), A (dB), SSN (R12),
+					month (0-11), OCR, BCR, MIR (%), the signal modes' tau (s) and Prw (dBW),
+					and CP[MP] or CP[Td02], CP[Rd02] (dip at 100 km, ltime, L)
+
 	 		OUTPUT
-	 			path->probocc - Probability of scattering occurrence (%)
-	 			path->OCRs - Overall circuit reliability with scattering, equation (48)
+	 			path->probocc - Probability of scattering occurrence (%), 0 unless the step 9
+					test is met
+	 			path->OCRs - Overall circuit reliability with scattering, equation (48) (%);
+					equal to OCR when D > 9000 km, there is no signal mode or the test fails
+
+			Attachment 1 formulae used: section 1 pTspread (Tspread = 1 ms), section 2 pFspread
+			(Fspread = 3 Hz), section 3 probocc = F(lambda_d) F(Tl) FR FS with
+			FR = min(0.1 + 0.008 R12, 1) and FS = 0.55 + 0.45 sin(60 (m - 1.5)) (degrees,
+			m = month number 1-12).
+
+			Interpretations (the text is not specific):
+				- Levels are compared as available powers (dBW), the dominant mode's Prw less A,
+				  where step 9 says "(EW - A)".
+				- The frequency window edges are taken at +/- FW from the carrier (step 8 says
+				  "symmetrically at the edges of the frequency window, Fw").
+				- The control points for the F region modes are those of Table 1a): mid-path
+				  for D <= dmax, otherwise T + d0/2 and R - d0/2, the largest probability kept.
 	 
 			SUBROUTINES
 				FindFlambdad()
@@ -954,12 +1043,16 @@ double FindFlambdad(struct ControlPt CP) {
 	 
 	  FindFlambdad() - Determines F sub lambda sub d in P.533-12 Appendix 1
 	 		to Annex 1 "A model for scattering of HF signals"
+		(P.533-14 Attachment 1 to Annex 1, section 3: F(lambda_d) = 1 for 0-15 deg,
+		((25 - lambda_d)/10)^2 ((lambda_d - 10)/5) for 15-25 deg, 0 for 25-90 deg,
+		"where lambda_d is the magnetic dip".)
 	 
 	 	INPUT 
-	 		Control point to determine F sub lambda sub d
+	 		Control point to determine F sub lambda sub d; CP.dip[HR100km] (radians) is read.
+			The text does not say at which height the dip is taken; the 100 km value is used.
 	 
 	 	OUTPUT
-	 		returns F sub lambda sub d
+	 		returns F sub lambda sub d, 0 to 1 (dimensionless); |dip| is used, in degrees
 	 
 	 	SUBROUTINES
 			None
@@ -993,12 +1086,16 @@ double FindFTl(struct ControlPt CP) {
 	 
 	  FindTl() - Determines the F sub T sub l parameter in in P.533-12 Appendix 1
 	 		to Annex 1 "A model for scattering of HF signals"
-	 
-	 	INPUT 
-	 		Control point of interest
-	 
-	 	OUTPUT 
-	 		returns time parameter F sub T sub l for the calculation of Prob sub occ
+			(P.533-14 Attachment 1 to Annex 1, section 3: F(Tl) = 1 for 00-03 h,
+			((7 - Tl)/4)^2 ((Tl - 1)/2) for 03-07 h, 0 for 07-19 h, (Tl - 19)^2 (41 - 2 Tl)
+			for 19-20 h, 1 for 20-24 h, "Tl: local time at the control point (h)".)
+
+	 	INPUT
+	 		Control point of interest; CP.ltime (UTC hour) and CP.L.lng are read
+
+	 	OUTPUT
+	 		returns time parameter F sub T sub l for the calculation of Prob sub occ (0 to 1)
+			Tl is the local mean time, LocalMeanTime(CP)
 	 
 	 	SUBROUTINES
 			None

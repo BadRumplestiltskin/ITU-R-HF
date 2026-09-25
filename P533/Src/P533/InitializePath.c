@@ -21,13 +21,26 @@ void InitializePath(struct PathData *path) {
 
 	/*
 
-		InitializePath() - Sets the path structure output values to default values
+		InitializePath() - Sets the path structure output values to default values, then finds
+			the path length and the fixed control points (P.533-14 section 2, Table 1: the
+			mid-path point and, for D >= 2000 km, T + 1000 km and R - 1000 km) and the season.
 
 			INPUT
-				struct PathData *path
+				struct PathData *path - the user inputs, already checked by ValidatePath():
+					L_tx, L_rx (radians), SorL (SHORTPATH/LONGPATH), month (0-11), hour
+					(index 0-23), SSN, the ionospheric maps
 
 			OUTPUT
 				struct PathData *path
+					- every computed output reset to a sentinel: TINYDB (-307, "no value" in
+					  dB), 99.9 for MUFs and B, 999999.9 for distance and dmax, 0.0 for
+					  reliabilities, NOLOWESTMODE / NODOMINANTMODE (99) for mode indices
+					- Md_E[], Md_F2[] reset by InitializeModes()
+					- path->distance (km): the great-circle distance, 2*PI*R0 minus it for
+					  a long path; a zero distance is replaced by DBL_EPSILON
+					- path->CP[] by InitializeCPs()
+					- path->noiseP initialised by dllInitializeNoise() (P372 library)
+					- path->season by WhatSeason() at the mid-path control point
 
 			SUBROUTINES
 				IntializeModes()
@@ -161,11 +174,19 @@ void InitializeCPs(struct PathData *path) {
 	 			  M is the location (lat and long) of the midpoint
 	 			  d0 is the hope distance (km) of the lowest-order mode
 
+		Control point locations follow P.533-14 section 2, Table 1.
+
 		INPUT
-			struct PathData *path
+			struct PathData *path - reads path->L_tx, path->L_rx, path->distance (km, already
+				the long-path distance when SorL == LONGPATH), and what CalculateCPParameters() reads
 
 		OTUPUT
 			initialized control points path->CP[n]
+				- all five zeroed
+				- CP[MP] placed at mid-path and its parameters found by CalculateCPParameters()
+				- CP[T1k], CP[R1k] placed and computed only when distance >= 2000 km; for
+				  shorter paths they stay zero (foE = 0 etc.)
+				- CP[Td02], CP[Rd02] are left zero here and set in MUFBasic() when D > dmax
 
 		SUBROUTINES
 			GreatCirclePoint()
@@ -251,11 +272,14 @@ void InitializeModes(struct Mode *M, int n) {
 		InitializeModes() - Initialized the n number of modes: MAXF2MDS for F2 and MAXEMDS for E
 
 		INPUT
-			struct Mode *M
-			int n
+			struct Mode *M - first element of a mode array (path->Md_E or path->Md_F2)
+			int n - number of modes in the array
 
 		OUTPUT
-			n initialized modes pointed to by the base pointer *M 
+			n initialized modes pointed to by the base pointer *M
+				BMUF = 0.0 marks a mode that does not exist (the test used throughout);
+				Ew, Prw, Grw = TINYDB (-307 dB); Lb = -TINYDB (+307 dB); MC = FALSE;
+				all MUFs, deciles, Fprob, fs, hr, tau, ele = 0.0
 
 		SUBROUTINES
 			None
@@ -295,13 +319,22 @@ int WhatSeason(struct Location L, int month) {
 	
 		WhatSeason() determines the month and latitude dependent index which 
 		    represents the season. The index is used to locate appropriate variables in the foF2var array.
+			The seasons are those of P.1239-4 section 3.2 (foF2 decile factors, Tables 2 and 3):
+			winter November-February in the Northern Hemisphere and May-August in the Southern,
+			equinox March, April, September and October, summer May-August (N) and
+			November-February (S). The equator counts as northern.
+			path->season is also used as the season index of the P.1240 Rop table in
+			MUFOperational(); P.1240 text not provided, so whether P.1240 defines its seasons the
+			same way is unverified.
+			These are NOT the Lh seasons of P.533-14 section 5.2.2 (winter December-February),
+			which WhatSeasonforLh() (MedianSkywaveFieldStrengthShort.c) determines separately.
 
 		INPUT
-			struct Location L
-			int month
+			struct Location L - Location (L.lat in radians; only the sign is used)
+			int month - Month index 0-11 (JAN .. DEC)
 
 		OUTPUT
-			int season
+			int season - WINTER (0), EQUINOX (1) or SUMMER (2)
 
 		SUBROUTINES
 			None
