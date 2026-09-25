@@ -96,6 +96,8 @@ suites; then CI green on all four jobs.
 - noise-flag-2-writes-MakeNoiseOut: file literally named ".\MakeNoiseOut.txt".
 - noise-flag-101-not-csv: undocumented flags 101/102 select CSV.
 - noise-mm-fractional-category: 2.5 taken as dB (FaM 201.5); README range 100-200.
+- noise-readme-arguments (upstream 29): README Mode 1 list omitted frequency
+  (argv[3]), so arguments 3-7 were misnumbered. Fixed (6d6fd5c).
 
 ## U8 Documentation and report text - low
 - *verify*: README return-code table disagrees with P533.h (131-142 vs 130-135/140/141/160/161/170).
@@ -106,3 +108,15 @@ suites; then CI green on all four jobs.
 ## U9 Hygiene - low
 - sprintf in ReadIonParameters.c, MakeNoise.c, Noise.c, DumpPathData.c,
   ReadInputConfiguration.c, Report.c: deprecated on macOS; move to snprintf.
+
+## Upstream issues
+Open issues on ITU-R-Study-Group-3/ITU-R-HF, checked against this fork on
+2026-09-25. Recorded here only; nothing is posted upstream.
+- 38 P.1240 Table 1 Rop seasons reversed in the > 30 dBW row: fixed (cdf6b0b).
+- 31 MUFOperational EIRP index always 0: fixed (cdf6b0b).
+- 25 CircuitReliability ptick uses cos(delta - psi): fixed (a04ebe8).
+- 18 RPT_N0_E / RPT_N0_F2 end the report-option scan: fixed (6b40e40).
+- 29 README ITURNoise arguments omit frequency: fixed (6d6fd5c).
+- 24 area prediction SNR contours not smooth: open, *verify*. Likely the
+  7000/9000 km method bands and mode changes, which step by design.
+- 16 embed Docs/Repo Arch.pptx diagram in README: open (documentation request).
