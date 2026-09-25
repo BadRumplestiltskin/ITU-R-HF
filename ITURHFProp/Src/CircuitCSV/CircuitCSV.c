@@ -1612,8 +1612,10 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 				free(line);
 				return RTN_ERRCSVWORKER;
 			}
-#endif
+			// A GCC/Clang builtin: MSVC has none, and there is no -j on Windows,
+			// where nworkers is always 1.
 			while (blk > mine) mine = __atomic_fetch_add(NextBlock, 1, __ATOMIC_SEQ_CST);
+#endif
 			if (blk < mine) continue;
 			if ((nrow - 1) % CSVBLOCK == 0) fprintf(BlockIdx, "%d\n", blk);
 		}

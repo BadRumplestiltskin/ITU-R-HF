@@ -460,8 +460,8 @@ void CircuitReliability(struct PathData *path) {
 		// predicted that the system will not meet its performance requirements."
 		// This range used to skip the OCR calculation altogether, leaving OCR = 0 and
 		// MIR undefined for every digital circuit beyond 9000 km.
-		double spread = 3.0 + 2.0*(path->distance - 7000.0)/13000.0; // ms
-		if(path->TW >= spread) {
+		double maxspread = 3.0 + 2.0*(path->distance - 7000.0)/13000.0; // ms
+		if(path->TW >= maxspread) {
 			path->MIR = 100.0;
 			path->OCR = path->BCR;
 		}
