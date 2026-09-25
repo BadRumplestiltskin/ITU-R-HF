@@ -222,9 +222,11 @@ int main(int argc, char* argv[]) {
 			return RTN_ERRCOMMANDLINEARGS;
 		}
 
-		RunAtmosNoiseMonths(&datafilepath[0]);
+		// The figure run's own status was discarded, so a failure still exited
+		// as success. Its success code is RTN_ATMOSFILESOK; the process exits 0.
+		retval = RunAtmosNoiseMonths(&datafilepath[0]);
 
-		return RTN_ITURNOISEOK;
+		return (retval == RTN_ATMOSFILESOK) ? RTN_ITURNOISEOK : retval;
 
 	} // argc == 2
 
@@ -386,8 +388,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	P372_LIB_CLOSE(hLib);
- 
-return retval;
+
+	// MakeNoise() reports success as RTN_MAKENOISEOK (26), which used to be the
+	// exit status: a shell or script saw a successful run as a failure.
+	return (retval == RTN_MAKENOISEOK) ? RTN_ITURNOISEOK : retval;
 
 }
 

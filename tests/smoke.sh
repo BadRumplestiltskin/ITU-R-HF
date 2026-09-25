@@ -3,7 +3,7 @@
 #   CircuitCSV on tests/circuitcsv/sample.csv, compared with expected.csv
 #     (four circuits: short, long-path and polar);
 #   ITURNoise for one point, compared with tests/iturnoise/expected.csv.
-# ITURNoise exits 26 (RTN_MAKENOISEOK) on success, not 0.
+# ITURNoise exits 0 on success.
 #
 # Usage: tests/smoke.sh
 # Exits 0 when both pass, 1 otherwise. The library path is injected with
@@ -42,8 +42,8 @@ fi
 # ITURNoise, one point, CSV output (print flag 3); the last line is the result
 status=0
 $run "$noise" 1 14 1.0 40 165 0 "$root/P372/Data" 3 >"$work/iturnoise.log" 2>&1 || status=$?
-if [ "$status" -ne 26 ]; then
-	echo "FAIL ITURNoise (exit $status, expected 26)"; sed 's/^/      /' "$work/iturnoise.log"; fail=1
+if [ "$status" -ne 0 ]; then
+	echo "FAIL ITURNoise (exit $status, expected 0)"; sed 's/^/      /' "$work/iturnoise.log"; fail=1
 elif ! tail -n 1 "$work/iturnoise.log" | diff -u "$root/tests/iturnoise/expected.csv" - >"$work/iturnoise.diff"; then
 	echo "FAIL ITURNoise (result differs from expected.csv)"; sed 's/^/      /' "$work/iturnoise.diff"; fail=1
 else

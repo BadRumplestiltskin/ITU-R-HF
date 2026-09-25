@@ -18,7 +18,7 @@
 #define RTN_ERRMMNOISE					112 // ERROR: Invalid Input Man-made Noise
 
 // Successfull return codes 
-#define RTN_ITURNOISEOK					 90 // Normal successful exit
+#define RTN_ITURNOISEOK					  0 // Normal successful exit: the process exit status
 #define RTN_ATMOSFILESOK                 91 // All atmospheric noise files created 
 // End ITURNoise return codes
 
