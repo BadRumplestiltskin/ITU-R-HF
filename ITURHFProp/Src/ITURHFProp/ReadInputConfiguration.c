@@ -37,8 +37,6 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 	fp = fopen(InFilePath, "r");
 	if(fp == NULL) {
 		printf("ReadingInputConfiguration: ERROR Can't find input file - %s\n", InFilePath);
-		printf("Press Enter...");
-		getchar();
 		return RTN_ERRNOINPUTFILE;
 	}
 
