@@ -728,7 +728,7 @@ static int CompareDouble(const void *a, const void *b) {
 
 		"start:stop:step" gives start, start+step, ... up to stop inclusive; each
 		value is rounded to 1 kHz so that 0.1 MHz steps do not accumulate binary
-		fractions. Anything else is read as a comma separated list, sorted
+		fractions, and a value the rounding repeats is dropped. Anything else is read as a comma separated list, sorted
 		ascending with duplicates removed. Every frequency must lie in P.533's
 		1-30 MHz, which ValidatePath() enforces. NaN and infinity are refused
 		outright: a NaN compares false with everything, so it slipped past the
@@ -765,6 +765,9 @@ static int ParseScan(const char *spec) {
 				printf("CircuitCSV: Error %d -F gives more than %d frequencies\n", RTN_ERRCSVARGS, SCANMAX);
 				return RTN_ERRCSVARGS;
 			}
+			// A step under 1 kHz rounds some values onto the one before; the
+			// values ascend, so a repeat can only be the previous one.
+			if (n > 0 && f == ScanF[n-1]) continue;
 			ScanF[n++] = f;
 		}
 	}
