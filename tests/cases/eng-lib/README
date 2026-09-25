@@ -12,5 +12,5 @@ prop.awk  checks the "Calculated Parameters" block of an ITURHFProp report:
           It also prints BAD when the dominant mode's loss (column 52) is
           below free space over twice its reflection height (column 54),
           which the slant range of eq. (19) can never be. That needs the
-          RPT_ALLMODES column layout that path.tmpl selects.
+          RPT_ALL column layout that path.tmpl selects.
 path.tmpl an ITURHFProp input with @...@ placeholders filled in by sed.

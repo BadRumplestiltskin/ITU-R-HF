@@ -13,7 +13,11 @@
 // Local prototypes
 void substrbtwnchar(char instr[256], char searchchar, char * outstr);
 static int ReadList(char *line, double *vals, int max, int integer);
-unsigned long OutputOption(char optstr[256]);
+static int ReadScalar(const char *line, double *v);
+static double ScalarOrNaN(const char *line);
+static int ReadWhole(const char *line, int *out);
+static int ReadReportFormat(char *instr, unsigned long *format);
+unsigned long OutputOption(const char *optstr);
 void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path);
 // End local prototypes
 
@@ -28,12 +32,10 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 	#endif
 
 	int i, n;
-	int retval;
 	double vals[NMBOFFREQS];	// the longest of the three lists
 
 	char line[256];
 	char instr[256];
-	char optstr[256];
 
 	FILE *fp;
 
@@ -65,10 +67,10 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				substrbtwnchar(line, '\"', path->name);
 			}
             if (strncmp("TXGOS", line, 5) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->TXGOS);
+				ITURHFP->TXGOS = ScalarOrNaN(line);
 			}
             if (strncmp("RXGOS", line, 5) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->RXGOS);
+				ITURHFP->RXGOS = ScalarOrNaN(line);
 			}
             if (strncmp("AntennaOrientation", line, 18) == 0) {
 				// The name is between two quotes-find them.
@@ -79,13 +81,18 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				else if ((strcmp(instr, "ARBITRARY") == 0) || (strcmp(instr, "MANUAL") == 0)) {
 					ITURHFP->AntennaOrientation = MANUAL;
 				}
+				else {
+					printf("ReadInputConfiguration: ERROR AntennaOrientation \"%s\" is not TX2RX, ARBITRARY or MANUAL\n", instr);
+					fclose(fp);
+					return RTN_ERRANTENNAORN;
+				}
             }
             if (strncmp("TXBearing", line, 5) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->TXBearing);
+				ITURHFP->TXBearing = ScalarOrNaN(line);
 				ITURHFP->TXBearing = ITURHFP->TXBearing*D2R;
 			}
             if (strncmp("RXBearing", line, 5) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->RXBearing);
+				ITURHFP->RXBearing = ScalarOrNaN(line);
 				ITURHFP->RXBearing = ITURHFP->RXBearing*D2R;
 			}
             if (strncmp("PathTXName", line, 10) == 0) {
@@ -93,11 +100,11 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				substrbtwnchar(line, '\"', path->txname);
 			}
             if (strncmp("Path.L_tx.lat", line, 13) == 0) {
-				sscanf(line, "%*s %lf", &path->L_tx.lat);
+				path->L_tx.lat = ScalarOrNaN(line);
 				path->L_tx.lat = path->L_tx.lat*D2R;
 			}
             if (strncmp("Path.L_tx.lng", line, 13) == 0) {
-				sscanf(line, "%*s %lf", &path->L_tx.lng);
+				path->L_tx.lng = ScalarOrNaN(line);
 				path->L_tx.lng = path->L_tx.lng*D2R;
 			}
             if (strncmp("TXAntFilePath", line, 13) == 0) {
@@ -109,11 +116,11 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				substrbtwnchar(line, '\"', path->rxname);
 			}
             if (strncmp("Path.L_rx.lat", line, 13) == 0) {
-				sscanf(line, "%*s %lf", &path->L_rx.lat);
+				path->L_rx.lat = ScalarOrNaN(line);
 				path->L_rx.lat = path->L_rx.lat*D2R;
 			}
             if (strncmp("Path.L_rx.lng", line, 13) == 0) {
-				sscanf(line, "%*s %lf", &path->L_rx.lng);
+				path->L_rx.lng = ScalarOrNaN(line);
 				path->L_rx.lng = path->L_rx.lng*D2R;
 			}
             if (strncmp("RXAntFilePath", line, 13) == 0) {
@@ -121,37 +128,40 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				substrbtwnchar(line, '\"', ITURHFP->RXAntFilePath);
 			}
             if (strncmp("Path.year", line, 9) == 0) {
-				sscanf(line, "%*s %d", &path->year);
+				if (ReadWhole(line, &path->year) != 0) { fclose(fp); return RTN_ERRYEAR; }
 			}
             if (strncmp("Path.month", line, 10) == 0) {
 				n = ReadList(line, vals, NMBOFMONTHS, TRUE);
 				if (n < 0) { fclose(fp); return RTN_ERRMONTH; }
-				for (i = 0; i < n; i++) ITURHFP->months[i] = (int)vals[i] - 1;
+				for (i = 0; i < n; i++) ITURHFP->months[i] = (int)vals[i];
+				ITURHFP->imnthend = n;
             }
             if (strncmp("Path.hour", line, 9) == 0) {
 				n = ReadList(line, vals, NMBOFHOURS, TRUE);
 				if (n < 0) { fclose(fp); return RTN_ERRHOUR; }
-				for (i = 0; i < n; i++) ITURHFP->hrs[i] = (int)vals[i] - 1;
+				for (i = 0; i < n; i++) ITURHFP->hrs[i] = (int)vals[i];
+				ITURHFP->ihrend = n;
             }
             if (strncmp("Path.SSN", line, 8) == 0) {
-				sscanf(line, "%*s %d", &path->SSN);
+				if (ReadWhole(line, &path->SSN) != 0) { fclose(fp); return RTN_ERRSSNVALUE; }
 			}
             if (strncmp("Path.frequency", line, 14) == 0) {
 				n = ReadList(line, vals, NMBOFFREQS, FALSE);
 				if (n < 0) { fclose(fp); return RTN_ERRFREQUENCY; }
 				for (i = 0; i < n; i++) ITURHFP->frqs[i] = vals[i];
+				ITURHFP->ifrqend = n;
             }
             if (strncmp("Path.txpower", line, 12) == 0) {
-				sscanf(line, "%*s %lf", &path->txpower);
+				path->txpower = ScalarOrNaN(line);
 			}
             if (strncmp("Path.BW", line, 7) == 0) {
-				sscanf(line, "%*s %lf", &path->BW);
+				path->BW = ScalarOrNaN(line);
 			}
             if (strncmp("Path.SNRr", line, 9) == 0) {
-				sscanf(line, "%*s %lf", &path->SNRr);
+				path->SNRr = ScalarOrNaN(line);
 			}
             if (strncmp("Path.SNRXXp", line, 9) == 0) {
-				sscanf(line, "%*s %d", &path->SNRXXp);
+				if (ReadWhole(line, &path->SNRXXp) != 0) { fclose(fp); return RTN_ERRSNRXXP; }
 			}
             if (strncmp("Path.ManMadeNoise", line, 17) == 0) {
 				// The name is between two quotes-find them.
@@ -174,8 +184,9 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				else if (strcmp(instr, "QUIET") == 0) {
 					path->noiseP.ManMadeNoise = QUIET;
 				}
-				else { // This is a number
-					sscanf(line, "%*s %lf", &path->noiseP.ManMadeNoise);
+				else { // Not a category: a figure in dB. NaN if it is not a number,
+					// which ValidatePath() rejects with RTN_ERRMANMADENOISE.
+					path->noiseP.ManMadeNoise = ScalarOrNaN(line);
 				}
             }
             if (strncmp("Path.Modulation", line, 15) == 0) {
@@ -187,24 +198,29 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				else if (strcmp(instr, "ANALOG") == 0) {
 					path->Modulation = ANALOG;
 				}
+				else {
+					printf("ReadInputConfiguration: ERROR Path.Modulation \"%s\" is not ANALOG or DIGITAL\n", instr);
+					fclose(fp);
+					return RTN_ERRMODULATION;
+				}
             }
             if (strncmp("Path.SIRr", line, 9) == 0) {
-				sscanf(line, "%*s %lf", &path->SIRr);
+				path->SIRr = ScalarOrNaN(line);
 			}
             if (strncmp("Path.A", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &path->A);
+				path->A = ScalarOrNaN(line);
 			}
             if (strncmp("Path.TW", line, 7) == 0) {
-				sscanf(line, "%*s %lf", &path->TW);
+				path->TW = ScalarOrNaN(line);
 			}
             if (strncmp("Path.FW", line, 7) == 0) {
-				sscanf(line, "%*s %lf", &path->FW);
+				path->FW = ScalarOrNaN(line);
 			}
             if (strncmp("Path.T0", line, 7) == 0) {
-				sscanf(line, "%*s %lf", &path->T0);
+				path->T0 = ScalarOrNaN(line);
 			}
             if (strncmp("Path.F0", line, 7) == 0) {
-				sscanf(line, "%*s %lf", &path->F0);
+				path->F0 = ScalarOrNaN(line);
 			}
             if (strncmp("Path.SorL", line, 9) == 0) {
 				// The name is between two quotes-find them.
@@ -215,6 +231,11 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				else if (strcmp(instr, "LONGPATH") == 0) {
 					path->SorL = LONGPATH;
 				}
+				else {
+					printf("ReadInputConfiguration: ERROR Path.SorL \"%s\" is not SHORTPATH or LONGPATH\n", instr);
+					fclose(fp);
+					return RTN_ERRSORL;
+				}
             }
             if (strncmp("RptFilePath", line, 11) == 0) {
 				// The name is between two quotes-find them.
@@ -224,88 +245,70 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				// The name is between two quotes-find them.
 				substrbtwnchar(line, '\"', instr);
 
-				// If this contains no bangs (|), then it is a single option.
-				if (strchr(instr, '|') == NULL) {
-					ITURHFP->RptFileFormat = OutputOption(instr);
+				if (ReadReportFormat(instr, &ITURHFP->RptFileFormat) != 0) {
+					fclose(fp);
+					return RTN_ERRRPTFILEFORMAT;
 				}
-				else {
-					char instr2[256];
-					char *buf[2];
-					int count = 0;
-					buf[0] = instr;
-					buf[1] = instr2;
-					retval = 2;
-					ITURHFP->RptFileFormat = 0;
-					while ((strlen(buf[count]) != 0) && (buf[count][0] != '/') && (retval == 2)) {
-						// The remainder scanset must admit digits: without them RPT_N0_F2 and
-						// RPT_N0_E ended the scan at their "0", and every option listed after
-						// one of them was silently dropped. Both conversions are bounded by
-						// the 256-byte buffers.
-						retval = sscanf(buf[count], "%255s | %255[a-zA-Z0-9 _|]", optstr, buf[count^1]);
-						ITURHFP->RptFileFormat = ITURHFP->RptFileFormat | OutputOption(optstr);
-						count ^= 1;
-					}
-                }
             }
             if (strncmp("LL.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LL.lat);
+				ITURHFP->L_LL.lat = ScalarOrNaN(line);
 				ITURHFP->L_LL.lat = ITURHFP->L_LL.lat*D2R;
 			}
             if (strncmp("LL.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LL.lng);
+				ITURHFP->L_LL.lng = ScalarOrNaN(line);
 				ITURHFP->L_LL.lng = ITURHFP->L_LL.lng*D2R;
 			}
             if (strncmp("LR.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LR.lat);
+				ITURHFP->L_LR.lat = ScalarOrNaN(line);
 				ITURHFP->L_LR.lat = ITURHFP->L_LR.lat*D2R;
 			}
             if (strncmp("LR.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LR.lng);
+				ITURHFP->L_LR.lng = ScalarOrNaN(line);
 				ITURHFP->L_LR.lng = ITURHFP->L_LR.lng*D2R;
 			}
             if (strncmp("UL.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UL.lat);
+				ITURHFP->L_UL.lat = ScalarOrNaN(line);
 				ITURHFP->L_UL.lat = ITURHFP->L_UL.lat*D2R;
 			}
             if (strncmp("UL.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UL.lng);
+				ITURHFP->L_UL.lng = ScalarOrNaN(line);
 				ITURHFP->L_UL.lng = ITURHFP->L_UL.lng*D2R;
 			}
             if (strncmp("UR.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UR.lat);
+				ITURHFP->L_UR.lat = ScalarOrNaN(line);
 				ITURHFP->L_UR.lat = ITURHFP->L_UR.lat*D2R;
 			}
             if (strncmp("UR.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UR.lng);
+				ITURHFP->L_UR.lng = ScalarOrNaN(line);
 				ITURHFP->L_UR.lng = ITURHFP->L_UR.lng*D2R;
 			}
             // An alternative way to input data is by two points of the analysis rectangle
 			// which is more efficient since 4 corner input is redundant
 			// The south east corner of the analysis rectangle
 			if (strncmp("SE.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LR.lat);
+				ITURHFP->L_LR.lat = ScalarOrNaN(line);
 				ITURHFP->L_LR.lat = ITURHFP->L_LR.lat*D2R;
 			}
             if (strncmp("SE.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_LR.lng);
+				ITURHFP->L_LR.lng = ScalarOrNaN(line);
 				ITURHFP->L_LR.lng = ITURHFP->L_LR.lng*D2R;
 			}
             // The north west corner of the analysis rectangle
 			if (strncmp("NW.lat", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UL.lat);
+				ITURHFP->L_UL.lat = ScalarOrNaN(line);
 				ITURHFP->L_UL.lat = ITURHFP->L_UL.lat*D2R;
 			}
             if (strncmp("NW.lng", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->L_UL.lng);
+				ITURHFP->L_UL.lng = ScalarOrNaN(line);
 				ITURHFP->L_UL.lng = ITURHFP->L_UL.lng*D2R;
 			}
             // Analysis window increments
 			if (strncmp("latinc", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->latinc);
+				ITURHFP->latinc = ScalarOrNaN(line);
 				ITURHFP->latinc = ITURHFP->latinc*D2R;
 			}
             if (strncmp("lnginc", line, 6) == 0) {
-				sscanf(line, "%*s %lf", &ITURHFP->lnginc);
+				ITURHFP->lnginc = ScalarOrNaN(line);
 				ITURHFP->lnginc = ITURHFP->lnginc*D2R;
 			}
             //
@@ -363,135 +366,71 @@ void substrbtwnchar(char instr[256], char searchchar, char * outstr) {
     return;
 }
 
-unsigned long OutputOption(char optstr[256]) {
+unsigned long OutputOption(const char *optstr) {
 
 	/*
-	  OutputOption() - This subroutine determines which variables the user
-	    wants in a report file. Since some of the options are a subset of
-		others make sure that the select option is unique.
+	  OutputOption() - Returns the report bits for one RptFileFormat option.
+
+		The name must match an option exactly. The old test compared
+		prefixes, so a misspelling such as "RPT_PRX" or "RPT_ALLMODES" was
+		taken silently as RPT_PR or RPT_ALL.
 
 		INPUTS
-			char optstr[256] This string is in the format:
-				RPT_OPTION1 | RPT_OPTION2 | RPT_OPTION# | ...
-				Where OPTION1, OPTION2 and OPTION3 are defined
+			const char *optstr - one option name, e.g. "RPT_PR", as defined
 				in ITURHFProp.h
 
 		OUTPUT
 			returns unsigned long where each bit field represents a
-				particular varable or set of variables as defined in
-				ITURHFProp.h
+				particular variable or set of variables as defined in
+				ITURHFProp.h, or 0 when the name is not an option
 	*/
-	// RPT_A*
-	if(strncmp("RPT_ALL", optstr, 7) == 0) {
-		return RPT_ALL;
-	}
-    // RPT_B*
-	if(strncmp("RPT_BCR", optstr, 7) == 0) {
-		return RPT_BCR;
-	}
-    if((strncmp("RPT_BMUF", optstr, 8) == 0) && (strncmp("RPT_BMUFD", optstr, 9) != 0)) {
-		return RPT_BMUF;
-	}
-    if(strncmp("RPT_BMUFD", optstr, 9) == 0) {
-		return RPT_BMUFD;
-	}
-    // RPT_D*
-	if(strncmp("RPT_DUMPPATH", optstr, 12) == 0) {
-		return RPT_DUMPPATH;
-	}
-    if(strncmp("RPT_DOMMODE", optstr, 11) == 0) {
-		return RPT_DOMMODE;
-	}
-    if(strncmp("RPT_DMAX", optstr, 8) == 0) {
-		return RPT_DMAX;
-	}
-    if((strncmp("RPT_D", optstr, 5) == 0) && (strncmp("RPT_DUMPPATH", optstr, 12) != 0) && (strncmp("RPT_DMAX", optstr, 8) != 0) && (strncmp("RPT_DOMMODE", optstr, 11) != 0)) {
-		return RPT_D;
-	}
-    // RPT_E*
-	if(strncmp("RPT_ELE", optstr, 7) == 0) {
-		return RPT_ELE;
-	}
-    if(strncmp("RPT_ESL", optstr, 7) == 0) {
-		return RPT_ESL;
-	}
-    if((strncmp("RPT_E", optstr, 5) == 0) && (strncmp("RPT_ELE", optstr, 7) != 0)) {
-		return RPT_E;
-	}
-    // RPT_G*
-	if(strncmp("RPT_GRW", optstr, 7) == 0) {
-		return RPT_GRW;
-	}
-    // RPT_L*
-	if(strncmp("RPT_LONG", optstr, 8) == 0) {
-		return RPT_LONG;
-	}
-    // RPT_M*
-	if(strncmp("RPT_MIR", optstr, 7) == 0) {
-		return RPT_MIR;
-	}
-    // RPT_N*
-	if(strncmp("RPT_N0_F2", optstr, 9) == 0) {
-		return RPT_N0_F2;
-	}
-    if(strncmp("RPT_N0_E", optstr, 8) == 0) {
-		return RPT_N0_E;
-	}
-    if(strncmp("RPT_NOISESOURCESD", optstr, 17) == 0) {
-		return RPT_NOISESOURCESD;
-	}
-    if((strncmp("RPT_NOISESOURCES", optstr, 16) == 0) && (strncmp("RPT_NOISESOURCESD", optstr, 17) != 0)) {
-		return RPT_NOISESOURCES;
-	}
-    if(strncmp("RPT_NOISETOTALD", optstr, 15) == 0) {
-		return RPT_NOISETOTALD;
-	}
-    if((strncmp("RPT_NOISETOTAL", optstr, 14) == 0) && (strncmp("RPT_NOISETOTALD", optstr, 15) != 0)) {
-		return RPT_NOISETOTAL;
-	}
-    //RPT_O*
-	if(strncmp("RPT_OPMUFD", optstr, 10) == 0) {
-		return RPT_OPMUFD;
-	}
-    if((strncmp("RPT_OPMUF", optstr, 9) == 0) && (strncmp("RPT_OPMUFD", optstr, 10) != 0)) {
-		return RPT_OPMUF;
-	}
-    if(strncmp("RPT_OCRS", optstr, 8) == 0) {
-		return RPT_OCRS;
-	}
-    if((strncmp("RPT_OCR", optstr, 7) == 0) && (strncmp("RPT_OCRS", optstr, 8) != 0)) {
-		return RPT_OCR;
-	}
-    // RPT_P*
-	if(strncmp("RPT_PR", optstr, 6) == 0) {
-		return RPT_PR;
-	}
-    // RPT_R*
-	if(strncmp("RPT_RSN", optstr, 7) == 0) {
-		return RPT_RSN;
-	}
-    if(strncmp("RPT_RXLOCATION", optstr, 14) == 0) {
-		return RPT_RXLOCATION;
-	}
-    //RPT_S*
-	if(strncmp("RPT_SNRXX", optstr, 9) == 0) {
-		return RPT_SNRXX;
-	}
-    if(strncmp("RPT_SNRD", optstr, 8) == 0) {
-		return RPT_SNRD;
-	}
-    if((strncmp("RPT_SNR", optstr, 7) == 0) && (strncmp("RPT_SNRD", optstr, 8) != 0) && (strncmp("RPT_SNRXX", optstr, 9) != 0)) {
-		return RPT_SNR;
-	}
-    if(strncmp("RPT_SIRD", optstr, 8) == 0) {
-		return RPT_SIRD;
-	}
-    if((strncmp("RPT_SIR", optstr, 7) == 0) && (strncmp("RPT_SIRD", optstr, 8) != 0)) {
-		return RPT_SIR;
+
+	static const struct {
+		const char *name;
+		unsigned long bits;
+	} options[] = {
+		{"RPT_D",				RPT_D},
+		{"RPT_DMAX",			RPT_DMAX},
+		{"RPT_ELE",				RPT_ELE},
+		{"RPT_BMUF",			RPT_BMUF},
+		{"RPT_BMUFD",			RPT_BMUFD},
+		{"RPT_OPMUF",			RPT_OPMUF},
+		{"RPT_OPMUFD",			RPT_OPMUFD},
+		{"RPT_N0_F2",			RPT_N0_F2},
+		{"RPT_N0_E",			RPT_N0_E},
+		{"RPT_E",				RPT_E},
+		{"RPT_PR",				RPT_PR},
+		{"RPT_NOISESOURCES",	RPT_NOISESOURCES},
+		{"RPT_NOISESOURCESD",	RPT_NOISESOURCESD},
+		{"RPT_NOISETOTALD",		RPT_NOISETOTALD},
+		{"RPT_NOISETOTAL",		RPT_NOISETOTAL},
+		{"RPT_SNR",				RPT_SNR},
+		{"RPT_SNRD",			RPT_SNRD},
+		{"RPT_SNRXX",			RPT_SNRXX},
+		{"RPT_SIR",				RPT_SIR},
+		{"RPT_SIRD",			RPT_SIRD},
+		{"RPT_RSN",				RPT_RSN},
+		{"RPT_BCR",				RPT_BCR},
+		{"RPT_OCR",				RPT_OCR},
+		{"RPT_OCRS",			RPT_OCRS},
+		{"RPT_MIR",				RPT_MIR},
+		{"RPT_RXLOCATION",		RPT_RXLOCATION},
+		{"RPT_DOMMODE",			RPT_DOMMODE},
+		{"RPT_GRW",				RPT_GRW},
+		{"RPT_ESL",				RPT_ESL},
+		{"RPT_LONG",			RPT_LONG},
+		{"RPT_ALL",				RPT_ALL},
+		{"RPT_DUMPPATH",		RPT_DUMPPATH},
+	};
+	size_t i;
+
+	for (i = 0; i < sizeof(options)/sizeof(options[0]); i++) {
+		if (strcmp(options[i].name, optstr) == 0) {
+			return options[i].bits;
+		}
 	}
 
-
-    return 0;
+	return 0;
 }
 
 void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
@@ -540,9 +479,13 @@ void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
 	ITURHFP->RXBearing = 0.0;
 	sprintf(ITURHFP->TXAntFilePath, ".");
 	sprintf(ITURHFP->RXAntFilePath, ".");
-	for(i=0; i<NMBOFFREQS; i++) ITURHFP->frqs[i] = LISTUNSET;
-	for(i=0; i<NMBOFHOURS; i++) ITURHFP->hrs[i] = LISTUNSET;
-	for(i=0; i<NMBOFMONTHS; i++) ITURHFP->months[i] = LISTUNSET;
+	// The lists start empty; ValidateITURHFP() rejects a run without them.
+	for(i=0; i<NMBOFFREQS; i++) ITURHFP->frqs[i] = 0.0;
+	for(i=0; i<NMBOFHOURS; i++) ITURHFP->hrs[i] = 0;
+	for(i=0; i<NMBOFMONTHS; i++) ITURHFP->months[i] = 0;
+	ITURHFP->ifrqend = 0;
+	ITURHFP->ihrend = 0;
+	ITURHFP->imnthend = 0;
 	// Defaulted on every platform. This used to be guarded by #ifdef _WIN32, so
 	// on Linux and macOS an input file that omitted RptFilePath left the member
 	// holding whatever was on the stack, which was then used to build the output
@@ -780,5 +723,155 @@ static int ReadList(char *line, double *vals, int max, int integer) {
 	}
 
 	return (n < max) ? n : max;
+
+}
+
+
+/*
+	ReadScalar() - Parses the single number after a keyword, e.g.
+		"latinc 1.5 // comment", into *v.
+
+		The number may be followed only by white space or a "//" comment.
+		Anything else - no number, a word, trailing text or a second number -
+		is an error naming the text. "inf" and "nan" are numbers to strtod()
+		and are passed on: the range checks after reading reject them and
+		name the value. The old
+		unchecked sscanf("%*s %lf") left the default in place on such input,
+		and for the degree keywords then multiplied that radian default by
+		D2R a second time.
+
+		INPUT
+			const char *line - the whole input line, keyword first
+			double *v - receives the value
+
+		OUTPUT
+			returns 0, or -1 (after printing why) on an error
+
+*/
+static int ReadScalar(const char *line, double *v) {
+
+	char key[64];
+	const char *p;
+	char *end;
+	size_t rest;
+
+	sscanf(line, "%63s", key);
+	p = line + strcspn(line, " \t");	// skip the keyword
+	p += strspn(p, " \t");
+
+	*v = strtod(p, &end);
+	rest = strspn(end, " \t\r\n");
+	if ((end == p) ||
+		((end[rest] != '\0') && (strncmp(&end[rest], "//", 2) != 0))) {
+		printf("ReadInputConfiguration: ERROR %s has an invalid value \"%.*s\"\n",
+			key, (int)strcspn(p, "\r\n"), p);
+		return -1;
+	}
+
+	return 0;
+
+}
+
+
+/*
+	ScalarOrNaN() - The number after a keyword, or NaN when ReadScalar()
+		rejects it.
+
+		Every floating-point input is range checked afterwards, by
+		ValidateITURHFP() or by P533's ValidatePath(), and both reject NaN, so
+		an unreadable value is reported with that keyword's own return code.
+
+		INPUT
+			const char *line - the whole input line, keyword first
+
+		OUTPUT
+			returns the value, or NaN
+
+*/
+static double ScalarOrNaN(const char *line) {
+
+	double v;
+
+	return (ReadScalar(line, &v) == 0) ? v : NAN;
+
+}
+
+
+/*
+	ReadWhole() - Parses the whole number after a keyword into *out.
+
+		As ReadScalar(), and the value must also be a whole number in int
+		range. The old sscanf("%*s %d") stopped at the first character that
+		could not be part of an int, so "Path.SSN 1e12" was read as 1 and
+		"Path.year 1985.7" as 1985.
+
+		INPUT
+			const char *line - the whole input line, keyword first
+			int *out - receives the value; unchanged on an error
+
+		OUTPUT
+			returns 0, or -1 (after printing why) on an error
+
+*/
+static int ReadWhole(const char *line, int *out) {
+
+	char key[64];
+	double v;
+
+	if (ReadScalar(line, &v) != 0) {
+		return -1;
+	}
+	if ((v != floor(v)) || (v < INT_MIN) || (v > INT_MAX)) {
+		sscanf(line, "%63s", key);
+		printf("ReadInputConfiguration: ERROR %s is %g; it must be a whole number from %d to %d\n",
+			key, v, INT_MIN, INT_MAX);
+		return -1;
+	}
+	*out = (int)v;
+
+	return 0;
+
+}
+
+
+/*
+	ReadReportFormat() - Combines the RptFileFormat options, e.g.
+		"RPT_D | RPT_PR", into *format.
+
+		Options are separated by '|', spaces or tabs in any mix, so "RPT_D|RPT_PR"
+		reads the same as "RPT_D | RPT_PR"; the old scan needed spaces round
+		each '|' and silently dropped every option after one without them. An
+		option OutputOption() does not know, or an empty list, is an error:
+		before, either left the report with no result columns.
+
+		INPUT
+			char *instr - the text between the quotes; it is modified
+			unsigned long *format - receives the combined option bits
+
+		OUTPUT
+			returns 0, or -1 (after printing why) on an error
+
+*/
+static int ReadReportFormat(char *instr, unsigned long *format) {
+
+	const char *seps = "| \t";
+	char *opt;
+	unsigned long bits;
+
+	*format = 0;
+	for (opt = strtok(instr, seps); opt != NULL; opt = strtok(NULL, seps)) {
+		bits = OutputOption(opt);
+		if (bits == 0) {
+			printf("ReadInputConfiguration: ERROR RptFileFormat option \"%s\" is unknown\n", opt);
+			return -1;
+		}
+		*format |= bits;
+	}
+	if (*format == 0) {
+		printf("ReadInputConfiguration: ERROR RptFileFormat names no options\n");
+		return -1;
+	}
+
+	return 0;
 
 }

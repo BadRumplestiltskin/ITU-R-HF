@@ -15,7 +15,7 @@ Status: open / fixed (commit) / not a defect (reason).
 Progress at 2026-09-25 end of session: U1 fixed (5f3ad5d). Also done outside
 the units: all text data and source files converted to UTF-8 (813a116,
 69073e6), guarded by cases data-text-is-utf8 and source-text-is-utf8.
-Next: U2. Local gate before each push: normal + ASan/UBSan builds, all three
+Next: U3 (U2 fixed, see below). Local gate before each push: normal + ASan/UBSan builds, all three
 suites; then CI green on all four jobs.
 
 ## U1 NaN antenna bearing writes outside the pattern - high - FIXED
@@ -24,25 +24,32 @@ suites; then CI green on all four jobs.
   negative index write. Should exit 55 / 56. Also every other double that
   ValidateITURHFP checks.
 
-## U2 ITURHFProp .in values silently misread - medium
-- read-pending-unknown-manmade-noise-rejected, read-pending-unknown-modulation-rejected,
-  prop-in-modulation-unknown-value: unknown word leaves the field uninitialised
-  (ReadInputConfiguration.c:177-190). Should be 103 / 110.
-- prop-orient-unknown-value: unknown AntennaOrientation stays TX2RX; 54 unreachable.
-- prop-area-latinc-not-a-number: unchecked sscanf multiplies the radian default
-  by D2R again; same unchecked sscanf for every scalar keyword. Should be 77.
-- prop-list-hour-collides-with-unset, prop-list-frequency-collides-with-unset:
-  -9998 / -9999 equal LISTUNSET. Should be 102 / 111.
-- prop-list-frequency-missing: no Path.frequency (or hour, month) runs nothing,
-  exits 0. Should be 111 (102, 101).
-- prop-list-month-int-min: (int)v - 1 overflows. Should be 101 without UB.
-- prop-rpt-combo-without-spaces: "RPT_D|RPT_PR" drops RPT_PR.
-- unknown RptFileFormat option (RPT_FOO): no result columns, exit 0 (confirmed
-  2026-09-25; OutputOption returns 0). Exit code not yet decided.
-- unknown Path.SorL (e.g. "MEDIUMPATH") silently runs as short path, exit 0
-  (confirmed 2026-09-25, :209-218). Exit code not yet decided.
-- Path.SSN 1e12 read as 1 by %d, output identical to SSN 1, exit 0 (confirmed
-  2026-09-25, :137). Exit code not yet decided.
+## U2 ITURHFProp .in values silently misread - medium - FIXED
+- read-unknown-manmade-noise-rejected (103), read-unknown-modulation-rejected,
+  prop-in-modulation-unknown-value (110): unknown word left the field unset.
+- prop-orient-unknown-value (54): unknown AntennaOrientation stayed TX2RX.
+- prop-area-latinc-not-a-number (77): unchecked sscanf for every scalar keyword.
+  Every floating-point keyword now reads as NaN when it is not exactly one
+  number (the range checks reject NaN with that keyword's code); year, SSN and
+  SNRXXp must be whole numbers. Cases prop-in-txpower-not-a-number (113),
+  prop-in-bw-two-values (112), prop-in-year-fractional (100),
+  prop-in-scalar-trailing-comment (0).
+- prop-list-hour-collides-with-unset (102), prop-list-frequency-collides-with-unset
+  (111): the -9999 unused-slot marker is gone; the reader sets each list length.
+- prop-list-frequency-missing (111), prop-list-hour-missing (102),
+  prop-list-month-missing (101): a run without the list ran nothing, exit 0.
+- prop-list-month-int-min (101): hours and months are now held 1-based as
+  typed, so nothing subtracts from INT_MIN.
+- prop-rpt-combo-without-spaces: options split on '|' with or without spaces.
+- prop-rpt-unknown-option, prop-rpt-empty: new exit 79 (was: no result columns).
+- prop-rpt-misspelled-option (79): OutputOption() compared prefixes, so RPT_PRX
+  ran as RPT_PR; now exact. tests/cases/eng-lib/path.tmpl asked for the
+  non-existent RPT_ALLMODES (read as RPT_ALL); it now says RPT_ALL, same bits.
+- prop-in-sorl-unknown-value: new exit 80 (was: silently short path).
+- prop-in-ssn-beyond-int, prop-in-ssn-not-a-number: new exit 81 (1e12 was read as 1).
+- README: ITURHFProp return-code table listed 1000-1201, which the program
+  never returns; replaced with 0, 32-34, 50-81 from ITURHFProp.h. Path.SSN
+  row said 1 to 311; 0 is valid and there is no upper limit (ValidatePath.c).
 
 ## U3 ITURHFProp command line and messages - medium/low
 - prop-cli-invalid-option: prints help, exits 0. Should be 75.
