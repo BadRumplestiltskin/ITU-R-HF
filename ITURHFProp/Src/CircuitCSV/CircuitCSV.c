@@ -2151,6 +2151,7 @@ int main(int argc, char *argv[]) {
 			}
 			else {
 				printf("CircuitCSV: Error %d Header needs an 'SSN' or a 't_Index' column\n", RTN_ERRCSVHEADER);
+				free(line);
 				fclose(fin);
 				return RTN_ERRCSVHEADER;
 			}
@@ -2158,6 +2159,7 @@ int main(int argc, char *argv[]) {
 		if (col[i] < 0) {
 			printf("CircuitCSV: Error %d Header is missing the column '%s'\n",
 				RTN_ERRCSVHEADER, InputColumns[i]);
+			free(line);
 			fclose(fin);
 			return RTN_ERRCSVHEADER;
 		}
