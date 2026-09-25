@@ -49,7 +49,7 @@ void MUFBasic(struct PathData *path) {
 	//double dhmax; // The maximum hop distance at a 500km reflection height
 	double aoi; // Angle of incidence
 	double n0F2DMUF; // Lowest-order mode basic MUF
-	double F2DMUF[2]; // There are 2 F2(d)MUF calculations for d > d sub max.
+	double F2DMUF[2] = {0.0, 0.0}; // F2(dmax)MUF at T + d0/2 and R - d0/2, set and read only for D > dmax
 	double Mn0[2]; // MUF Factor of the lowest-order mode
 	double Mn[2]; // MUF Factor for higher-order modes
 	double fracd; // Fractional distance
@@ -182,7 +182,12 @@ void MUFBasic(struct PathData *path) {
 					Mn[0] = CalcF2DMUF(&path->CP[Td02], path->distance/(n+1.0), Calcdmax(&path->CP[Td02]), CalcB(&path->CP[Td02])); 
 					Mn[1] = CalcF2DMUF(&path->CP[Rd02], path->distance/(n+1.0), Calcdmax(&path->CP[Rd02]), CalcB(&path->CP[Rd02]));
 				
-					path->Md_F2[n].BMUF = path->BMUF * min(Mn[0]/Mn0[0], Mn[1]/Mn0[1]);
+					// Equation (7), nF2(D)MUF = n0F2(dmax)MUF x Mn/Mn0: "The lower of
+					// the values calculated at the two control points of Table 1a) is
+					// selected." The product is formed at each control point and the
+					// lower taken. This multiplied the lower F2(dmax)MUF (path->BMUF)
+					// by the lower ratio, which can come from the other control point.
+					path->Md_F2[n].BMUF = min(F2DMUF[0]*Mn[0]/Mn0[0], F2DMUF[1]*Mn[1]/Mn0[1]);
 			
 				}
             }
