@@ -31,6 +31,7 @@ exec_prefix = $(prefix)
 libdir = $(exec_prefix)/lib
 
 SRCS = $(source_dir)InitializeNoise.c \
+       $(source_dir)MakeNoise.c \
        $(source_dir)Noise.c \
        $(source_dir)NoiseMemory.c
 

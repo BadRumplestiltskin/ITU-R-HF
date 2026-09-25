@@ -10,7 +10,8 @@ TOPTARGETS := all clean
 SUBDIRS := ../P533/Linux/ \
 	../P372/Linux/ \
 	../ITURHFProp/Linux \
-	../ITURHFProp/Src/CircuitCSV
+	../ITURHFProp/Src/CircuitCSV \
+	../P372/Src/ITURNoise
 
 datarootdir = $(prefix)/share
 datadir = $(datarootdir)
