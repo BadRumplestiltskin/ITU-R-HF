@@ -1,4 +1,6 @@
-deg40file = r'C:\Users\behm\Documents\GitHub\ITU-R-HF\P372\Src\AtmosPlots\40deg0.txt'
+import os, sys
+# Usage: 40degParse.py [40deg0.txt]; default: the file beside this script.
+deg40file = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.realpath(__file__)), '40deg0.txt')
 
 d40fp = open(deg40file, 'r')
 

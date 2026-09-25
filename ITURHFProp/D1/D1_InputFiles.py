@@ -1,6 +1,16 @@
 import sys
 import os
 
+# Usage: D1_InputFiles.py [engine [report_dir [data_dir]]]
+# The defaults are this checkout's ITURHFProp/Bin/ITURHFProp, D1/Reports and
+# ITURHFProp/Data.
+here = os.path.dirname(os.path.realpath(__file__))
+exe = sys.argv[1] if len(sys.argv) > 1 else os.path.join(here, '..', 'Bin', 'ITURHFProp')
+rptdir = sys.argv[2] if len(sys.argv) > 2 else os.path.join(here, 'Reports')
+datadir = sys.argv[3] if len(sys.argv) > 3 else os.path.join(here, '..', 'Data')
+rptdir = os.path.join(rptdir, '')      # the engine wants a trailing separator
+datadir = os.path.join(datadir, '')
+
 # Open output text file
 bat_file = open("D1.bat", 'wt')
 
@@ -39,7 +49,7 @@ for line in in_file:
 	out_file_name = inpath+'\\'+str[0]+'-'+str[11]+'-'+str[10]+'.in'
 	
 	# Create the batch file command associated with this *.in file 
-	batstr = 'C:\\Users\\Behm\\Documents\\GitHub\\GitHf\\Bin\\ITUHFProp -s '+out_file_name+' out\\'+str[0]+'-'+str[11]+'-'+str[10]+'.out'
+	batstr = exe+' -s '+out_file_name+' out\\'+str[0]+'-'+str[11]+'-'+str[10]+'.out'
 	print(batstr, file=bat_file) 
 	
 	# Open output text file
@@ -160,7 +170,7 @@ for line in in_file:
 	outstr = 'Path.SorL "SHORTPATH"'
 	print(outstr, file=out_file)
 
-	outstr = 'RptFilePath "C:\\Users\\Behm\\Documents\\GitHub\\GitHF\\Reports\\"'
+	outstr = 'RptFilePath "'+rptdir+'"'
 	print(outstr, file=out_file)
 	outstr = 'RptFileFormat = "RPT_E | RPT_PR | RPT_RXLOCATION | RPT_D"'
 	print(outstr, file=out_file)
@@ -185,7 +195,7 @@ for line in in_file:
 	print(outstr, file=out_file)
 	outstr = 'lnginc 1.0'
 	print(outstr, file=out_file)
-	outstr = 'DataFilePath "C:\\Users\\Behm\\Documents\\GitHub\\GitHF\\Data\\"'
+	outstr = 'DataFilePath "'+datadir+'"'
 	print(outstr, file=out_file)
 	
 	out_file.close()

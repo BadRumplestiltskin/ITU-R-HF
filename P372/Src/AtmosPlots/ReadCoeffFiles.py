@@ -6,7 +6,9 @@ import glob as gb
 # phase2, and low antenna data has fixed spaced fields from FORTRAN output
 deduplicate = lambda s,c: c.join([substring for substring in s.strip().split(c) if substring])
 
-COEFFdir = r'C:\Users\behm\Documents\GitHub\ITU-R-HF\P372\Data'
+import sys
+# Usage: ReadCoeffFiles.py [coeff_dir]; default: this checkout's P372/Data.
+COEFFdir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'Data')
 COEFFfn = r'COEFF??W.TXT'
 
 COEFFfpath = os.path.join(COEFFdir, COEFFfn)
