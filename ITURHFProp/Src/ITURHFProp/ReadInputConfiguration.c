@@ -47,9 +47,9 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 	// structure ITURHFProp ITURHFP to default values.
 	InitializeInput(ITURHFP, path);
 
-	// Read the first line of the file.
-	fgets(line, 256, fp);
-	while (!feof(fp)) {
+	// fgets() in the loop condition: the old read-then-test-feof() loop dropped a
+	// last line with no newline, because that read already sets end-of-file.
+	while (fgets(line, sizeof(line), fp) != NULL) {
 
 		// Check if the line is a comment or blank.
 		if (((line[0] == '/') && (line[1] == '/'))
@@ -313,8 +313,6 @@ int ReadInputConfiguration(char InFilePath[256], struct ITURHFProp *ITURHFP, str
 				substrbtwnchar(line, '\"', ITURHFP->DataFilePath);
 			}
         }
-        // Read the next line.
-		fgets(line, 256, fp);
 	}
 
     // There are optional ways to enter the analysis rectangle.
