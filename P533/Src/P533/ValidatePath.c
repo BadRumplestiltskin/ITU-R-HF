@@ -33,6 +33,8 @@ int ValidatePath(struct PathData *path) {
 	//			Then the value is either a flag or a single value > 100 and < 200
 	//  2) if path->ManMadeNoise is negative 
 	//			Then the user desires to cancel the noise calculation and and value is valid
+	// A NaN or infinite figure would satisfy neither branch and be accepted.
+	if (!isfinite(path->noiseP.ManMadeNoise))							return RTN_ERRMANMADENOISE;
 	if (path->noiseP.ManMadeNoise > 0.0) {
 		// Note: the three clauses below were once ANDed together, which made the
 		// test unsatisfiable - no value is both under 100 and over 200 - so every
@@ -55,23 +57,26 @@ int ValidatePath(struct PathData *path) {
 	// in IonosphericParameters() (P.533-14 section 3.4 and P.1239-4 section 3.1);
 	// nothing else in P.533 limits it.
 	// R12 = 0 is valid: P.533-14 section 3.4 gives the maps for R12 from 0 up.
+	// The floating-point range checks below are written as !(lo <= x && x <= hi)
+	// rather than (lo > x) || (x > hi): every comparison with NaN is false, so
+	// the second form accepted NaN, which later reached (int) conversions (UB).
 	if (0 > path->SSN)												return RTN_ERRSSN;
 	if ((path->Modulation != DIGITAL) && (path->Modulation != ANALOG))	return RTN_ERRMODULATION;
-	if ((1.0 > path->frequency) || path->frequency > 30.0)				return RTN_ERRFREQUENCY;
-	if ((0.005 > path->BW) || (path->BW > 3e6))							return RTN_ERRBW;
-	if ((-30.0 > path->txpower) || (path->txpower > 60))				return RTN_ERRTXPOWER;
-	if ((-30.0 > path->SNRr) || (path->SNRr > 200))						return RTN_ERRSNRR;
-	if ((-30.0 > path->SIRr) || (path->SIRr > 200))						return RTN_ERRSIRR;
-	if ((0.0 > path->F0) || (path->F0 > 1000))							return RTN_ERRF0;
-	if ((0.0 > path->T0) || (path->T0 > 1000))							return RTN_ERRT0;
-	if ((0.0 > path->A) || (path->A > 1000))							return RTN_ERRA;
-	if ((0.0 > path->TW) || (path->TW > 50.0))							return RTN_ERRTW;
-	if ((0.0 > path->FW) || (path->FW > 1000))							return RTN_ERRFW;
-	if ((fabs(path->L_tx.lat) > PI / 2.0) || (fabs(path->L_tx.lng) > PI))	return RTN_ERRLTX;
-	if ((fabs(path->L_rx.lat) > PI / 2.0) || (fabs(path->L_rx.lng) > PI))	return RTN_ERRLRX;
+	if (!((1.0 <= path->frequency) && (path->frequency <= 30.0)))				return RTN_ERRFREQUENCY;
+	if (!((0.005 <= path->BW) && (path->BW <= 3e6)))							return RTN_ERRBW;
+	if (!((-30.0 <= path->txpower) && (path->txpower <= 60)))				return RTN_ERRTXPOWER;
+	if (!((-30.0 <= path->SNRr) && (path->SNRr <= 200)))						return RTN_ERRSNRR;
+	if (!((-30.0 <= path->SIRr) && (path->SIRr <= 200)))						return RTN_ERRSIRR;
+	if (!((0.0 <= path->F0) && (path->F0 <= 1000)))							return RTN_ERRF0;
+	if (!((0.0 <= path->T0) && (path->T0 <= 1000)))							return RTN_ERRT0;
+	if (!((0.0 <= path->A) && (path->A <= 1000)))							return RTN_ERRA;
+	if (!((0.0 <= path->TW) && (path->TW <= 50.0)))							return RTN_ERRTW;
+	if (!((0.0 <= path->FW) && (path->FW <= 1000)))							return RTN_ERRFW;
+	if (!((fabs(path->L_tx.lat) <= PI / 2.0) && (fabs(path->L_tx.lng) <= PI)))	return RTN_ERRLTX;
+	if (!((fabs(path->L_rx.lat) <= PI / 2.0) && (fabs(path->L_rx.lng) <= PI)))	return RTN_ERRLRX;
 	if (path->A_rx.pattern == NULL)										return RTN_ERRRXANTENNAPATTERN;
 	if (path->A_tx.pattern == NULL)										return RTN_ERRTXANTENNAPATTERN;
-	if ((1 > path->SNRXXp) || (path->SNRXXp > 99))					 	return RTN_ERRSNRXXP;
+	if (!((1 <= path->SNRXXp) && (path->SNRXXp <= 99)))					 	return RTN_ERRSNRXXP;
 
 	// path data valid
 	return RTN_VALIDDATAOK;

@@ -534,7 +534,9 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 			// This is the Basic MUF for the path if the path is greater than 9000 km, otherwise it is calculated in MUFBasic()
 			if(path->distance > 9000) path->BMUF = fBM[0][path->hour];
 		}
-		else if(fBM[0][path->hour] >= fBM[1][path->hour]) {
+		else {
+			// Plain else, not else-if (>=): with a NaN fBM neither test held and
+			// smallerCP stayed 99, which then indexed CP[99].
 			smallerCP = RdM2;
 			// This is the Basic MUF for the path if the path is greater than 9000 km, otherwise it is calculated in MUFBasic()
 			if(path->distance > 9000) path->BMUF = fBM[1][path->hour];
