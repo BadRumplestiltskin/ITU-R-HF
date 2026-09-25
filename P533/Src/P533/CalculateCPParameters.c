@@ -484,7 +484,16 @@ void SolarParameters(struct ControlPt *here, int month, double hour) {
 	here->Sun.ha = ((tst/4.0) - 180)*D2R; // radians
 	
 	// Hour angle at sunrise and sunset in radians
-	here->Sun.sha = acos((cos(90.833*(D2R))/(cos(here->L.lat)*cos(here->Sun.decl))) - (tan(here->L.lat)*tan(here->Sun.decl)));
+	// In polar day or night the acos() argument leaves [-1, 1] and acos() is NaN,
+	// which made sunrise and sunset NaN. Take the limits instead: an argument
+	// below -1 means the Sun never sets (sha = PI, sunrise and sunset 12 hours
+	// either side of solar noon) and above 1 that it never rises (sha = 0, both at
+	// solar noon). Consumers test sha against these two values for polar day and
+	// night. Arguments in range are unchanged.
+	{
+		double arg = (cos(90.833*(D2R))/(cos(here->L.lat)*cos(here->Sun.decl))) - (tan(here->L.lat)*tan(here->Sun.decl));
+		here->Sun.sha = acos(min(max(arg, -1.0), 1.0));
+	}
 
 	// The cosine of the solar zenith angle can be found
 	cosphi = (sin(here->L.lat)*sin(here->Sun.decl)) + (cos(here->L.lat)*cos(here->Sun.decl)*cos(here->Sun.ha));

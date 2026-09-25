@@ -1,0 +1,1050 @@
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 25 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Fri Sep 25 12:03:44 2026
+
+---------------------------------------------------------------------------
+
+**********************************************************
+*      DumpPathData - p533() Path data structure         *
+**********************************************************
+**********************************************************
+*                 Input Parameters                       *
+**********************************************************
+	Polar day and night: Tromso to Longyearbyen
+	Year = 2018
+	Month = June
+	Hour  = 12 (hour UTC)
+	SSN (R12) = 10
+	Tx power = -10.000 (dB(1kW))
+	Tx Location Tromso
+	Tx latitude  =  1.216 ( 69.650) [ 69 38 59]
+	Tx longitude =  0.331 ( 18.960) [ 18 57 35]
+	Rx Location Longyearbyen
+	Rx latitude  =  1.365 ( 78.220) [ 78 13 11]
+	Rx longitude =  0.273 ( 15.650) [ 15 38 59]
+	local time Rx   =  13 
+	local time Tx   =  13 
+	Frequency =  7.000 (MHz)
+	Bandwidth =  1.000 (Hz)
+	Short or Long Path = Short
+	Modulation = ANALOG
+	Required signal-to-noise ratio =  31.000
+	Required Reliability (%) =  90
+	Required signal-to-interference ratio =  0.000
+	Man-made noise = RESIDENTIAL
+	Antenna configuration: Transmitter main beam to receiver main beam
+	Transmit antenna 14 MHz Dipole at 10 m AAGL    
+	Transmit antenna bearing = 355.486865
+	Transmit antenna gain offset = 0.000000
+	Receive antenna  14 MHz Dipole at 10 m AAGL    
+	Receive antenna bearing = 172.297147
+	Receive antenna gain offset = 0.000000
+**********************************************************
+*                 Calculated Parameters                  *
+**********************************************************
+****************** Distances (km) ************************
+	distance =  957.992
+	slant range =  3974.586
+	dmax     =  4000.000
+************ Maximum Usable Frequencies (MHz) ************
+	basic MUF       =  10.879
+	10% MUF         =  11.423
+	50% MUF         =  10.879
+	90% MUF         =  10.335
+	Operational MUF =  10.879
+	10% OPMUF       =  11.423
+	90% OPMUF       =  10.335
+********* Lowest Order and Dominant Mode *****************
+	lowest order F2 layer mode =  1
+	lowest order E layer mode =  1
+	Dominant mode: F2 layer mode 1
+************************ Season ***************************
+	season = Summer
+****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
+	Field Strength (7000 km > D)           =  21.234
+	Field Strength (7000 km < D < 9000 km) = -307.000
+	Field Strength           (D > 9000 km) = -307.000
+	Median Rx power = -96.434
+**************** Rx Elevation Angle (degs)****************
+	Rx Elevation angle =  31.002
+***************** Short Path Parameters *******************
+	"Not otherwise included loss" (dB) =  8.720
+***************** Noise Parameters (dB) *******************
+	Atmospheric noise upper decile =  12.731
+	Atmospheric noise lower decile =  8.366
+	Atmospheric noise              =  29.686
+	Man made noise upper decile    =  10.600
+	Man made noise lower decile    =  5.300
+	Man made noise                 =  49.091
+	Galactic noise upper decile    =  2.000
+	Galactic noise lower decile    =  2.000
+	Galactic noise                 =  32.563
+	Total noise upper decile       =  10.588
+	Total noise lower decile       =  5.177
+	Total noise                    =  49.235
+********************** SNR Parameters (dB) *************************************
+	Monthly median resultant signal-to-noise ratio =  58.332
+	Upper decile deviation signal-to-noise ratio   =  9.393
+	Lower decile deviation signal-to-noise ratio   =  15.469
+	Signal-to-noise exceeded for 90% of the month  =  42.862
+********************** SIR Parameters (dB) *************************************
+	Signal-to-interference ratio = -307.000
+	Upper decile deviation of the signal-to-interference ratio = -307.000
+	Lower decile deviation of the signal-to-interference ratio = -307.000
+******************** Reliability Parameters (%) *******************************
+	Basic Circuit Reliability                      =  100.000
+	Multimode Interference                         = -307.000
+	Overall Circuit Reliability without scattering =  0.000
+	Overall Circuit Reliability with scattering    =  0.000
+	Probability of scattering                      =  0.000
+	Probability required SNR is achieved                      =  0.000
+	Probability required time spread T0 is not exceeded       =  0.000
+	Probability required frequency spread f0 is not exceeded  =  0.000
+**********************************************************
+*                      F2 Mode 1                         *
+**********************************************************
+	basic MUF  =  8.066 (MHz)
+	10% MUF    =  9.340 (MHz)
+	50% MUF    =  8.066 (MHz)
+	90% MUF    =  6.937 (MHz)
+	OPMUF      =  8.873 (MHz)
+	10% OPMUF  =  10.274 (MHz)
+	90% OPMUF  =  7.631 (MHz)
+	Fprob        =  0.888 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  5.069 (MHz)
+	Basic Loss (< 7000 km)    =  130.338 (dB)
+	Median Field Strength     =  20.204 (dB(1 uV/m))
+	Receiver Power            = -96.858 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  31.002 (degs)
+	Reflection height =  362.833 (km)
+	Receiver Gain =  7.040 (dBi)
+**********************************************************
+*                      F2 Mode 2                         *
+**********************************************************
+	basic MUF  =  6.037 (MHz)
+	10% MUF    =  6.990 (MHz)
+	50% MUF    =  6.037 (MHz)
+	90% MUF    =  5.192 (MHz)
+	OPMUF      =  6.641 (MHz)
+	10% OPMUF  =  7.689 (MHz)
+	90% OPMUF  =  5.711 (MHz)
+	Fprob        =  0.098 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  3.628 (MHz)
+	Basic Loss (< 7000 km)    =  150.747 (dB)
+	Median Field Strength     = -3.471 (dB(1 uV/m))
+	Receiver Power            = -123.799 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  51.503 (degs)
+	Reflection height =  348.962 (km)
+	Receiver Gain =  3.774 (dBi)
+**********************************************************
+*                      F2 Mode 3                         *
+**********************************************************
+	basic MUF  =  5.529 (MHz)
+	10% MUF    =  6.402 (MHz)
+	50% MUF    =  5.529 (MHz)
+	90% MUF    =  4.755 (MHz)
+	OPMUF      =  6.082 (MHz)
+	10% OPMUF  =  7.042 (MHz)
+	90% OPMUF  =  5.231 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  3.276 (MHz)
+	Basic Loss (< 7000 km)    =  161.884 (dB)
+	Median Field Strength     = -17.874 (dB(1 uV/m))
+	Receiver Power            = -141.469 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  62.259 (degs)
+	Reflection height =  344.339 (km)
+	Receiver Gain =  0.507 (dBi)
+**********************************************************
+*                      F2 Mode 4                         *
+**********************************************************
+	basic MUF  =  5.340 (MHz)
+	10% MUF    =  6.183 (MHz)
+	50% MUF    =  5.340 (MHz)
+	90% MUF    =  4.593 (MHz)
+	OPMUF      =  5.874 (MHz)
+	10% OPMUF  =  6.802 (MHz)
+	90% OPMUF  =  5.052 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  3.140 (MHz)
+	Basic Loss (< 7000 km)    =  170.158 (dB)
+	Median Field Strength     = -28.109 (dB(1 uV/m))
+	Receiver Power            = -153.665 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  68.529 (degs)
+	Reflection height =  342.027 (km)
+	Receiver Gain = -1.453 (dBi)
+**********************************************************
+*                      F2 Mode 5                         *
+**********************************************************
+	basic MUF  =  5.253 (MHz)
+	10% MUF    =  6.083 (MHz)
+	50% MUF    =  5.253 (MHz)
+	90% MUF    =  4.518 (MHz)
+	OPMUF      =  5.779 (MHz)
+	10% OPMUF  =  6.691 (MHz)
+	90% OPMUF  =  4.970 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  3.074 (MHz)
+	Basic Loss (< 7000 km)    =  177.384 (dB)
+	Median Field Strength     = -36.431 (dB(1 uV/m))
+	Receiver Power            = -163.082 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  72.555 (degs)
+	Reflection height =  340.640 (km)
+	Receiver Gain = -2.549 (dBi)
+**********************************************************
+*                      F2 Mode 6                         *
+**********************************************************
+	basic MUF  =  5.208 (MHz)
+	10% MUF    =  6.030 (MHz)
+	50% MUF    =  5.208 (MHz)
+	90% MUF    =  4.479 (MHz)
+	OPMUF      =  5.729 (MHz)
+	10% OPMUF  =  6.633 (MHz)
+	90% OPMUF  =  4.927 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.860
+	Upper decile =  1.158
+	E Layer Screen Frequency  =  3.038 (MHz)
+	Basic Loss (< 7000 km)    =  184.068 (dB)
+	Median Field Strength     = -43.753 (dB(1 uV/m))
+	Receiver Power            = -171.042 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  75.335 (degs)
+	Reflection height =  339.716 (km)
+	Receiver Gain = -3.187 (dBi)
+**********************************************************
+*                      F2 Mode 7                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  3.015 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  339.055 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 8                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  3.001 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  338.560 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 9                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  2.990 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  338.175 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 10                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  2.983 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  337.866 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 11                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  2.978 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  337.614 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                       E Mode 1                         *
+**********************************************************
+	basic MUF  =  10.879 (MHz)
+	10% MUF    =  11.423 (MHz)
+	50% MUF    =  10.879 (MHz)
+	90% MUF    =  10.335 (MHz)
+	OPMUF      =  10.879 (MHz)
+	10% OPMUF  =  11.423 (MHz)
+	90% OPMUF  =  10.335 (MHz)
+	Fprob        =  1.000 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  131.706 (dB)
+	Median Field Strength     =  13.974 (dB(1 uV/m))
+	Receiver Power            = -107.948 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  10.667 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  2.179 (dBi)
+**********************************************************
+*                       E Mode 2                         *
+**********************************************************
+	basic MUF  =  6.516 (MHz)
+	10% MUF    =  6.841 (MHz)
+	50% MUF    =  6.516 (MHz)
+	90% MUF    =  6.190 (MHz)
+	OPMUF      =  6.516 (MHz)
+	10% OPMUF  =  6.841 (MHz)
+	90% OPMUF  =  6.190 (MHz)
+	Fprob        =  0.022 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  145.999 (dB)
+	Median Field Strength     =  4.145 (dB(1 uV/m))
+	Receiver Power            = -113.314 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  23.403 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  6.642 (dBi)
+**********************************************************
+*                       E Mode 3                         *
+**********************************************************
+	basic MUF  =  4.894 (MHz)
+	10% MUF    =  5.139 (MHz)
+	50% MUF    =  4.894 (MHz)
+	90% MUF    =  4.650 (MHz)
+	OPMUF      =  4.894 (MHz)
+	10% OPMUF  =  5.139 (MHz)
+	90% OPMUF  =  4.650 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  169.297 (dB)
+	Median Field Strength     = -18.861 (dB(1 uV/m))
+	Receiver Power            = -136.030 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  33.615 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  6.933 (dBi)
+**********************************************************
+*                       E Mode 4                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  0.000 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*            Control Point   -      T + 1000             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -      T + d0/2             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -       MidPath             *
+**********************************************************
+	Latitude	=	 1.291	( 73.941)	[73 56 27]
+	Longitude	=	 0.310	( 17.736)	[17 44 8]
+	distance =  478.996
+	Magnetic dip (100 km)  =  79.828 (deg)
+	Gyrofrequency (100 km) =  1.414 (MHz)
+	Magnetic dip (300 km)  =  79.881 (deg)
+	Gyrofrequency (300 km) =  1.308 (MHz)
+	M(3000)F2 =  2.998
+	foE   =  2.811 (MHz)
+	foF2  =  4.505 (MHz)
+	reflection height  =  320.951 (km)
+	solar zenith angle =  50.619 (deg)
+	solar declination  =  23.340 (deg)
+	solar hour angle   =  2.520 (deg)
+	equation of time   = -0.864 (minutes)
+	local sunrise      =  22:49 (UTC)  23:49 (Local)
+	local solar noon   =  10:49 (UTC)  11:49 (Local)
+	local sunset       =  22:49 (UTC)  23:49 (Local)
+	local time         =  11:00 (UTC)  12:00 (Local)
+**********************************************************
+*            Control Point   -      R - d0/2             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -     R - 1000              *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*               End DumpPathData()                       *
+**********************************************************
+---------------------------------------------------------------------------
+ International Telecommunications Union - Radiocommunication Sector (ITU-R)
+     ITURHFProp         Ver Sep 25 2026
+     HF Model (P533)    Ver 14.2
+     Noise Model (P372) Ver 14.3
+     Analysis Prepared  Fri Sep 25 12:03:44 2026
+
+---------------------------------------------------------------------------
+
+**********************************************************
+*      DumpPathData - p533() Path data structure         *
+**********************************************************
+**********************************************************
+*                 Input Parameters                       *
+**********************************************************
+	Polar day and night: Tromso to Longyearbyen
+	Year = 2018
+	Month = December
+	Hour  = 12 (hour UTC)
+	SSN (R12) = 10
+	Tx power = -10.000 (dB(1kW))
+	Tx Location Tromso
+	Tx latitude  =  1.216 ( 69.650) [ 69 38 59]
+	Tx longitude =  0.331 ( 18.960) [ 18 57 35]
+	Rx Location Longyearbyen
+	Rx latitude  =  1.365 ( 78.220) [ 78 13 11]
+	Rx longitude =  0.273 ( 15.650) [ 15 38 59]
+	local time Rx   =  13 
+	local time Tx   =  13 
+	Frequency =  7.000 (MHz)
+	Bandwidth =  1.000 (Hz)
+	Short or Long Path = Short
+	Modulation = ANALOG
+	Required signal-to-noise ratio =  31.000
+	Required Reliability (%) =  90
+	Required signal-to-interference ratio =  0.000
+	Man-made noise = RESIDENTIAL
+	Antenna configuration: Transmitter main beam to receiver main beam
+	Transmit antenna 14 MHz Dipole at 10 m AAGL    
+	Transmit antenna bearing = 355.486865
+	Transmit antenna gain offset = 0.000000
+	Receive antenna  14 MHz Dipole at 10 m AAGL    
+	Receive antenna bearing = 172.297147
+	Receive antenna gain offset = 0.000000
+**********************************************************
+*                 Calculated Parameters                  *
+**********************************************************
+****************** Distances (km) ************************
+	distance =  957.992
+	slant range =  3306.773
+	dmax     =  4000.000
+************ Maximum Usable Frequencies (MHz) ************
+	basic MUF       =  5.591
+	10% MUF         =  7.097
+	50% MUF         =  5.591
+	90% MUF         =  4.161
+	Operational MUF =  7.268
+	10% OPMUF       =  9.226
+	90% OPMUF       =  5.409
+********* Lowest Order and Dominant Mode *****************
+	lowest order F2 layer mode =  1
+	lowest order E layer mode =  1
+	Dominant mode: F2 layer mode 1
+************************ Season ***************************
+	season = Winter
+****** Field Strength (dB(1 uV/m)) and Rx Power (dBW) *****
+	Field Strength (7000 km > D)           =  8.886
+	Field Strength (7000 km < D < 9000 km) = -307.000
+	Field Strength           (D > 9000 km) = -307.000
+	Median Rx power = -108.318
+**************** Rx Elevation Angle (degs)****************
+	Rx Elevation angle =  26.135
+***************** Short Path Parameters *******************
+	"Not otherwise included loss" (dB) =  8.720
+***************** Noise Parameters (dB) *******************
+	Atmospheric noise upper decile =  8.503
+	Atmospheric noise lower decile =  7.165
+	Atmospheric noise              =  30.963
+	Man made noise upper decile    =  10.600
+	Man made noise lower decile    =  5.300
+	Man made noise                 =  49.091
+	Galactic noise upper decile    =  2.000
+	Galactic noise lower decile    =  2.000
+	Galactic noise                 =  32.563
+	Total noise upper decile       =  10.566
+	Total noise lower decile       =  5.175
+	Total noise                    =  49.192
+********************** SNR Parameters (dB) *************************************
+	Monthly median resultant signal-to-noise ratio =  46.489
+	Upper decile deviation signal-to-noise ratio   =  14.873
+	Lower decile deviation signal-to-noise ratio   =  16.557
+	Signal-to-noise exceeded for 90% of the month  =  29.933
+********************** SIR Parameters (dB) *************************************
+	Signal-to-interference ratio = -307.000
+	Upper decile deviation of the signal-to-interference ratio = -307.000
+	Lower decile deviation of the signal-to-interference ratio = -307.000
+******************** Reliability Parameters (%) *******************************
+	Basic Circuit Reliability                      =  88.668
+	Multimode Interference                         = -307.000
+	Overall Circuit Reliability without scattering =  0.000
+	Overall Circuit Reliability with scattering    =  0.000
+	Probability of scattering                      =  0.000
+	Probability required SNR is achieved                      =  0.000
+	Probability required time spread T0 is not exceeded       =  0.000
+	Probability required frequency spread f0 is not exceeded  =  0.000
+**********************************************************
+*                      F2 Mode 1                         *
+**********************************************************
+	basic MUF  =  5.591 (MHz)
+	10% MUF    =  7.097 (MHz)
+	50% MUF    =  5.591 (MHz)
+	90% MUF    =  4.161 (MHz)
+	OPMUF      =  7.268 (MHz)
+	10% OPMUF  =  9.226 (MHz)
+	90% OPMUF  =  5.409 (MHz)
+	Fprob        =  0.113 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  2.045 (MHz)
+	Basic Loss (< 7000 km)    =  141.593 (dB)
+	Median Field Strength     =  8.827 (dB(1 uV/m))
+	Receiver Power            = -108.356 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  26.135 (degs)
+	Reflection height =  251.893 (km)
+	Receiver Gain =  6.919 (dBi)
+**********************************************************
+*                      F2 Mode 2                         *
+**********************************************************
+	basic MUF  =  4.079 (MHz)
+	10% MUF    =  5.178 (MHz)
+	50% MUF    =  4.079 (MHz)
+	90% MUF    =  3.036 (MHz)
+	OPMUF      =  5.303 (MHz)
+	10% OPMUF  =  6.732 (MHz)
+	90% OPMUF  =  3.947 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  1.309 (MHz)
+	Basic Loss (< 7000 km)    =  158.820 (dB)
+	Median Field Strength     = -10.197 (dB(1 uV/m))
+	Receiver Power            = -129.177 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  46.041 (degs)
+	Reflection height =  248.572 (km)
+	Receiver Gain =  5.121 (dBi)
+**********************************************************
+*                      F2 Mode 3                         *
+**********************************************************
+	basic MUF  =  3.702 (MHz)
+	10% MUF    =  4.700 (MHz)
+	50% MUF    =  3.702 (MHz)
+	90% MUF    =  2.755 (MHz)
+	OPMUF      =  4.813 (MHz)
+	10% OPMUF  =  6.110 (MHz)
+	90% OPMUF  =  3.582 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  1.116 (MHz)
+	Basic Loss (< 7000 km)    =  167.363 (dB)
+	Median Field Strength     = -21.842 (dB(1 uV/m))
+	Receiver Power            = -143.926 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  57.521 (degs)
+	Reflection height =  247.464 (km)
+	Receiver Gain =  2.018 (dBi)
+**********************************************************
+*                      F2 Mode 4                         *
+**********************************************************
+	basic MUF  =  3.563 (MHz)
+	10% MUF    =  4.523 (MHz)
+	50% MUF    =  3.563 (MHz)
+	90% MUF    =  2.652 (MHz)
+	OPMUF      =  4.632 (MHz)
+	10% OPMUF  =  5.880 (MHz)
+	90% OPMUF  =  3.447 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  1.040 (MHz)
+	Basic Loss (< 7000 km)    =  173.575 (dB)
+	Median Field Strength     = -30.301 (dB(1 uV/m))
+	Receiver Power            = -154.631 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  64.556 (degs)
+	Reflection height =  246.911 (km)
+	Receiver Gain = -0.228 (dBi)
+**********************************************************
+*                      F2 Mode 5                         *
+**********************************************************
+	basic MUF  =  3.499 (MHz)
+	10% MUF    =  4.442 (MHz)
+	50% MUF    =  3.499 (MHz)
+	90% MUF    =  2.604 (MHz)
+	OPMUF      =  4.549 (MHz)
+	10% OPMUF  =  5.775 (MHz)
+	90% OPMUF  =  3.386 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  1.003 (MHz)
+	Basic Loss (< 7000 km)    =  178.817 (dB)
+	Median Field Strength     = -36.961 (dB(1 uV/m))
+	Receiver Power            = -162.708 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  69.192 (degs)
+	Reflection height =  246.578 (km)
+	Receiver Gain = -1.646 (dBi)
+**********************************************************
+*                      F2 Mode 6                         *
+**********************************************************
+	basic MUF  =  3.466 (MHz)
+	10% MUF    =  4.400 (MHz)
+	50% MUF    =  3.466 (MHz)
+	90% MUF    =  2.580 (MHz)
+	OPMUF      =  4.506 (MHz)
+	10% OPMUF  =  5.720 (MHz)
+	90% OPMUF  =  3.354 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.744
+	Upper decile =  1.269
+	E Layer Screen Frequency  =  0.982 (MHz)
+	Basic Loss (< 7000 km)    =  183.544 (dB)
+	Median Field Strength     = -42.563 (dB(1 uV/m))
+	Receiver Power            = -169.185 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  72.442 (degs)
+	Reflection height =  246.357 (km)
+	Receiver Gain = -2.521 (dBi)
+**********************************************************
+*                      F2 Mode 7                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  0.969 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  246.199 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 8                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  0.960 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  246.080 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 9                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  0.955 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  245.988 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 10                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  0.950 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  245.914 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                      F2 Mode 11                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	E Layer Screen Frequency  =  0.947 (MHz)
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  245.854 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*                       E Mode 1                         *
+**********************************************************
+	basic MUF  =  3.435 (MHz)
+	10% MUF    =  3.607 (MHz)
+	50% MUF    =  3.435 (MHz)
+	90% MUF    =  3.264 (MHz)
+	OPMUF      =  3.435 (MHz)
+	10% OPMUF  =  3.607 (MHz)
+	90% OPMUF  =  3.264 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  205.497 (dB)
+	Median Field Strength     = -59.816 (dB(1 uV/m))
+	Receiver Power            = -181.739 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  10.667 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  2.179 (dBi)
+**********************************************************
+*                       E Mode 2                         *
+**********************************************************
+	basic MUF  =  2.058 (MHz)
+	10% MUF    =  2.160 (MHz)
+	50% MUF    =  2.058 (MHz)
+	90% MUF    =  1.955 (MHz)
+	OPMUF      =  2.058 (MHz)
+	10% OPMUF  =  2.160 (MHz)
+	90% OPMUF  =  1.955 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  208.783 (dB)
+	Median Field Strength     = -58.638 (dB(1 uV/m))
+	Receiver Power            = -176.098 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  23.403 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  6.642 (dBi)
+**********************************************************
+*                       E Mode 3                         *
+**********************************************************
+	basic MUF  =  1.546 (MHz)
+	10% MUF    =  1.623 (MHz)
+	50% MUF    =  1.546 (MHz)
+	90% MUF    =  1.468 (MHz)
+	OPMUF      =  1.546 (MHz)
+	10% OPMUF  =  1.623 (MHz)
+	90% OPMUF  =  1.468 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.950
+	Upper decile =  1.050
+	Basic Loss (< 7000 km)    =  212.202 (dB)
+	Median Field Strength     = -61.767 (dB(1 uV/m))
+	Receiver Power            = -178.936 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  33.615 (degs)
+	Reflection height =  110.000 (km)
+	Receiver Gain =  6.933 (dBi)
+**********************************************************
+*                       E Mode 4                         *
+**********************************************************
+	basic MUF  =  0.000 (MHz)
+	10% MUF    =  0.000 (MHz)
+	50% MUF    =  0.000 (MHz)
+	90% MUF    =  0.000 (MHz)
+	OPMUF      =  0.000 (MHz)
+	10% OPMUF  =  0.000 (MHz)
+	90% OPMUF  =  0.000 (MHz)
+	Fprob        =  0.000 (%)
+	Lower decile =  0.000
+	Upper decile =  0.000
+	Basic Loss (< 7000 km)    =  307.000 (dB)
+	Median Field Strength     = -307.000 (dB(1 uV/m))
+	Receiver Power            = -307.000 (dBW)
+	Delay                     =  0.000 (mS)
+	Elevation angle   =  0.000 (degs)
+	Reflection height =  0.000 (km)
+	Receiver Gain = -307.000 (dBi)
+**********************************************************
+*            Control Point   -      T + 1000             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -      T + d0/2             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -       MidPath             *
+**********************************************************
+	Latitude	=	 1.291	( 73.941)	[73 56 27]
+	Longitude	=	 0.310	( 17.736)	[17 44 8]
+	distance =  478.996
+	Magnetic dip (100 km)  =  79.828 (deg)
+	Gyrofrequency (100 km) =  1.414 (MHz)
+	Magnetic dip (300 km)  =  79.881 (deg)
+	Gyrofrequency (300 km) =  1.308 (MHz)
+	M(3000)F2 =  3.392
+	foE   =  0.888 (MHz)
+	foF2  =  2.782 (MHz)
+	reflection height  =  263.248 (km)
+	solar zenith angle =  97.259 (deg)
+	solar declination  = -23.287 (deg)
+	solar hour angle   =  3.705 (deg)
+	equation of time   =  3.876 (minutes)
+	local sunrise      =  10:45 (UTC)  11:45 (Local)
+	local solar noon   =  10:45 (UTC)  11:45 (Local)
+	local sunset       =  10:45 (UTC)  11:45 (Local)
+	local time         =  11:00 (UTC)  12:00 (Local)
+**********************************************************
+*            Control Point   -      R - d0/2             *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*            Control Point   -     R - 1000              *
+**********************************************************
+	Latitude	=	 0.000	( 0.000)	[0 0 0]
+	Longitude	=	 0.000	( 0.000)	[0 0 0]
+	distance =  0.000
+	Magnetic dip (100 km)  =  0.000 (deg)
+	Gyrofrequency (100 km) =  0.000 (MHz)
+	Magnetic dip (300 km)  =  0.000 (deg)
+	Gyrofrequency (300 km) =  0.000 (MHz)
+	M(3000)F2 =  0.000
+	foE   =  0.000 (MHz)
+	foF2  =  0.000 (MHz)
+	solar zenith angle =  0.000 (deg)
+	solar declination  =  0.000 (deg)
+	solar hour angle   =  0.000 (deg)
+	equation of time   =  0.000 (minutes)
+	local sunrise      =  0:00 (UTC)  0:00 (Local)
+	local solar noon   =  0:00 (UTC)  0:00 (Local)
+	local sunset       =  0:00 (UTC)  0:00 (Local)
+	local time         =  0:00 (UTC)  0:00 (Local)
+**********************************************************
+*               End DumpPathData()                       *
+**********************************************************
