@@ -1,0 +1,5 @@
+TW=0: exit 0
+TW=-0.01: exit 119
+TW=50: exit 0
+TW=50.01: exit 119
+TW=nan: exit 119

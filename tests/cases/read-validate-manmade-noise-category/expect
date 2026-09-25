@@ -1,0 +1,5 @@
+MMN='CITY': exit 0
+MMN='RESIDENTIAL': exit 0
+MMN='QUIETRURAL': exit 0
+MMN='NOISY': exit 0
+MMN='QUIET': exit 0

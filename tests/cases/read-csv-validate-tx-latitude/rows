@@ -1,0 +1,7 @@
+row 1 is 90
+row 2 is 90.001
+row 3 is -90.001
+row 4 is nan
+row 5 is inf
+row 6 is -inf
+row 7 is 1e400

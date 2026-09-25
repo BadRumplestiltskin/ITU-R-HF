@@ -1,0 +1,8 @@
+MMN=100: exit 103
+MMN=100.01: exit 0
+MMN=199.99: exit 0
+MMN=200: exit 103
+MMN=50: exit 103
+MMN=-5: exit 0
+MMN=nan: exit 103
+MMN=inf: exit 103

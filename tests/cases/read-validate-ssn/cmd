@@ -1,0 +1,1 @@
+L=$CASE/../read-lib; sh "$L/mkin.sh" SSN=0 > x.in; $ITURHFPROP -s x.in out > /dev/null; echo "SSN=0: exit $?"; sh "$L/mkin.sh" SSN=-1 > x.in; $ITURHFPROP -s x.in out > /dev/null; echo "SSN=-1: exit $?"; sh "$L/mkin.sh" SSN=1000 > x.in; $ITURHFPROP -s x.in out > /dev/null; echo "SSN=1000: exit $?"

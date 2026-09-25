@@ -1,0 +1,5 @@
+SNRR=-30: exit 0
+SNRR=-30.01: exit 114
+SNRR=200: exit 0
+SNRR=200.01: exit 114
+SNRR=nan: exit 114

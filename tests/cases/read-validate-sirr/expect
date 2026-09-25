@@ -1,0 +1,6 @@
+SIRR=-30: exit 0
+SIRR=-30.01: exit 115
+SIRR=200: exit 0
+SIRR=200.01: exit 115
+SIRR=nan: exit 115
+SIRR=inf: exit 115

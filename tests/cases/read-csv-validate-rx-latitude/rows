@@ -1,0 +1,5 @@
+row 1 is 90
+row 2 is 90.001
+row 3 is -90.001
+row 4 is NaN
+row 5 is INF

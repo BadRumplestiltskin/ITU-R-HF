@@ -1,0 +1,2 @@
+MOD=DIGITAL: exit 0
+MOD=DIGITAL SIRR=-31: exit 115

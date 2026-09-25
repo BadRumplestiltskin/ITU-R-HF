@@ -1,0 +1,4 @@
+SNRXXP=0: exit 125
+SNRXXP=1: exit 0
+SNRXXP=99: exit 0
+SNRXXP=100: exit 125

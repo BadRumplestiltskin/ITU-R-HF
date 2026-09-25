@@ -1,0 +1,6 @@
+TXLAT=90: exit 0
+TXLAT=90.01: exit 121
+TXLAT=-90: exit 0
+TXLAT=-90.01: exit 121
+TXLAT=nan: exit 121
+TXLAT=inf: exit 121

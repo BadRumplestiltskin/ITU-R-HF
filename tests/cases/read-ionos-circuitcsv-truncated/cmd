@@ -1,0 +1,1 @@
+mkdir d && for f in "$P533DATA"/*; do ln -s "$f" d/; done; rm d/ionos03.bin && head -c 6000000 "$P533DATA/ionos03.bin" > d/ionos03.bin && $CIRCUITCSV -s -i "$CASE/../../circuitcsv/sample.csv" -o o.csv -d d

@@ -1,0 +1,5 @@
+A=0: exit 0
+A=-0.01: exit 118
+A=1000: exit 0
+A=1000.01: exit 118
+A=nan: exit 118
