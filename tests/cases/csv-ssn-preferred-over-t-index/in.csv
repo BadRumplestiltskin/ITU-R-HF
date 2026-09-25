@@ -1,0 +1,2 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays,t_Index
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90,10

@@ -1,0 +1,1 @@
+head -100 flat.14 > cut.14 && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -r cut.14

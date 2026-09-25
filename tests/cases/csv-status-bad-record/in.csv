@@ -1,0 +1,25 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4
+Perth,,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,north,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,1.5e999,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,inf,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,nan,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024.5,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3.5,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4.5,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15th,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4.0,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15, 4 ,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3deg,1000,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1kW,10,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,,-150,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150dBW,3000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3,000,90
+Perth,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,
+Perth,-31.95,115.86,Sydney,-33.87,151.21,99999999999,3,15,4,120,3,1000,10,-150,3000,90
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,-31.95,115.86,Sydney,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90
+Perth,-31.95,115.86,yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy,-33.87,151.21,2024,3,15,4,120,3,1000,10,-150,3000,90

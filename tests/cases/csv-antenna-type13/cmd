@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -t "$CASE/../../../ITURHFProp/Data/Antenna/T13 Files/141-10_0.t13" -r "$CASE/../../../ITURHFProp/Data/Antenna/T13 Files/141-10_0.t13" && $CIRCUITCSV -s -i in.csv -o iso.csv -d "$P533DATA" -t ISOTROPIC -r ISOTROPIC && ! cmp -s res.csv iso.csv && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

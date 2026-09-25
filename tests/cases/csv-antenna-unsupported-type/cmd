@@ -1,0 +1,1 @@
+printf "name\n4\n1.0\n  99\n0\n" > odd.t13 && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -r odd.t13

@@ -1,0 +1,1 @@
+awk -F, -v OFS=, 'NR==1{print $0",Notes";next}{s=sprintf("%20000s","");gsub(/ /,"n",s);print $0,s}' in.csv > long.csv && $CIRCUITCSV -s -i long.csv -o res.csv -d "$P533DATA" && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

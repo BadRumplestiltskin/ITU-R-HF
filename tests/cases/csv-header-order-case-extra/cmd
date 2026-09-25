@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && $CIRCUITCSV -s -i shuffled.csv -o shuf.csv -d "$P533DATA" && cmp res.csv shuf.csv && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

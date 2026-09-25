@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -F "$(awk 'BEGIN{for(i=0;i<1400;i++)printf "10,";print "25"}')" -S scan.csv && awk -F, 'NR>1{print $2}' scan.csv > out

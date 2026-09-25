@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -t flat.14 -r flat.14 && $CIRCUITCSV -s -i in.csv -o iso.csv -d "$P533DATA" -g 3 && cmp res.csv iso.csv && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

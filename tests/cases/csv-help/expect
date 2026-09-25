@@ -1,0 +1,3 @@
+USAGE: CircuitCSV -i <in.csv> -o <out.csv> -d <datapath> [options]
+Every non-blank input row gives exactly one output row, in input order;
+Site names over 255 characters make the row BAD_RECORD.

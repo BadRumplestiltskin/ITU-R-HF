@@ -1,0 +1,2 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays
+Madrid,40.42,-3.70,Wellington,-41.29,174.78,2024,12,15,20,10,3,10000,10,-150,3000,90

@@ -1,0 +1,1 @@
+$CIRCUITCSV -i in.csv -o res.csv -d "$(printf %0300d 0)"

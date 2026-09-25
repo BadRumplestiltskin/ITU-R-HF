@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && awk -F, 'NR>1{print $NF, ($(NF-17)!=""), ($(NF-8)!=""), ($(NF-6)!="")}' res.csv > out

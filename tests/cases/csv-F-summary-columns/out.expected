@@ -1,0 +1,16 @@
+Circuit#,Status,48
+1,OK,48
+2,BAD_RECORD,48
+3,BAD_MONTH,48
+4,LONG_PATH,48
+LUF
+BestF
+SN_Best
+SN0_Best
+DuSN_Best
+DlSN_Best
+BCR_Best
+Status
+|
+3 1
+3 4

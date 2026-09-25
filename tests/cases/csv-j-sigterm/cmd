@@ -1,0 +1,1 @@
+awk 'NR==1{print;next}{for(i=0;i<3000;i++)print}' in.csv > big.csv && ($CIRCUITCSV -s -i big.csv -o res.csv -d "$P533DATA" -F 2:30:0.5 -S scan.csv -j 2 & pid=$!; sleep 1; kill -TERM $pid; wait $pid; echo "status $?"; echo "parts $(ls | grep -c part)")

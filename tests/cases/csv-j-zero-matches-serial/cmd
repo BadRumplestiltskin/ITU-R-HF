@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -F 5:15:5 -S scan.csv && $CIRCUITCSV -s -i in.csv -o par.csv -d "$P533DATA" -F 5:15:5 -S pscan.csv -j 0 && cmp res.csv par.csv && cmp scan.csv pscan.csv && awk -F, 'NF>30{print $(NF-30)","$NF","NF}' res.csv > out && { ls | grep -c part || :; } >> out

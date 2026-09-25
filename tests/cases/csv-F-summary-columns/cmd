@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -F 5,10,15 -S scan.csv && awk -F, 'NF>30{print $(NF-30)","$NF","NF}' res.csv > out && head -1 res.csv | tr , '\n' | tail -8 >> out && awk -F, '$NF=="BAD_RECORD"{print $(NF-7)$(NF-6)$(NF-5)$(NF-4)$(NF-3)$(NF-2)$(NF-1)"|"}' res.csv >> out && awk -F, 'NR>1{print $1}' scan.csv | uniq -c | sed 's/^ *//' >> out

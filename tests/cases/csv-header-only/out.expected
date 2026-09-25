@@ -1,0 +1,1 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays,Circuit#,SSN_used,Dist,Tx-Bearing,Rx-Bearing,Mode,BUF,Prob,TOA,Losses,SN_BUF,Delay_BUF,Grange_BUF,Noise Rx,Noise Tx,MUF,SN_MUF,OWF,SN_OWF,fM,SN_fM,fL,SN_fL,Status

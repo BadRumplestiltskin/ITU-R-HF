@@ -1,0 +1,1 @@
+awk 'NR==1{print;next}{for(i=0;i<1000;i++)print}' in.csv > big.csv && $CIRCUITCSV -i big.csv -o res.csv -d "$P533DATA" && awk -F, 'END{print NR","$(NF-23)","$NF}' res.csv > out

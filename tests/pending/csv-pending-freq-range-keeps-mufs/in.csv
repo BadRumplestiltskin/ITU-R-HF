@@ -1,0 +1,2 @@
+txSite,txLat,txLon,rxSite,rxLat,rxLon,year,month,day,hour,SSN,minTOA,txPow,reqSN,rxNoise,bandW,percDays
+A,-25.41,3.46,B,-13.67,62.43,2024,5,1,9,195,3,1000,10,-150,3000,90
