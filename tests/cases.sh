@@ -26,8 +26,7 @@
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 # The C locale for every case: text tools behave the same on every machine,
-# and sed/grep accept the non-UTF-8 bytes in some data files (a UTF-8 locale
-# makes sed fail on the P.1239 file).
+# and sed/grep accept any byte a case writes into a deliberately corrupt file.
 LC_ALL=C
 export LC_ALL
 libdir=$root/P533/Linux:$root/P372/Linux

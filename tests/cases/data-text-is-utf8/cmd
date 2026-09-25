@@ -1,0 +1,1 @@
+R=$CASE/../../..; bad=0; for f in "$R"/*/Data/*.txt "$R"/*/Data/*.csv; do [ -f "$f" ] || continue; head -c 3 "$f" | od -An -tx1 | grep -q 'ef bb bf' && { echo "BOM: $f"; bad=1; }; iconv -f UTF-8 -t UTF-8 "$f" >/dev/null 2>&1 || { echo "not UTF-8: $f"; bad=1; }; done; echo checked; exit $bad
