@@ -556,8 +556,8 @@ void InitializeInput(struct ITURHFProp *ITURHFP, struct PathData *path) {
 	ITURHFP->L_UL.lng = TOOBIG;
 	ITURHFP->L_UR.lat = TOOBIG;
 	ITURHFP->L_UR.lng = TOOBIG;
-	ITURHFP->latinc = 1.0;
-	ITURHFP->lnginc = 1.0;
+	ITURHFP->latinc = 1.0*D2R;	// 1 degree; a value read from the file is also converted to radians
+	ITURHFP->lnginc = 1.0*D2R;
 	sprintf(ITURHFP->DataFilePath, ".");
 
 	return;
