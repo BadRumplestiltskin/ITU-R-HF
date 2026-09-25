@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <signal.h>
+#endif
+#ifdef __linux__
+#include <sys/prctl.h>
 #endif
 
 // Local includes
@@ -242,9 +246,52 @@ static char *Trim(char *s) {
 }
 
 /*
+	CsvStep() - Advances the csv quote state by one character.
+
+		The one quoting rule shared by SplitCSV(), ReadRecord() and
+		CopyRecord(), per RFC 4180: a quote opens a quoted field only when it
+		is the first character of the field other than white space; inside
+		one, a doubled quote is a literal quote and a single one closes it. A
+		quote anywhere else, as in  Perth 12" dish , is an ordinary character.
+		Every quote used to toggle the state, so that one such name ran on to
+		the next quote in the file, however many rows later, and swallowed
+		every row in between. A line break or a comma separates only outside
+		an open quoted field (CSV_QUOTED); the caller tests that.
+
+		INPUT
+			int st, the state before ch; int ch
+
+		OUTPUT
+			returns the state after ch
+
+		SUBROUTINES
+			None
+*/
+enum { CSV_START, CSV_PLAIN, CSV_QUOTED, CSV_CLOSED, CSV_AFTER };
+
+static int CsvStep(int st, int ch) {
+
+	switch (st) {
+		case CSV_START:
+			if (ch == ' ' || ch == '\t') return CSV_START;
+			if (ch == '"') return CSV_QUOTED;
+			return (ch == ',') ? CSV_START : CSV_PLAIN;
+		case CSV_QUOTED:
+			return (ch == '"') ? CSV_CLOSED : CSV_QUOTED;
+		case CSV_CLOSED:	// a quote inside a quoted field: doubled, or the close
+			if (ch == '"') return CSV_QUOTED;
+			if (ch == ' ' || ch == '\t' || ch == '\r') return CSV_CLOSED;
+			return (ch == ',') ? CSV_START : CSV_AFTER;
+		default:			// CSV_PLAIN, or text after a closing quote
+			return (ch == ',') ? CSV_START : st;
+	}
+
+}
+
+/*
 	SplitCSV() - Splits one record into fields on commas.
 
-		Quoted fields are handled so that a site name may contain a comma.
+		A comma inside a quoted field (see CsvStep()) does not split.
 
 		INPUT
 			char *line		the record, modified in place
@@ -255,24 +302,25 @@ static char *Trim(char *s) {
 			returns the number of fields found
 
 		SUBROUTINES
-			Trim()
+			CsvStep(), Trim()
 */
 static int SplitCSV(char *line, char **field, int maxfields) {
 
 	int n = 0;
-	int inquote = 0;
+	int st = CSV_START;
 	char *p = line;
 
 	field[n++] = line;
 	for (; *p != '\0'; p++) {
-		if (*p == '"') inquote = !inquote;
-		else if (*p == ',' && inquote == 0) {
+		if (*p == ',' && st != CSV_QUOTED) {
 			*p = '\0';
+			st = CSV_START;
 			// Stop collecting, but still fall through to the trim below: an
 			// early return here left every field untrimmed, quotes and all.
 			if (n >= maxfields) break;
 			field[n++] = p + 1;
 		}
+		else st = CsvStep(st, *p);
 	}
 
 	for (int i = 0; i < n; i++) field[i] = Trim(field[i]);
@@ -287,24 +335,38 @@ static int SplitCSV(char *line, char **field, int maxfields) {
 		fgets() into a fixed buffer split a record longer than the buffer into
 		two rows, and a quoted field holding a newline into two as well; either
 		broke the one-row-in, one-row-out numbering. This reads up to a newline
-		that is outside quotes, growing the buffer as needed. The newline is
-		kept, as fgets() kept it. A quote left open at end of file ends the
-		record there.
+		that is outside a quoted field (see CsvStep()), growing the buffer as
+		needed. The newline is kept, as fgets() kept it.
+
+		A quoted field that runs over a line break is taken as malformed, so
+		that one bad row can never swallow the rows after it, when it is still
+		open at end of file, when it spans more than CSVMAXQLINES line breaks,
+		or when its closing quote is followed by anything but white space, a
+		comma or the end of the line (as when a stray opening quote pairs with
+		the first quote of a later row). The record is then only its first
+		line, returned as CSVBADQUOTE for the caller to report as BAD_RECORD,
+		and reading resumes at the next line. A quote left open at the end of
+		the file's last line is CSVBADQUOTE too.
 
 		INPUT
 			FILE *fp, char **buf, size_t *cap	(*buf may start NULL)
 
 		OUTPUT
-			returns TRUE with the record in *buf, FALSE at end of file, or -1
-			when memory runs out
+			returns TRUE with the record in *buf, CSVBADQUOTE with a malformed
+			record's first line in *buf, FALSE at end of file, or -1 when memory
+			runs out or the file cannot be repositioned
 
 		SUBROUTINES
-			None
+			CsvStep()
 */
+#define CSVBADQUOTE		2
+#define CSVMAXQLINES	64
+
 static int ReadRecord(FILE *fp, char **buf, size_t *cap) {
 
-	size_t n = 0;
-	int ch, inquote = 0;
+	size_t n = 0, first = 0;
+	long resume = -1;
+	int ch, st = CSV_START, lines = 0, bad = FALSE;
 
 	ch = getc(fp);
 	if (ch == EOF) return FALSE;
@@ -317,12 +379,27 @@ static int ReadRecord(FILE *fp, char **buf, size_t *cap) {
 			*cap = nc;
 		}
 		(*buf)[n++] = (char)ch;
-		if (ch == '"') inquote = !inquote;
-		else if (ch == '\n' && inquote == 0) break;
+		if (ch == '\n') {
+			if (st != CSV_QUOTED) break;
+			if (lines++ == 0) {
+				first = n;
+				resume = ftell(fp);
+			}
+			if (lines > CSVMAXQLINES) { bad = TRUE; break; }
+		}
+		else {
+			st = CsvStep(st, ch);
+			if (st == CSV_AFTER && lines > 0) { bad = TRUE; break; }
+		}
+	}
+	if (ch == EOF && st == CSV_QUOTED) bad = TRUE;
+	if (bad == TRUE && lines > 0) {
+		if (resume < 0 || fseek(fp, resume, SEEK_SET) != 0) return -1;
+		n = first;
 	}
 	(*buf)[n] = '\0';
 
-	return TRUE;
+	return (bad == TRUE) ? CSVBADQUOTE : TRUE;
 
 }
 
@@ -632,6 +709,15 @@ static int DominantMode(struct PathData *path, int *hops, char *layer) {
 static int Workers = 1;
 static int *NextBlock = NULL;
 static FILE *BlockIdx = NULL;
+#ifndef _WIN32
+// The -j parent's pid, as each worker saw it at fork: a worker whose parent
+// has changed was orphaned and stops at its next block. The workers started
+// so far, for the parent's SIGINT/SIGTERM handler to stop.
+static pid_t ParentPid = 0;
+static pid_t WorkerPid[CSVMAXWORKERS];
+static volatile sig_atomic_t NStarted = 0;
+static volatile sig_atomic_t StopSignal = 0;
+#endif
 
 struct Counts {
 	int number;			// circuits that ran
@@ -655,9 +741,11 @@ static int CompareDouble(const void *a, const void *b) {
 
 		"start:stop:step" gives start, start+step, ... up to stop inclusive; each
 		value is rounded to 1 kHz so that 0.1 MHz steps do not accumulate binary
-		fractions. Anything else is read as a comma separated list, sorted
+		fractions, and a value the rounding repeats is dropped. Anything else is read as a comma separated list, sorted
 		ascending with duplicates removed. Every frequency must lie in P.533's
-		1-30 MHz, which ValidatePath() enforces.
+		1-30 MHz, which ValidatePath() enforces. NaN and infinity are refused
+		outright: a NaN compares false with everything, so it slipped past the
+		1-30 MHz test on the sorted ends.
 
 		INPUT
 			const char *spec
@@ -678,8 +766,9 @@ static int ParseScan(const char *spec) {
 	if (ScanF == NULL) return RTN_ERRCSVARGS;
 
 	if (strchr(spec, ':') != NULL) {
-		if (sscanf(spec, "%lf:%lf:%lf%c", &a, &b, &c, &tail) != 3 || c <= 0.0 || b < a) {
-			printf("CircuitCSV: Error %d -F range must be start:stop:step with step > 0 and stop >= start\n", RTN_ERRCSVARGS);
+		if (sscanf(spec, "%lf:%lf:%lf%c", &a, &b, &c, &tail) != 3 ||
+			!isfinite(a) || !isfinite(b) || !isfinite(c) || c <= 0.0 || b < a) {
+			printf("CircuitCSV: Error %d -F range must be start:stop:step, finite numbers with step > 0 and stop >= start\n", RTN_ERRCSVARGS);
 			return RTN_ERRCSVARGS;
 		}
 		for (int k = 0; ; k++) {
@@ -689,6 +778,9 @@ static int ParseScan(const char *spec) {
 				printf("CircuitCSV: Error %d -F gives more than %d frequencies\n", RTN_ERRCSVARGS, SCANMAX);
 				return RTN_ERRCSVARGS;
 			}
+			// A step under 1 kHz rounds some values onto the one before; the
+			// values ascend, so a repeat can only be the previous one.
+			if (n > 0 && f == ScanF[n-1]) continue;
 			ScanF[n++] = f;
 		}
 	}
@@ -698,8 +790,8 @@ static int ParseScan(const char *spec) {
 		for (tok = strtok(buf, ","); tok != NULL; tok = strtok(NULL, ",")) {
 			double f = strtod(tok, &end);
 			while (*end == ' ') end++;
-			if (end == tok || *end != '\0') {
-				printf("CircuitCSV: Error %d -F list entry '%s' is not a number\n", RTN_ERRCSVARGS, tok);
+			if (end == tok || *end != '\0' || !isfinite(f)) {
+				printf("CircuitCSV: Error %d -F list entry '%s' is not a finite number\n", RTN_ERRCSVARGS, tok);
 				return RTN_ERRCSVARGS;
 			}
 			if (n >= SCANMAX) {
@@ -1497,7 +1589,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 
 	snprintf(dp, sizeof(dp), "%s", dpath);
 
-	while ((rc = ReadRecord(fin, &line, &cap)) == TRUE) {
+	while ((rc = ReadRecord(fin, &line, &cap)) > 0) {
 
 		// Test for a blank record without touching it: Trim() unquotes a FIELD
 		// in place, so running it on the whole record stripped the closing quote
@@ -1513,6 +1605,14 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 			int blk = (nrow - 1) / CSVBLOCK;
 			// Claims only increase, so a claim behind the reader is simply
 			// taken again; a claim ahead is skipped to.
+#ifndef _WIN32
+			// Where there is no PR_SET_PDEATHSIG (macOS), this is how a worker
+			// learns that the parent died: it is re-parented.
+			if (blk > mine && getppid() != ParentPid) {
+				free(line);
+				return RTN_ERRCSVWORKER;
+			}
+#endif
 			while (blk > mine) mine = __atomic_fetch_add(NextBlock, 1, __ATOMIC_SEQ_CST);
 			if (blk < mine) continue;
 			if ((nrow - 1) % CSVBLOCK == 0) fprintf(BlockIdx, "%d\n", blk);
@@ -1521,6 +1621,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 		nf = SplitCSV(line, field, CSVMAXFIELDS);
 		ReadCircuit(&c, field, nf, col);
 		c.row = nrow;
+		if (rc == CSVBADQUOTE) c.parsed = FALSE;	// a quote left open
 
 		memset(&r, 0, sizeof(r));
 
@@ -1598,7 +1699,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 	CopyRecord() - Copies one record from in to out, of any length.
 
 		A quoted site name may hold a newline, so a record ends only at a
-		newline outside quotes.
+		newline outside a quoted field, by the rule ReadRecord() reads with.
 
 		INPUT
 			FILE *in, FILE *out
@@ -1609,21 +1710,46 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 */
 static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 
-	int ch, inquote = 0;
+	int ch, st = CSV_START;
 	size_t j = 0;
 
 	ch = getc(in);
 	if (ch == EOF) return FALSE;
-	for (; ch != EOF && (ch != '\n' || inquote); ch = getc(in)) {
+	for (; ch != EOF && (ch != '\n' || st == CSV_QUOTED); ch = getc(in)) {
 		putc(ch, out);
-		if (ch == '"') inquote = !inquote;
-		if (ch == ',') j = 0;
+		if (ch == ',' && st != CSV_QUOTED) st = CSV_START;
+		else st = CsvStep(st, ch);
+		if (ch == ',' && st == CSV_START) j = 0;
 		else if (j + 1 < n) status[j++] = (char)ch;
 	}
 	putc('\n', out);
 	status[j] = '\0';
 
 	return TRUE;
+
+}
+
+/*
+	StopWorkers() - The -j parent's SIGINT/SIGTERM handler.
+
+		Records the signal and passes SIGTERM on to every worker started, so
+		that the parent's waitpid() returns promptly; RunParallel() then
+		removes the part files and re-raises the signal. Only kill() is
+		called, which is async-signal-safe.
+
+		INPUT
+			int sig
+
+		OUTPUT
+			StopSignal
+
+		SUBROUTINES
+			None
+*/
+static void StopWorkers(int sig) {
+
+	StopSignal = sig;
+	for (int k = 0; k < NStarted; k++) kill(WorkerPid[k], SIGTERM);
 
 }
 
@@ -1639,6 +1765,12 @@ static int CopyRecord(FILE *in, FILE *out, char *status, size_t n) {
 		its worker's part -- and -S rows by their Circuit#, since a row gives
 		none or one per frequency.
 		The parts are then removed. Any worker failing fails the run.
+
+		SIGINT or SIGTERM to the parent stops the workers, removes the parts
+		and ends the process by that signal. If fork() fails part-way, the
+		workers already started are stopped rather than left to run the job.
+		A worker dies with its parent: through PR_SET_PDEATHSIG on Linux, and
+		everywhere by checking getppid() before each block it takes.
 
 		INPUT
 			FILE *fin, const char *infile, *outfile, *scanfile
@@ -1662,7 +1794,10 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	char (*scanpart)[CSVPARTNAME] = malloc(sizeof(*scanpart) * CSVMAXWORKERS);
 	char (*idxpart)[CSVPARTNAME] = malloc(sizeof(*idxpart) * CSVMAXWORKERS);
 	int nextidx[CSVMAXWORKERS];
-	pid_t pid[CSVMAXWORKERS];
+	struct sigaction sa, oldint, oldterm;
+	sigset_t block, oldmask;
+	pid_t parent = getpid();
+	int stopped = 0;			// the workers were sent SIGTERM
 	int k, bad = 0, number = 0, failed = 0, nrow = 0;
 	FILE *fout, *fsout = NULL, *pin[CSVMAXWORKERS], *sin[CSVMAXWORKERS], *xin[CSVMAXWORKERS];
 	char pend[CSVMAXWORKERS][512];
@@ -1696,15 +1831,34 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	if (silent == FALSE) printf("CircuitCSV: %d workers\n", Workers);
 	fflush(stdout);
 
+	// The handler goes in before the first fork, with the two signals held
+	// until every worker is started and recorded in WorkerPid.
+	StopSignal = 0;
+	NStarted = 0;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = StopWorkers;
+	sigemptyset(&sa.sa_mask);
+	// A signal ignored on entry (nohup, a background job) stays ignored.
+	sigaction(SIGINT, NULL, &oldint);
+	sigaction(SIGTERM, NULL, &oldterm);
+	if (oldint.sa_handler != SIG_IGN) sigaction(SIGINT, &sa, NULL);
+	if (oldterm.sa_handler != SIG_IGN) sigaction(SIGTERM, &sa, NULL);
+	sigemptyset(&block);
+	sigaddset(&block, SIGINT);
+	sigaddset(&block, SIGTERM);
+	sigprocmask(SIG_BLOCK, &block, &oldmask);
+
 	for (k = 0; k < Workers; k++) {
-		pid[k] = fork();
-		if (pid[k] < 0) {
+		pid_t p = fork();
+		if (p < 0) {
 			printf("CircuitCSV: Error %d Can't start worker %d (%s)\n", RTN_ERRCSVWORKER, k, strerror(errno));
 			Workers = k;			// wait only for those started
+			for (int i = 0; i < k; i++) kill(WorkerPid[i], SIGTERM);
+			stopped = 1;
 			bad = 1;
 			break;
 		}
-		if (pid[k] == 0) {
+		if (p == 0) {
 			// The worker. It must not share the parent's FILE position, so it
 			// opens the input afresh and skips the header.
 			char *hdr = NULL;
@@ -1712,6 +1866,15 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			struct Counts cnt = { 0, 0, 0 };
 			FILE *in = fopen(infile, "r"), *out = fopen(outpart[k], "w");
 			int rv;
+
+			sigaction(SIGINT, &oldint, NULL);
+			sigaction(SIGTERM, &oldterm, NULL);
+			sigprocmask(SIG_SETMASK, &oldmask, NULL);
+			ParentPid = parent;
+#ifdef __linux__
+			prctl(PR_SET_PDEATHSIG, SIGTERM);
+#endif
+			if (getppid() != parent) _exit(2);	// the parent died already
 
 			BlockIdx = fopen(idxpart[k], "w");
 			if (in == NULL || out == NULL || BlockIdx == NULL || ReadRecord(in, &hdr, &hcap) != TRUE) _exit(2);
@@ -1721,6 +1884,13 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 				if (ScanOut == NULL) _exit(2);
 			}
 			rv = ProcessRows(in, out, path, col, dpath, TRUE, k, Workers, &cnt);
+			if (getppid() != parent) {
+				// Orphaned: nobody will merge or remove the parts.
+				remove(outpart[k]);
+				remove(idxpart[k]);
+				if (scanfile != NULL) remove(scanpart[k]);
+				_exit(1);
+			}
 			fclose(in);
 			if (fclose(out) != 0) rv = RTN_ERRCSVOPENOUT;
 			if (ScanOut != NULL && fclose(ScanOut) != 0) rv = RTN_ERRCSVOPENOUT;
@@ -1728,15 +1898,23 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			fflush(stdout);
 			_exit(rv == RTN_CSVOK ? 0 : 1);
 		}
+		WorkerPid[k] = p;
+		NStarted = k + 1;
 	}
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 
 	for (k = 0; k < Workers; k++) {
 		int st;
-		if (waitpid(pid[k], &st, 0) < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+		pid_t w;
+		while ((w = waitpid(WorkerPid[k], &st, 0)) < 0 && errno == EINTR) ;
+		if (StopSignal != 0 || stopped) bad = 1;
+		else if (w < 0 || !WIFEXITED(st) || WEXITSTATUS(st) != 0) {
 			printf("CircuitCSV: Error %d worker %d failed\n", RTN_ERRCSVWORKER, k);
 			bad = 1;
 		}
 	}
+	// All reaped: a signal from here on must not reach a pid since reused.
+	NStarted = 0;
 	(void)fin;
 
 	if (bad == 0) {
@@ -1768,7 +1946,7 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 			// are the next CSVBLOCK lines of that worker's part (fewer for the
 			// last block), and each row's -S lines are the lines of the same
 			// worker's -S part that carry its Circuit#.
-			for (int b = 0; bad == 0; b++) {
+			for (int b = 0; bad == 0 && StopSignal == 0; b++) {
 				for (k = 0; k < Workers && nextidx[k] != b; k++) ;
 				if (k == Workers) break;			// no such block: the end
 				for (int j = 0; j < CSVBLOCK; j++) {
@@ -1806,6 +1984,17 @@ static int RunParallel(FILE *fin, const char *infile, const char *outfile, const
 	NextBlock = NULL;
 	free(outpart); free(scanpart); free(idxpart);
 	#undef CSVPARTNAME
+
+	sigaction(SIGINT, &oldint, NULL);
+	sigaction(SIGTERM, &oldterm, NULL);
+	if (StopSignal != 0) {
+		// The parts are gone; end as the signal would have ended the run.
+		printf("CircuitCSV: Interrupted, workers stopped\n");
+		fflush(stdout);
+		signal(StopSignal, SIG_DFL);
+		raise(StopSignal);
+		return RTN_ERRCSVWORKER;
+	}
 
 	if (bad != 0) return RTN_ERRCSVWORKER;
 
@@ -1940,8 +2129,12 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVOPENIN;
 	}
 
-	if (ReadRecord(fin, &line, &linecap) != TRUE) {
-		printf("CircuitCSV: Error %d %s is empty\n", RTN_ERRCSVHEADER, infile);
+	retval = ReadRecord(fin, &line, &linecap);
+	if (retval != TRUE) {
+		if (retval == CSVBADQUOTE)
+			printf("CircuitCSV: Error %d %s header has an unclosed quote\n", RTN_ERRCSVHEADER, infile);
+		else printf("CircuitCSV: Error %d %s is empty\n", RTN_ERRCSVHEADER, infile);
+		free(line);
 		fclose(fin);
 		return RTN_ERRCSVHEADER;
 	}
@@ -1958,6 +2151,7 @@ int main(int argc, char *argv[]) {
 			}
 			else {
 				printf("CircuitCSV: Error %d Header needs an 'SSN' or a 't_Index' column\n", RTN_ERRCSVHEADER);
+				free(line);
 				fclose(fin);
 				return RTN_ERRCSVHEADER;
 			}
@@ -1965,6 +2159,7 @@ int main(int argc, char *argv[]) {
 		if (col[i] < 0) {
 			printf("CircuitCSV: Error %d Header is missing the column '%s'\n",
 				RTN_ERRCSVHEADER, InputColumns[i]);
+			free(line);
 			fclose(fin);
 			return RTN_ERRCSVHEADER;
 		}

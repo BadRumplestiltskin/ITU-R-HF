@@ -70,6 +70,15 @@ A row is one csv record, not one line: there is no length limit, and a quoted
 field (a site name) may contain commas, doubled quotes or line breaks. Blank
 lines are skipped and do not count as rows.
 
+Quoting follows RFC 4180: a quote opens a quoted field only as the first
+character of the field (after any spaces), so a quote inside a name, as in
+`Perth 12" dish`, is just a character. A quoted field that crosses a line break
+is taken as malformed if it is still open at the end of the file, spans more
+than 64 line breaks, or has anything but spaces after its closing quote before
+the next comma or line end. That row is then only its first line, reported
+`BAD_RECORD`, and the following lines are read as rows of their own, so one
+stray quote never swallows the rows after it.
+
 Nothing is ever dropped. A row that cannot be calculated still appears, with
 empty result fields and a `Status` saying why:
 
@@ -77,7 +86,7 @@ empty result fields and a `Status` saying why:
 |---|---|
 | `OK` | calculated normally |
 | `NO_MODE` | ran, but no propagation mode is supported; geometry columns are still filled |
-| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers), or a site name was over 255 characters |
+| `BAD_RECORD` | an input column was missing, empty or not a number (`year`, `month`, `day` and `hour` must be whole numbers), a site name was over 255 characters, or a quoted field was left open (see above) |
 | `BAD_MONTH` | `month` was outside 1-12, so the circuit was not run |
 | `P533_ERROR` | the engine rejected the circuit, e.g. an out-of-range latitude |
 | `FREQ_RANGE` | every characteristic frequency fell outside P.533's 1-30 MHz, so nothing was evaluated |
@@ -118,9 +127,9 @@ With `-F`, seven columns are inserted before `Status`; see Frequency scan.
     CircuitCSV -i circuits.csv -o results.csv -d Data -F 2:30:0.5 -S scan.csv
 
 `-F` evaluates every circuit at a set of frequencies, given either as a range
-`start:stop:step` in MHz (values rounded to 1 kHz, `stop` included) or as a
+`start:stop:step` in MHz (values rounded to 1 kHz, repeats dropped, `stop` included) or as a
 comma separated list such as assigned frequencies, `4.5,7.1,11.2` (sorted,
-duplicates dropped). All must lie within P.533's 1-30 MHz.
+duplicates dropped). All must be finite and lie within P.533's 1-30 MHz.
 
 Why: for each frequency P.533 gives the monthly median S/N and its upper and
 lower decile deviations (P.842 Table 1 Steps 3, 6 and 9). None of the three
@@ -186,6 +195,13 @@ order when all have finished and deletes them, so allow about twice the output's
 size on disk during a run. Each worker loads the months it meets, so memory is
 up to about 300 MB per worker. A failing worker fails the whole run with error
 1009.
+
+Interrupting a run (`SIGINT`, e.g. Ctrl-C, or `SIGTERM`) stops the workers,
+deletes the part files and ends the run by that signal (exit status 130 or 143
+from a shell); a signal ignored when the run starts, as under `nohup`, stays
+ignored. If a worker cannot be started, those already running are stopped at
+once. A worker whose parent dies stops too: at once on Linux, and on macOS
+before its next block of 32 rows, deleting its own part files.
 
 Measured on an Apple M4 (4 performance + 6 efficiency cores), 10,000 circuits on
 the 57-frequency grid `2:30:0.5` with `-S`:
