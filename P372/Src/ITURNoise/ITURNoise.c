@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
 	} // argc == 2
 
 	// Are there enough command line arguments to proceed?
-	if (argc > 6) {
+	if (argc > 7) { // argv[1] to argv[7]: month hour freq lat lng mmnoise datafilepath
 
 		month = atoi(argv[1]) - 1;
 		if ((month < 0) || (month > 11)) {
@@ -370,7 +370,7 @@ int main(int argc, char* argv[]) {
 			}
 	}
 	else {
-		printf("ITURNoise: ERROR: Insufficient number (%d) of command line arguments, 7 required.\n", argc);
+		printf("ITURNoise: ERROR: Insufficient number (%d) of command line arguments, 7 required.\n", argc - 1);
 		printf("\n");
 		PrintUsage();
 		return RTN_ERRCOMMANDLINEARGS;
