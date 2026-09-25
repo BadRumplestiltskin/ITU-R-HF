@@ -31,6 +31,7 @@ double AbsorptionLayerPenetrationFactor(double T);
 double AbsorptionTerm(struct ControlPt CP, int month, double fv);
 double FindLh(struct ControlPt CP, double D, double hour, int month);
 double PenetrationPoints(struct PathData * path, double noh, double fv);
+static double LongitudinalGyrofrequency(struct ControlPt P);
 int WhatSeasonforLh(struct Location L, int month); 
 int SmallestCPfoF2(struct PathData path);
 // End local prototypes
@@ -208,7 +209,13 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	
 				// All the variable have been calculated to determine
 				// Absorption loss (dB) for an n-hop mode, Li
-				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				if(PEN) {
+					// AT is already the mean of ATj/(f + fLj)^2 over the penetration points
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/cos(aoi110);
+				}
+				else {
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				}
 
 				// "Above-the-MUF" loss, P.533-14 equations (24) and (25).
 				// Lm = 0 for f <= fb; for E modes above fb,
@@ -381,7 +388,13 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 
 				// All the variable have been calculated to determine
 				// Absorption loss (dB) for an n-hop mode, Li.
-				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				if(PEN) {
+					// AT is already the mean of ATj/(f + fLj)^2 over the penetration points
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/cos(aoi110);
+				}
+				else {
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				}
 	
 				// "Above-the-MUF" loss, P.533-14 equations (24) and (26).
 				// Lm = 0 for f <= fb; for F2 modes above fb,
@@ -1414,6 +1427,15 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
 	// penetration points per hop)." This took the reflection height of the mode
 	// instead -- 110 km for E modes, eq. (2)'s hr for F2 modes -- which moves the
 	// E-mode points by several hundred km (the MATLAB port's D31).
+	//
+	// Equation (20) divides each point's term by (f + fLj)^2, with fLj "the value
+	// of electron gyrofrequency, about the longitudinal component of the Earth's
+	// magnetic field for a height of 100 km, determined at the j-th penetration
+	// point" (23). The callers divided the mean of the terms by (f + fL)^2 with fL
+	// averaged over the Table 1d) control points instead; on a 7 000 km southern
+	// path at 2 MHz, where fLj runs from 0.42 to 1.38 MHz, that made Li 9.5 dB
+	// low. The division is now made here, point by point, and the mean of
+	// ATj/(f + fLj)^2 is returned.
 	const double hr = 300.0;
  	
 	struct ControlPt PP[2]; // Temp
@@ -1426,6 +1448,7 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
 	//double fv;
 	double ATSum = 0.0;
 	double fracd;
+	double f = path->frequency;
 
 	int i;
 
@@ -1469,7 +1492,7 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
  
  		// Calculate the absortion term for the ith hop penetration point
  		// closest to the transmitter and add it to the running absoption term sum	
- 		ATSum += AbsorptionTerm(PP[TXEND], path->month, fv);
+ 		ATSum += AbsorptionTerm(PP[TXEND], path->month, fv)/pow(f + LongitudinalGyrofrequency(PP[TXEND]), 2);
  			
  		// Next the end nearest to the receiver for this hop
  		fracd = ((i+1)*dh  - dh90)/path->distance;
@@ -1480,13 +1503,30 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
  
  		// Calculate the absortion term for the ith hop penetration point
  		// closest to the receiver and add it to the running absoption term sum	
- 		ATSum += AbsorptionTerm(PP[RXEND], path->month, fv);
+ 		ATSum += AbsorptionTerm(PP[RXEND], path->month, fv)/pow(f + LongitudinalGyrofrequency(PP[RXEND]), 2);
 
 
  		}
 
-    // Return the Ave of the absorption over all penetration points	
+    // Return the mean of ATj/(f + fLj)^2 over all penetration points
 	return ATSum/(2.0*(noh+1));
  
  }
+
+/*
+	LongitudinalGyrofrequency() - P.533-14 equation (23): fL = |fH sin(I)|, the
+		electron gyrofrequency about the longitudinal component of the Earth's
+		magnetic field at 100 km, at a point whose parameters are set.
+
+		INPUT
+			struct ControlPt P - a point after CalculateCPParameters()
+
+		OUTPUT
+			returns fL (MHz)
+*/
+static double LongitudinalGyrofrequency(struct ControlPt P) {
+
+	return fabs(P.fH[HR100km]*sin(P.dip[HR100km]));
+
+}
 
