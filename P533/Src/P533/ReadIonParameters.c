@@ -151,6 +151,7 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 static struct {
 	float ****foF2;
 	float ****M3kF2;
+	char  path[512];	// DataFilePath the month was read from
 	int   loaded;
 } IonMapCache[12];
 
@@ -230,6 +231,10 @@ static void FreeIonMap(float ****m) {
 		path->M3kF2 at them but must not free them; call IonMapFree() once at
 		the end of the run instead.
 
+		The cache is keyed on month and DataFilePath. Asking for a month from a
+		different directory re-reads it and frees the other directory's copy,
+		which invalidates pointers earlier returned for that month.
+
 		INPUT
 			int month (0 - 11), char *DataFilePath, int silent
 
@@ -244,34 +249,46 @@ DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent,
                         float *****foF2, float *****M3kF2) {
 
 	int retval;
+	float ****newfoF2;
+	float ****newM3kF2;
 
-	if (month < 0 || month > 11 || foF2 == NULL || M3kF2 == NULL) {
+	if (month < 0 || month > 11 || foF2 == NULL || M3kF2 == NULL || DataFilePath == NULL) {
+		return RTN_ERRREADIONPARAMETERS;
+	}
+	// The path is the cache key, so it has to fit the key field.
+	if (strlen(DataFilePath) >= sizeof(IonMapCache[month].path)) {
+		printf("IonMapGet: ERROR Data file path too long\n");
 		return RTN_ERRREADIONPARAMETERS;
 	}
 
-	if (IonMapCache[month].loaded != TRUE) {
+	// A hit needs the same month from the same directory. Keying on the month
+	// alone returned the first directory's maps to a caller naming another.
+	if (IonMapCache[month].loaded != TRUE || strcmp(IonMapCache[month].path, DataFilePath) != 0) {
 
-		IonMapCache[month].foF2  = AllocIonMap();
-		IonMapCache[month].M3kF2 = AllocIonMap();
-		if (IonMapCache[month].foF2 == NULL || IonMapCache[month].M3kF2 == NULL) {
-			FreeIonMap(IonMapCache[month].foF2);
-			FreeIonMap(IonMapCache[month].M3kF2);
-			IonMapCache[month].foF2 = NULL;
-			IonMapCache[month].M3kF2 = NULL;
+		// Read into fresh maps, so a failed read leaves any cached month intact.
+		newfoF2  = AllocIonMap();
+		newM3kF2 = AllocIonMap();
+		if (newfoF2 == NULL || newM3kF2 == NULL) {
+			FreeIonMap(newfoF2);
+			FreeIonMap(newM3kF2);
 			printf("IonMapGet: ERROR Out of memory caching month %d\n", month+1);
 			return RTN_ERRREADIONPARAMETERS;
 		}
 
-		retval = ReadIonParametersBin(month, IonMapCache[month].foF2,
-		                              IonMapCache[month].M3kF2, DataFilePath, silent);
+		retval = ReadIonParametersBin(month, newfoF2, newM3kF2, DataFilePath, silent);
 		if (retval != RTN_READIONPARAOK) {
-			FreeIonMap(IonMapCache[month].foF2);
-			FreeIonMap(IonMapCache[month].M3kF2);
-			IonMapCache[month].foF2 = NULL;
-			IonMapCache[month].M3kF2 = NULL;
+			FreeIonMap(newfoF2);
+			FreeIonMap(newM3kF2);
 			return retval;
 		}
 
+		// Replacing another directory's month frees it: pointers a caller got
+		// for this month from that directory are no longer valid.
+		FreeIonMap(IonMapCache[month].foF2);
+		FreeIonMap(IonMapCache[month].M3kF2);
+		IonMapCache[month].foF2  = newfoF2;
+		IonMapCache[month].M3kF2 = newM3kF2;
+		strcpy(IonMapCache[month].path, DataFilePath);	// length checked above
 		IonMapCache[month].loaded = TRUE;
 	}
 
@@ -304,6 +321,7 @@ DLLEXPORT void IonMapFree(void) {
 		IonMapCache[m].foF2 = NULL;
 		IonMapCache[m].M3kF2 = NULL;
 		IonMapCache[m].loaded = FALSE;
+		IonMapCache[m].path[0] = '\0';
 	}
 
 }
