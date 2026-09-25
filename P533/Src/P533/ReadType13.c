@@ -29,7 +29,7 @@ DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azim
 	//If TXorRX == 0 set the transmitter's antenna pattern value.
 	if (TXorRX == 0){
 		if (path->A_tx.pattern == NULL) {
-			AllocateAntennaMemory(&path->A_tx, 1, 360, 91);
+			if (AllocateAntennaMemory(&path->A_tx, 1, 360, 91) != RTN_ALLOCATEP533OK) return;
 			path->A_tx.freqs[0] = 0.0;
 		}
 		path->A_tx.pattern[frequencyIndex][azimuth][elevation] = value;
@@ -37,12 +37,43 @@ DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azim
 	//At the moment anything but 0 is the RX.
 	else {
 		if (path->A_rx.pattern == NULL) {
-			AllocateAntennaMemory(&path->A_rx, 1, 360, 91);
+			if (AllocateAntennaMemory(&path->A_rx, 1, 360, 91) != RTN_ALLOCATEP533OK) return;
 			path->A_rx.freqs[0] = 0.0;
 		}
 		path->A_rx.pattern[frequencyIndex][azimuth][elevation] = value;
 	}
 }
+
+/*
+	ReadLine() - fgets() one line of an antenna file into line[256].
+
+		Returns TRUE if a line was read, FALSE at end of file or on a read
+		error. Every antenna reader checks this so a truncated file is
+		reported rather than parsed from a stale or uninitialised buffer.
+*/
+static int ReadLine(char *line, FILE *fp) {
+	return fgets(line, 256, fp) != NULL;
+}
+
+/*
+	ReadGains() - Reads one line holding n gain values into g[0..n-1].
+
+		Returns TRUE only if the line was read and all n values parsed.
+*/
+static int ReadGains(char *line, FILE *fp, double *g, int n) {
+	int k;
+	char *p, *end;
+
+	if (!ReadLine(line, fp)) return FALSE;
+	p = line;
+	for (k = 0; k < n; k++) {
+		g[k] = strtod(p, &end);
+		if (end == p) return FALSE;
+		p = end;
+	}
+	return TRUE;
+}
+
 
 int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 
@@ -61,8 +92,14 @@ int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 	double MaxG = 0.0;			// Maximum gain
 
 	int j;									// Loop counter
-	
-	AllocateAntennaMemory(Ant, freqn, azin, elen);
+	int retval;								// Return value
+
+	if (fp == NULL) {
+		return RTN_ERRCANTOPENANTFILE;
+	}
+
+	retval = AllocateAntennaMemory(Ant, freqn, azin, elen);
+	if (retval != RTN_ALLOCATEP533OK) return retval;
 
 	/*
    * Read a VOACAP antenna pattern Type 14 file
@@ -86,22 +123,10 @@ int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
    *   -21.9
 	 */
 
-	if (fp == NULL) {
-		return RTN_ERRCANTOPENANTFILE;
-	}
-
     // The first line is the name of the antenna.
 	// fgets will return a string that has a trailing "\n" which needs to be stripped off
-	/*
-	if (fgets(line, sizeof(line), fp) != NULL) {
-		size_t len = strlen(line);
-		if (len > 0 && line[len - 1] == '\n') {
-			line[--len] = '\0';
-		};
-	};*/
-	if (fgets(line, sizeof(line), fp) != NULL) {
-		line[strcspn(line, "\n")] = '\0';
-	}
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;
+	line[strcspn(line, "\n")] = '\0';
 
     strcpy(Ant->Name, line);	// Store it to the path structure.
 
@@ -110,24 +135,20 @@ int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 		printf("ReadType11: Reading antenna %.35s\n", Ant->Name);
 	}
 
-    fgets(line, sizeof(line), fp);		// Number of parameters
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Number of parameters
 
 	// The next lines are parameters
-	fgets(line, sizeof(line), fp);		// Max Gain
-	sscanf(line, " %lf %s\n", &MaxG, instr);
-	fgets(line, sizeof(line), fp);		// Antenna type (ignored)
-	fgets(line, sizeof(line), fp); 		// Efficiency (ignored)
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Max Gain
+	if (sscanf(line, " %lf %s\n", &MaxG, instr) < 1) return RTN_ERRREADANTFILE;
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Antenna type (ignored)
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE; 		// Efficiency (ignored)
 
 	Ant->freqs[0] = 0;
-  
+
   for(j=0; j<90; j += 10) {
-		fgets(line, sizeof(line), fp);
-		sscanf(line, " %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-			&Ant->pattern[0][0][j],   &Ant->pattern[0][0][j+1], &Ant->pattern[0][0][j+2], &Ant->pattern[0][0][j+3], &Ant->pattern[0][0][j+4],
-			&Ant->pattern[0][0][j+5], &Ant->pattern[0][0][j+6], &Ant->pattern[0][0][j+7], &Ant->pattern[0][0][j+8], &Ant->pattern[0][0][j+9]);
+		if (!ReadGains(line, fp, &Ant->pattern[0][0][j], 10)) return RTN_ERRREADANTFILE;
 	}
-    fgets(line, sizeof(line), fp);
-	sscanf(line, " %lf\n", &Ant->pattern[0][0][90]);
+	if (!ReadGains(line, fp, &Ant->pattern[0][0][90], 1)) return RTN_ERRREADANTFILE;
 
 	// If max gain != 0.0 add it to the values read in from the table.
 	if (MaxG != 0.0) {
@@ -166,12 +187,19 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 	int iI = 0;				// Temp
 
 	double MaxG = 0.0;	// Maximum gain
+	double first[11];	// Azimuth and the first 10 gains of an azimuth block
+	int retval;			// Return value
 
 	azin = 360;			// Fixed number of azimuths at 1-degree intervals
 	elen = 91;			// Fixed number of elevations at 1-degree intervals
 	freqn = 1;      // Assume data for a single frequency block
 
-	AllocateAntennaMemory(Ant, freqn, azin, elen);
+	if (fp == NULL) {
+		return RTN_ERRCANTOPENANTFILE;
+	}
+
+	retval = AllocateAntennaMemory(Ant, freqn, azin, elen);
+	if (retval != RTN_ALLOCATEP533OK) return retval;
 
 	// Determine the azimuth direction that the antenna is pointing to find the index offset.
 	// Ideally the antenna pattern could be rotated to any position and then every gain value in the
@@ -195,12 +223,8 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 
 	// The first line is the name of the antenna.
 	// fgets will return a string that has a trailing "\n" which needs to be stripped off
-	if (fgets(line, sizeof(line), fp) != NULL) {
-		size_t len = strlen(line);
-		if (len > 0 && line[len - 1] == '\n') {
-			line[--len] = '\0';
-		}
-    }
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;
+	line[strcspn(line, "\n")] = '\0';
 
     strcpy(Ant->Name, line);	// Store it to the path structure.
 
@@ -209,15 +233,15 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 		printf("ReadType13: Reading antenna %.35s\n", Ant->Name);
 	}
 
-    fgets(line, sizeof(line), fp);		// Number of parameters
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Number of parameters
 
 	// The next lines are parameters
-	fgets(line, sizeof(line), fp);		// Max Gain
-	sscanf(line, " %lf %s\n", &MaxG, instr);
-	fgets(line, sizeof(line), fp);		// Antenna type
-	sscanf(line, " %d %s\n", &iI, instr);
-	fgets(line, sizeof(line), fp); // Efficiency
-	fgets(line, sizeof(line), fp); // Frequency
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Max Gain
+	if (sscanf(line, " %lf %s\n", &MaxG, instr) < 1) return RTN_ERRREADANTFILE;
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Antenna type
+	if (sscanf(line, " %d %s\n", &iI, instr) < 1) return RTN_ERRREADANTFILE;
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE; // Efficiency
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE; // Frequency
 	Ant->freqs[0] = atof(line);
 
 	/*
@@ -239,18 +263,13 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 		// Advance to the next azimuth and roll it over if necessary.
 		iazi = (iMBOS+i)%360;
 
-		fgets(line, sizeof(line), fp);
-		sscanf(line, " %d %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-			&iI, &Ant->pattern[0][iazi][0], &Ant->pattern[0][iazi][1], &Ant->pattern[0][iazi][2], &Ant->pattern[0][iazi][3], &Ant->pattern[0][iazi][4],
-			     &Ant->pattern[0][iazi][5], &Ant->pattern[0][iazi][6], &Ant->pattern[0][iazi][7], &Ant->pattern[0][iazi][8], &Ant->pattern[0][iazi][9]);
+		// The block's first line leads with the azimuth, which is not stored.
+		if (!ReadGains(line, fp, first, 11)) return RTN_ERRREADANTFILE;
+		memcpy(Ant->pattern[0][iazi], &first[1], 10 * sizeof(double));
 		for(j=10; j<90; j += 10) {
-			fgets(line, sizeof(line), fp);
-			sscanf(line, " %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-				&Ant->pattern[0][iazi][j],   &Ant->pattern[0][iazi][j+1], &Ant->pattern[0][iazi][j+2], &Ant->pattern[0][iazi][j+3], &Ant->pattern[0][iazi][j+4],
-				&Ant->pattern[0][iazi][j+5], &Ant->pattern[0][iazi][j+6], &Ant->pattern[0][iazi][j+7], &Ant->pattern[0][iazi][j+8], &Ant->pattern[0][iazi][j+9]);
+			if (!ReadGains(line, fp, &Ant->pattern[0][iazi][j], 10)) return RTN_ERRREADANTFILE;
 		}
-        fgets(line, sizeof(line), fp);
-		sscanf(line, " %lf\n", &Ant->pattern[0][iazi][90]);
+		if (!ReadGains(line, fp, &Ant->pattern[0][iazi][90], 1)) return RTN_ERRREADANTFILE;
 	}
 
     return RTN_READANTENNAPATTERNSOK;
@@ -285,12 +304,19 @@ int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
 	int iI = 0;					// Temp
 
 	double MaxG = 0.0;	// Maximum gain
+	double first[12];	// Frequency, efficiency and the first 10 gains of a block
+	int retval;			// Return value
 
 	freqn = 30;					// 1-30Mhz in 1MHz intervals, as per standard voacap files.
 	azin = 360;					// Fixed number of azimuths at 1-degree intervals
 	elen = 91;					// Fixed number of elevations at 1-degree intervals
-	
-	AllocateAntennaMemory(Ant, freqn, azin, elen);
+
+	if (fp == NULL) {
+		return RTN_ERRCANTOPENANTFILE;
+	}
+
+	retval = AllocateAntennaMemory(Ant, freqn, azin, elen);
+	if (retval != RTN_ALLOCATEP533OK) return retval;
 
 	/*
      * Read a VOACAP antenna pattern Type 14 file
@@ -304,18 +330,10 @@ int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
 	 *
 	 */
 
-	if (fp == NULL) {
-		return RTN_ERRCANTOPENANTFILE;
-	}
-
     // The first line is the name of the antenna.
 	// fgets will return a string that has a trailing "\n" which needs to be stripped off
-	if (fgets(line, sizeof(line), fp) != NULL) {
-		size_t len = strlen(line);
-		if (len > 0 && line[len - 1] == '\n') {
-			line[--len] = '\0';
-		}
-    }
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;
+	line[strcspn(line, "\n")] = '\0';
 
     strcpy(Ant->Name, line);	// Store it to the path structure.
 
@@ -324,14 +342,14 @@ int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
 		printf("ReadType14: Reading antenna %.35s\n", Ant->Name);
 	}
 
-    fgets(line, sizeof(line), fp);		// Number of parameters
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Number of parameters
 
 	// The next lines are parameters
-	fgets(line, sizeof(line), fp);		// Max Gain
-	sscanf(line, " %lf %s\n", &MaxG, instr);
-	fgets(line, sizeof(line), fp);		// Antenna type
-	sscanf(line, " %d %s\n", &iI, instr);
-	fgets(line, sizeof(line), fp); // Frequency
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Max Gain
+	if (sscanf(line, " %lf %s\n", &MaxG, instr) < 1) return RTN_ERRREADANTFILE;
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE;		// Antenna type
+	if (sscanf(line, " %d %s\n", &iI, instr) < 1) return RTN_ERRREADANTFILE;
+	if (!ReadLine(line, fp)) return RTN_ERRREADANTFILE; // Frequency
 
 	/*
 	 * There are 30 elevation blocks (1-30) that look like the following. The first line
@@ -350,18 +368,16 @@ int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
    *          -50.573
 	 */
   for (i = 0; i<30; i++) {
-		fgets(line, sizeof(line), fp);
-		sscanf(line, " %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-				&Ant->freqs[i], &efficiency, &Ant->pattern[i][0][0], &Ant->pattern[i][0][1], &Ant->pattern[i][0][2], &Ant->pattern[i][0][3], &Ant->pattern[i][0][4],
-				&Ant->pattern[i][0][5], &Ant->pattern[i][0][6], &Ant->pattern[i][0][7], &Ant->pattern[i][0][8], &Ant->pattern[i][0][9]);
+		// The block's first line leads with the frequency and the efficiency.
+		if (!ReadGains(line, fp, first, 12)) return RTN_ERRREADANTFILE;
+		Ant->freqs[i] = first[0];
+		efficiency = first[1];		// Not used by P.533 (see above)
+		(void)efficiency;
+		memcpy(Ant->pattern[i][0], &first[2], 10 * sizeof(double));
 		for(j=10; j<90; j += 10) {
-			fgets(line, sizeof(line), fp);
-			sscanf(line, " %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
-				&Ant->pattern[i][0][j],   &Ant->pattern[i][0][j+1], &Ant->pattern[i][0][j+2], &Ant->pattern[i][0][j+3], &Ant->pattern[i][0][j+4],
-				&Ant->pattern[i][0][j+5], &Ant->pattern[i][0][j+6], &Ant->pattern[i][0][j+7], &Ant->pattern[i][0][j+8], &Ant->pattern[i][0][j+9]);
+			if (!ReadGains(line, fp, &Ant->pattern[i][0][j], 10)) return RTN_ERRREADANTFILE;
 		}
-        fgets(line, sizeof(line), fp);
-		sscanf(line, " %lf\n", &Ant->pattern[i][0][90]);
+		if (!ReadGains(line, fp, &Ant->pattern[i][0][90], 1)) return RTN_ERRREADANTFILE;
 		
 		// Add max gain value where required.
 		if (MaxG != 0.0) {
@@ -393,7 +409,9 @@ void IsotropicPattern(struct Antenna *Ant, double G, int silent) {
 	freqn = 1;					// Number of frequencies to be read
 
 
-	AllocateAntennaMemory(Ant, freqn, azin, elen);
+	// IsotropicPattern() returns void, so an allocation failure can only leave
+	// the antenna empty (NULL pattern); it must not write through NULL.
+	if (AllocateAntennaMemory(Ant, freqn, azin, elen) != RTN_ALLOCATEP533OK) return;
 
     // User feedback
 	if(silent != TRUE) {

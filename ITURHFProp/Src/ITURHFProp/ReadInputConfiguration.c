@@ -669,8 +669,13 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
             return RTN_ERRCANTOPENRXANTFILE;
 	    }
 
+        // A file shorter than four lines leaves antType 0, which is rejected below.
+        antType = 0;
         for (lineCtr = 0 ; lineCtr<4 ; ++lineCtr) {
-		    fgets(line, sizeof(line), fp);		// Scroll to line 3, Antenna type
+		    if (fgets(line, sizeof(line), fp) == NULL) {		// Scroll to line 3, Antenna type
+		        line[0] = '\0';
+		        break;
+		    }
 	    }
 
 	    sscanf(line, " %d %s\n", &antType, instr);
@@ -696,6 +701,7 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 		    }
         } else {
             printf("Unsuppported antenna type: %d\n",antType);
+            fclose(fp);
             return RTN_ERRCANTOPENRXANTFILE;
         }
     } // end of the rx antenna type
@@ -715,8 +721,13 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 			}
             return RTN_ERRCANTOPENTXANTFILE;
 	    }
+        // A file shorter than four lines leaves antType 0, which is rejected below.
+        antType = 0;
         for (lineCtr = 0 ; lineCtr<4 ; ++lineCtr) {
-		    fgets(line, sizeof(line), fp);		// Antenna type
+		    if (fgets(line, sizeof(line), fp) == NULL) {		// Antenna type
+		        line[0] = '\0';
+		        break;
+		    }
 	    }
 	    sscanf(line, " %d %s\n", &antType, instr);
 
@@ -742,6 +753,7 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 		    }
         } else {
 			printf("Unsuppported antenna type: %d\n",antType);
+            fclose(fp);
             return RTN_ERRCANTOPENTXANTFILE;
 	    }
     }
