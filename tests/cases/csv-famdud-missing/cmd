@@ -1,0 +1,1 @@
+mkdir d && for f in "$P533DATA"/*; do ln -s "$f" d/; done && rm d/COEFF06W.txt d/COEFF06W.BIN && $CIRCUITCSV -s -i in.csv -o res.csv -d d; [ $? -ne 0 ] && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

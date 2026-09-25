@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out && cut -c1-40 res.csv | sed -n '2,20p' | sed 's/,-3.*//' >> out

@@ -1,0 +1,3 @@
+Note,PERCDAYS,bandw,RXNOISE,reqSN,txPow,minTOA,ssn,hour,day,month,year,rxLon,rxLat,rxSite,txLon,txLat,TXSITE,Extra
+a,90,3000,-150,10,1000,3,120,4,15,3,2024,151.21,-33.87,Sydney,115.86,-31.95,Perth,z
+b,90,3000,-150,10,500,3,50,12,15,6,2024,2.35,48.86,Paris,-0.13,51.51,London,z

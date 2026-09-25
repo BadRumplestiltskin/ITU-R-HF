@@ -1,0 +1,1 @@
+head -500 "$CASE/../../../ITURHFProp/Data/Antenna/T13 Files/141-10_0.t13" > cut.t13 && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -t cut.t13

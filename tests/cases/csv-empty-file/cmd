@@ -1,0 +1,1 @@
+: > in.csv && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA"

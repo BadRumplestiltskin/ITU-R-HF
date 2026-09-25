@@ -1,0 +1,1 @@
+printf "name\n4\n1.0\n" > short.t13 && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -t short.t13

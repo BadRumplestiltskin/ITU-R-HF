@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o "$(printf %05000d 0)" -d "$P533DATA" -j 2

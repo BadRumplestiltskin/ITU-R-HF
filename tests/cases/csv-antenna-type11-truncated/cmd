@@ -1,0 +1,1 @@
+head -8 flat.11 > cut.11 && $CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" -t cut.11

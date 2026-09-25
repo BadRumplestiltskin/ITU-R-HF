@@ -1,0 +1,1 @@
+{ cat in.csv; printf '\r\n \r\n'; } > crlf.csv && $CIRCUITCSV -s -i crlf.csv -o res.csv -d "$P533DATA" && awk -F, 'NF>23{print $(NF-23)","$NF","NF}' res.csv > out

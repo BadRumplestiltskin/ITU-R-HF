@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && head -1 res.csv | cut -d, -f11 > out && awk -F, 'NR>1{print $11","$(NF-22)","$NF}' res.csv >> out

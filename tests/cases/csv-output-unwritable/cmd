@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o nodir/res.csv -d "$P533DATA"

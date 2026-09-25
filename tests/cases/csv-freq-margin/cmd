@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && $CIRCUITCSV -s -i in.csv -o m.csv -d "$P533DATA" -m 0.9 && awk -F, 'NR>1{print $(NF-17),$(NF-8),$(NF-6),$(NF-13)}' res.csv > a && awk -F, 'NR>1{print $(NF-17),$(NF-8),$(NF-6),$(NF-13),$NF}' m.csv > b && paste -d' ' a b | awk '{print ($1==$5),($2==$6),($3==$7),($4!=$8),$9}' > out

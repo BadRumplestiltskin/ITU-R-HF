@@ -1,0 +1,1 @@
+$CIRCUITCSV -s -i in.csv -o res.csv -d "$P533DATA" && $CIRCUITCSV -s -i in.csv -o g.csv -d "$P533DATA" -g 5 && awk -F, 'NR>1{print $(NF-13)}' res.csv > a && awk -F, 'NR>1{print $(NF-13)}' g.csv > b && paste -d' ' a b | awk '{printf "%.3f\n", $2-$1}' > out
