@@ -2,6 +2,7 @@
 set -e
 # The checkout this script lives in.
 R=$(cd "$(dirname "$0")/.." && pwd)
+mkdir -p /tmp/iturhf-cbuild
 cd /tmp/iturhf-cbuild
 
 # Lenient flags + force-include standard headers the old code relied on implicitly.
