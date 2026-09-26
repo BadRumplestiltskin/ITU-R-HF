@@ -39,7 +39,8 @@ void magfit(struct ControlPt *here, double height) {
 					here->L.lng (radians, N and E positive) are read
 	 			double height - Height at which the calculation is made (km). Must be exactly
 					100.0 or 300.0: the result is stored only in the HR100km or HR300km slot.
-					Any other height is computed but written to the HR100km slot (index 0).
+					For any other height the routine returns without computing or storing
+					anything, since there is no slot to hold the result.
 
  	 		OUTPUT
 	 			here->dip[hr] - Magnetic dip I (radians, positive when the field points
@@ -118,8 +119,11 @@ void magfit(struct ControlPt *here, double height) {
 	double SUMZ, SUMX, SUMY;
     int N, M;
 
-	//Initialise to prevent - potentially uninitialized local variable 'hr' used
-	int hr = 0; // Height index
+	// Height index: dip and fH are held for 2 heights only in this project
+	int hr;
+	if(height == 100.0) hr = HR100km;
+	else if(height == 300.0) hr = HR300km;
+	else return; // No slot for this height; leave the control point unchanged
 
     
 /*******************************************************************************************************/
@@ -159,10 +163,6 @@ void magfit(struct ControlPt *here, double height) {
 	Fx=Fx-pow(AR,(N+2))*SUMX;
 	Fy=Fy+pow(AR,(N+2))*SUMY;
 	}
-
-	// dip and fH can only be calculated for 2 heights in this project
-	if(height == 100) hr = HR100km;
-	else if(height == 300) hr = HR300km;
 
 	here->dip[hr]=atan(Fz/sqrt(pow(Fx,2) + pow((Fy/cos(here->L.lat)),2)));
 	here->fH[hr]=2.8*sqrt(pow(Fx,2)+pow((Fy/cos(here->L.lat)),2)+pow(Fz,2));

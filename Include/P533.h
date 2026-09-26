@@ -283,13 +283,6 @@ struct Mode {
 					// MedianSkywaveFieldStrengthShort()
 };
 
-// An antenna beam direction and gain. Not used anywhere else in this repository.
-struct Beam {
-	double azm;		// Azimuth
-	double ele;		// Elevation angle
-	double G;		// Gain for the azimuth and elevation
-};
-
 struct Antenna {
 	char Name[256];
 
@@ -383,7 +376,6 @@ struct PathData {
 	double ptick;		// Virtual slant range p' (km), equation (19): of the last short-path mode
 						// calculated, replaced for D >= 7000 km by the long-model (fM hop) value
 	double dmax;		// d sub max (km), equation (5) at the midpoint of the path, limited to 4000 km
-	double B;			// Intermediate value when calculating dmax, equation (6). Initialised to 99.9
 						// by InitializePath(); no routine currently stores a value here
 	double ele;			// Elevation angle (radians): of the dominant mode for D <= 7000 km, otherwise
 						// that of the largest 0 - 8 degree receive gain; for D > 9000 km the long

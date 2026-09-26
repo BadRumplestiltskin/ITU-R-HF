@@ -61,7 +61,6 @@ void InitializePath(struct PathData *path) {
 	// Initialize the path to be set elsewhere.
 	
 	// Clear the variables that will be determined elsewhere.	
-	path->B			= 99.9;
 	path->BCR		= 0.0;
 	path->BMUF		= 99.9;
 	path->DMidx		= NODOMINANTMODE;

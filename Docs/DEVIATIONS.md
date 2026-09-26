@@ -19,6 +19,7 @@ D40); where an item below has a number there, it is given.
 | P.842-5 Table 2 note (1) on short paths (D23) | "... between control points located 1 000 km from each end of the path, reaches a geomagnetic latitude of 60 deg or more ..." | A path of 2000 km or less has no such segment and takes the < 60 deg values. | unchanged (the code already did this) |
 | Long-path zenith angle, eq. (33)-(35) (D20) | delta "can be approximated" by Table 4; eta "can be approximated" by eq. (35) | Full solar geometry. | unchanged |
 | Long-path local noon, eq. (32) | "value of fBM for a time corresponding to local noon" | The whole UTC hour nearest 12 - lng/15, where eq. (35) puts the hour angle at zero. | 86c022c |
+| Eq. (3) for a hop longer than dmax (3.5.1.1, 3.5.2.2; MATLAB D41) | silent: 3.5.2.2 recalculates dmax at each control point for Mn/Mn0, so the hop D/n can exceed it | d is limited to dmax in both terms of eq. (3); the fH term is never negative. Was: Cd at min(d, dmax), fH term at d. | 457d411 |
 | Long-path current-hour fL | "the current hour fL value is selected" | fL[path->hour], the hour the rest of the engine computes for (was hour + 1). | 86c022c |
 
 ## 2. Corrected to the text, no ruling needed
@@ -65,14 +66,14 @@ for all of these.
 
 | # | Where | What |
 |---|---|---|
-| 1 | P372/Src/P372/NoiseDriver.c main | `noiseP.ManMadeNoise` is never set and `InitializeNoise` is not called, so `Noise()` reads an uninitialised value; return codes ignored; memory not freed. |
-| 2 | P372/Src/P372/MakeNoise.c | output file `".\\MakeNoiseOut.txt"` is a Windows path; on Linux it creates a file with a backslash in its name. |
+| 1 | P372/Src/P372/NoiseDriver.c main | `noiseP.ManMadeNoise` is never set and `InitializeNoise` is not called, so `Noise()` reads an uninitialised value; return codes ignored; memory not freed. Fixed: the file, which no Makefile built, is deleted (owner's decision). |
+| 2 | P372/Src/P372/MakeNoise.c | output file `".\\MakeNoiseOut.txt"` is a Windows path; on Linux it creates a file with a backslash in its name. Fixed: `MakeNoiseOut.txt` in the working directory. |
 | 3 | P372 Noise.c AtmosphericNoise, AtmosphericNoise_LT | the adjacent 4-hour block is always the next one, where the code's own description says previous, same or next depending on the hour. |
 | 4 | P372 Noise.c Noise | FamT = min(upper-decile median, lower-decile median), commented "worst case"; override path sets FaM = input, FamT = -input. |
-| 5 | MUFBasic.c CalcF2DMUF | Cd is clamped at dmax, but the fH/2 (1 - d/dmax) term goes negative when a hop exceeds the recalculated dmax at a control point. |
-| 6 | Magfit.c | any height other than 100 or 300 km is written to the 100 km slot. |
-| 7 | ReadType13.c | reads the maximum gain but does not add it (types 11 and 14 do). |
-| 8 | Include/P533.h | `path->B` is never stored; `struct Beam` is unused. |
+| 5 | MUFBasic.c CalcF2DMUF | Cd is clamped at dmax, but the fH/2 (1 - d/dmax) term goes negative when a hop exceeds the recalculated dmax at a control point. Resolved by the owner's ruling in section 1. |
+| 6 | Magfit.c | any height other than 100 or 300 km is written to the 100 km slot. Fixed: such a height now leaves the control point unchanged (the only callers pass 100 and 300). |
+| 7 | ReadType13.c | reads the maximum gain but does not add it (types 11 and 14 do). Not a defect: in all 532 Type 13 files in `ITURHFProp/Data/Antenna/T13 Files` the largest tabulated gain equals the Max Gain header to 0.001 dB, so the table is already in dBi and adding Max Gain would count it twice. |
+| 8 | Include/P533.h | `path->B` is never stored; `struct Beam` is unused. Fixed: both removed from the header (owner's decision); code built against the old header must be rebuilt. |
 
 ## 5. Waiting on texts that are not in hand
 
