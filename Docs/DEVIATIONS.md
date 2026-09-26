@@ -71,7 +71,7 @@ for all of these.
 | 4 | P372 Noise.c Noise | FamT = min(upper-decile median, lower-decile median), commented "worst case"; override path sets FaM = input, FamT = -input. |
 | 5 | MUFBasic.c CalcF2DMUF | Cd is clamped at dmax, but the fH/2 (1 - d/dmax) term goes negative when a hop exceeds the recalculated dmax at a control point. |
 | 6 | Magfit.c | any height other than 100 or 300 km is written to the 100 km slot. Fixed: such a height now leaves the control point unchanged (the only callers pass 100 and 300). |
-| 7 | ReadType13.c | reads the maximum gain but does not add it (types 11 and 14 do). |
+| 7 | ReadType13.c | reads the maximum gain but does not add it (types 11 and 14 do). Not a defect: in all 532 Type 13 files in `ITURHFProp/Data/Antenna/T13 Files` the largest tabulated gain equals the Max Gain header to 0.001 dB, so the table is already in dBi and adding Max Gain would count it twice. |
 | 8 | Include/P533.h | `path->B` is never stored; `struct Beam` is unused. |
 
 ## 5. Waiting on texts that are not in hand
