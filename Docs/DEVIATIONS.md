@@ -21,6 +21,22 @@ D40); where an item below has a number there, it is given.
 | Long-path local noon, eq. (32) | "value of fBM for a time corresponding to local noon" | The whole UTC hour nearest 12 - lng/15, where eq. (35) puts the hour angle at zero. | 86c022c |
 | Eq. (3) for a hop longer than dmax (3.5.1.1, 3.5.2.2; MATLAB D41) | silent: 3.5.2.2 recalculates dmax at each control point for Mn/Mn0, so the hop D/n can exceed it | d is limited to dmax in both terms of eq. (3); the fH term is never negative. Was: Cd at min(d, dmax), fH term at d. | 457d411 |
 | Long-path current-hour fL | "the current hour fL value is selected" | fL[path->hour], the hour the rest of the engine computes for (was hour + 1). | 86c022c |
+| Eq. (20) Li (D30; open list 1) | Li = (1 + 0.0067 R12) sec i sum over j = 1..m | n hops times the mean over the m = 2n points (half the printed sum), supported by the CCIR D1 databank; an upstream erratum. | unchanged |
+| F2 height for the field-strength geometry (open list 2) | 5.1 eq. (13) with (14)-(16); 5.2.1 "from equation (2)" | eq. (2) height for elevation, p' and Li; the 5.1 height for the eq. (47) delays. On D1 the two readings are equally accurate (rms 13.43 against 13.42 dB). | unchanged |
+| Eq. (33) and (40) slant ranges (open list 3; MATLAB D42) | (33) "p': slant path length"; (40) p from (19) and (13) with hr = 300 km | (33): the 5.3.2 fL hops; (40): the 5.3.1 fM hops. | this change |
+| Eq. (33) fH (open list 4) | not defined in 5.3.2 | the 5.3.3 fH: mean at 300 km of the two fM control points. | unchanged |
+| Aw (open list 5) | "unity for geographic latitudes 0 deg to 30 deg and at 90 deg" | Aw = 0 there, used as (Aw + 1): "unity" is the factor; an upstream wording erratum. | unchanged |
+| P.842-5 Table 2 rows (open list 6, D38) | no rule between tabulated f/BMUF ratios | the row at or above f/fb. | unchanged |
+| 10.3 step 9 units (open list 7) | "exceeds (Ew - A)" | available powers in dBW against the dominant mode's Pr - A. | unchanged |
+| 10.3 step 8 frequency window (open list 8; MATLAB D43) | "symmetrically at the edges of the frequency window, Fw" | Fw is the width of a window centred on the carrier: edges at +/- Fw/2 (were +/- Fw). | this change |
+| Attachment 1 lambda_d (open list 9) | "lambda_d is the magnetic dip" | the dip at 100 km. | unchanged |
+| n0 minimum elevation (open list 10) | 3.5.1.1 "determined by geometrical considerations" | keep the 3 deg minimum of 5.3.1. | unchanged |
+| MUF decile control point (open list 11; MATLAB D44) | P.1239-4 3.2 "for the local time and geographic latitude at the control point" | the control point whose value set the mode's basic MUF (mid-path up to dmax, the selected Table 1a) point beyond), with the P.1239 season of that point's hemisphere; the long-path deciles also take the season of their point's hemisphere (were path->season). | this change |
+| Path MUF90 and MUF10 (open list 12) | 3.6 gives deciles per mode only | those of the mode that sets MUF50 (lowest-order F2 when its BMUF is the path BMUF, else lowest-order E), as for OPMUF (D37); were the largest over all modes, taken separately. | this change |
+| E-layer screening limit (open list 13) | "paths up to 4 000 km (see Table 1b)" | screening up to 4000 km; Table 1b) gives the control points only. | unchanged |
+| Lh local time (open list 14; MATLAB D45) | "local time t ...: mean values for the control points" against the heading "Mid-path local time, t" | each control point's own local mean time (was the mid-path time). | this change |
+| fL night rule (open list 15) | "the larger of the values calculated from equations (32) and (35)" | equations (33) and (36); a numbering erratum. | unchanged |
+| P.1239-4 eq. (18) foE floor (open list 16) | "At night, ..." | applied at every hour. | unchanged |
 
 ## 2. Corrected to the text, no ruling needed
 
@@ -38,29 +54,14 @@ section "Status in the ITU-R-HF fork".
 
 ## 3. Open: the text is ambiguous or silent (awaiting a ruling)
 
-Found while documenting the code (September 2026). The code is unchanged
-for all of these.
+Found while documenting the code (September 2026); items 1 to 16 of the
+original list were ruled on 2026-09-26 and moved to section 1. The code is
+unchanged for these.
 
 | # | Where | Text | What the code does |
 |---|---|---|---|
-| 1 | eq. (20) Li, MSFSS PenetrationPoints (D30) | Li = (1 + 0.0067 R12) sec i sum over j = 1..m | n hops times the mean over the m = 2n points, half the printed sum. The MATLAB port's D1 databank validation supports the hop-mean reading. |
-| 2 | F2 reflection height for the field-strength geometry, MSFSS | 5.1: eq. (13) for F2 uses hr from (14)-(16); 5.2.1: F2 heights "from equation (2)" | eq. (2) hr for elevation, p' and Li; the (14)-(16) height for the mode delays of eq. (47) |
-| 3 | eq. (33) p', MSFSL | "p': slant path length" | p' of the fM hops (dM) |
-| 4 | eq. (33) fH, MSFSL | not defined in 5.3.2 | the mean fH at 300 km of the two fM control points (the 5.3.3 definition) |
-| 5 | Aw, WinterAnomaly | "unity for geographic latitudes 0 deg to 30 deg and at 90 deg" | Aw = 0 there, used as (Aw + 1) |
-| 6 | P.842-5 Table 2 rows between tabulated f/BMUF ratios (D38) | no rule given | the row at or above f/fb, no interpolation |
-| 7 | 10.3 step 9, EquatorialScattering | "exceeds (Ew - A)" (field strength) | compares available powers in dBW |
-| 8 | 10.3 step 8, EquatorialScattering | "symmetrically at the edges of the frequency window, Fw" | edges at +/- FW from the carrier (could be +/- FW/2) |
-| 9 | Attachment 1, FindFlambdad | "lambda_d is the magnetic dip" | the dip at 100 km |
-| 10 | 3.5.1.1 n0, MUFBasic | "determined by geometrical considerations" | also requires a 3 deg minimum elevation, which the text gives only for 5.3.1 |
-| 11 | P.1239-4 3.2 decile location, MUFVariability | "for the local time and geographic latitude at the control point" | the mid-path point for every path length |
-| 12 | path MUF90 and MUF10, MUFVariability | 3.6 defines no path value | the highest over the modes, each taken separately (OPMUF was aligned to the setting mode, D37) |
-| 13 | 4, E-layer screening limit | "paths up to 4 000 km (see Table 1b)", but Table 1b) lists 2000 < D < 9000 | screening up to 4000 km |
-| 14 | Lh local time, MSFSS | "local time t ...: mean values for the control points" against the Table 2 heading "Mid-path local time, t" | mid-path time at every point |
-| 15 | fL night rule numbering, FindfL | "the larger of the values calculated from equations (32) and (35)" | equations (33) and (36), the only reading that makes sense |
-| 16 | P.1239-4 eq. (18), FindfoE | the minimum is stated "At night" | max((12), (18)) at every hour |
-| 17 | 7 eq. (45) Fa (D26) | Fa from P.372; P.842-5 Table 1 step 3 uses the power sum of FaA, FaM, FaG | P.372 total FamT for the median S/N, the power sum for the decile steps |
-| 18 | 6 distance bands, MARP | where exactly 7000 and 9000 km fall is not stated | <= 7000 short, (7000, 9000) interpolated, >= 9000 long |
+| 1 | 7 eq. (45) Fa (D26) | Fa from P.372; P.842-5 Table 1 step 3 uses the power sum of FaA, FaM, FaG | P.372 total FamT for the median S/N, the power sum for the decile steps |
+| 2 | 6 distance bands, MARP | where exactly 7000 and 9000 km fall is not stated | <= 7000 short, (7000, 9000) interpolated, >= 9000 long |
 
 ## 4. Open: probable defects not tied to the text
 
@@ -81,6 +82,8 @@ P.372-17: the decile rule (Noise.c uses sigma_T = c sqrt(2 ln(alpha_T/gamma_T))
 in place of the log-normal sigma when a component decile exceeds 12 dB;
 the MATLAB port treats it as a maximum), and every P.372 equation and
 table reference in `P372/Src/P372`.
-P.1240: the Rop table and its season and day/night selection.
+P.1240: the Rop table and its season and day/night selection. The two codebases
+select the Rop season differently: the C code uses path->season (the P.1239-4
+seasons at mid-path), the MATLAB port the P.533-14 section 5.2 seasons.
 P.1144: the bilinear interpolation of the maps.
 P.371: the Phi12 relation used for foE.

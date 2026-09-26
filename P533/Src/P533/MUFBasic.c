@@ -41,6 +41,8 @@ void MUFBasic(struct PathData *path) {
 	 			path->BMUF - path basic MUF (MHz); TOOBIG (DBL_MAX) if neither an E nor an F2 mode
 					exists; not touched (initial 99.9) when D > 9000 km
 	 			path->Md_F2[].BMUF - F2 mode basic MUFs (MHz) for n0_F2 .. n0_F2+5; others stay 0.0
+	 			path->Md_F2[].cpMUF - control point whose value set the mode's BMUF: MP up to dmax,
+					otherwise Td02 or Rd02, whichever gave the lower (selected) value
 	 			path->Md_E[].BMUF - E mode basic MUFs (MHz) for n0_E .. n0_E+2; others stay 0.0
 	 			path->Md_E[].hr - 110 km for those E modes
 				path->CP[].x - foF2/foE or 2 (set by CalcB() at every control point it is used on)
@@ -157,6 +159,7 @@ void MUFBasic(struct PathData *path) {
 
 			// The lowest-order F2 mode has been determined. Load it into the path structure
 			path->Md_F2[path->n0_F2].BMUF = n0F2DMUF; // lowest-order mode basic MUF
+			path->Md_F2[path->n0_F2].cpMUF = MP;
 
 			// The n0F2DMUF is the basic F2 MUF of the path.
 			path->BMUF = n0F2DMUF;
@@ -187,6 +190,7 @@ void MUFBasic(struct PathData *path) {
 			F2DMUF[1] = CalcF2DMUF(&path->CP[Rd02], dmax, dmax, CalcB(&path->CP[Rd02]));
 
 			path->Md_F2[n0].BMUF = min(F2DMUF[0], F2DMUF[1]); // Basic MUF is the lower of the two control point MUFs.
+			path->Md_F2[n0].cpMUF = (F2DMUF[0] <= F2DMUF[1]) ? Td02 : Rd02;
 
 			// The path MUF is small of the two MUFs calculated at the control points T + d0/2 and R - d0/2 
 			path->BMUF = path->Md_F2[n0].BMUF;
@@ -198,6 +202,7 @@ void MUFBasic(struct PathData *path) {
 			for(n = n0+1; (n < MAXF2MDS) && (n <= n0+NHIGHERF2); n++) { // the next five higher-order modes, section 5.2.1
 				if(path->distance <= path->dmax) { // 3.5.2.1 Paths up to dmax (km)
 					path->Md_F2[n].BMUF = CalcF2DMUF(&path->CP[MP], path->distance/(n+1.0), dmax, CalcB(&path->CP[MP]));
+					path->Md_F2[n].cpMUF = MP;
 				}
 				else { //3.5.2.2 Paths longer than dmax (km)
 					// The higher-order modes calculated here imply that the lowest-order mode has already set up the 
@@ -221,7 +226,10 @@ void MUFBasic(struct PathData *path) {
 					// selected." The product is formed at each control point and the
 					// lower taken. This multiplied the lower F2(dmax)MUF (path->BMUF)
 					// by the lower ratio, which can come from the other control point.
-					path->Md_F2[n].BMUF = min(F2DMUF[0]*Mn[0]/Mn0[0], F2DMUF[1]*Mn[1]/Mn0[1]);
+					Mn[0] = F2DMUF[0]*Mn[0]/Mn0[0]; // The eq. (7) value at each control point
+					Mn[1] = F2DMUF[1]*Mn[1]/Mn0[1];
+					path->Md_F2[n].BMUF = min(Mn[0], Mn[1]);
+					path->Md_F2[n].cpMUF = (Mn[0] <= Mn[1]) ? Td02 : Rd02;
 			
 				}
             }

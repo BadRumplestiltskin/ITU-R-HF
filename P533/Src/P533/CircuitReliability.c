@@ -914,8 +914,9 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
 			Interpretations (the text is not specific):
 				- Levels are compared as available powers (dBW), the dominant mode's Prw less A,
 				  where step 9 says "(EW - A)".
-				- The frequency window edges are taken at +/- FW from the carrier (step 8 says
-				  "symmetrically at the edges of the frequency window, Fw").
+				- The frequency window edges are taken at +/- FW/2 from the carrier (step 8 says
+				  "symmetrically at the edges of the frequency window, Fw"; by the owner's ruling
+				  FW is the width of a window centred on the carrier).
 				- The control points for the F region modes are those of Table 1a): mid-path
 				  for D <= dmax, otherwise T + d0/2 and R - d0/2, the largest probability kept.
 	 
@@ -988,10 +989,11 @@ void EquatorialScattering(struct PathData *path, int iS[MAXMDS]) {
 
 	// Step 8: the frequency scattering function "applied to the dominant F region
 	// mode and the frequency scattering strength is found symmetrically at the edges
-	// of the frequency window, Fw". The edges are taken at +/- FW from the carrier,
-	// as this routine always has; the function is symmetric, so one value serves.
+	// of the frequency window, Fw". By the owner's ruling FW is the width of a window
+	// centred on the carrier, so the edges are at +/- FW/2; the function is
+	// symmetric, so one value serves.
 	if(domF != NOTINDEX) {
-		level = max(level, pdomF + k - e*pow(path->FW, 2)/(2.0*pow(Fspread, 2)));
+		level = max(level, pdomF + k - e*pow(path->FW/2.0, 2)/(2.0*pow(Fspread, 2)));
 	}
 
 	// Step 9: "If the value of any pTspread and/or pFspread at the edges of the

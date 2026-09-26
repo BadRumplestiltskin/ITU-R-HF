@@ -134,6 +134,7 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 	int nL;				// Number of hops 
 	double deltaL;		// Elevation angle
 	double dL;			// Hop distance
+	double ptickL;		// Virtual slant range p' (km) of the fL hops, for equation (33)
 
 	// fM Calculation
 	int nM;				// Number of hops
@@ -332,7 +333,10 @@ void MedianSkywaveFieldStrengthLong(struct PathData *path) {
 		FindMUFsandfM(path, CP, nM, dM);
 
 		// Lower frequency
-		FindfL(path, CP, nL, dL, path->ptick, path->fH, i90);
+		// p' of equation (33) is the slant range of the section 5.3.2 fL hops (owner's ruling);
+		// path->ptick above, the fM hop value, is the p of equation (40)
+		ptickL = fabs(2.0*R0*(sin(dL/(2.0*R0))/cos(deltaL + dL/(2.0*R0))))*(nL+1.0);
+		FindfL(path, CP, nL, dL, ptickL, path->fH, i90);
 
 		f = path->frequency;
 		
@@ -446,7 +450,7 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
 				path->OPMUF - fM (MHz)
 				path->OPMUF10, path->OPMUF90 - fM times the same decile factors
 			  The decile factors are looked up at the local mean time and latitude of the control point
-			  with the lower fBM (P.533-14 sections 3.6 and 3.7).
+			  with the lower fBM, in the P.1239-4 season of its hemisphere (P.533-14 sections 3.6 and 3.7).
 
 			NOTES
 				fBM,noon is fBM at the whole UTC hour nearest 12 - longitude/15 (the local noon of
@@ -616,11 +620,11 @@ void FindMUFsandfM(struct PathData *path, struct ControlPt CP[MAXCP][24], int ho
         // Determine the MUF deciles
 		decile = DL; // Lower MUF decile
 		// Find the deltal in the foF2var array
-		deltal = FindfoF2var(*path, LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
+		deltal = FindfoF2var(*path, WhatSeason(CP[smallerCP][path->hour].L, path->month), LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
 				
 		decile = DU; // Upper MUF decile
 		// Find the deltau in the foF2var array
-		deltau = FindfoF2var(*path, LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
+		deltau = FindfoF2var(*path, WhatSeason(CP[smallerCP][path->hour].L, path->month), LocalMeanTime(CP[smallerCP][path->hour]), CP[smallerCP][path->hour].L.lat, decile);
 
 		// Determine the decile MUFs
 		path->MUF50 = path->BMUF;
@@ -663,8 +667,9 @@ void FindfL(struct PathData *path, struct ControlPt CP[MAXCP][24], int hops, dou
 						solar zenith angle (radians) of point i at t:00 UTC, for i = 0 .. 2*hops+1
 	 			int hops - Number of fL hops minus one (nL); there are 2*(hops+1) penetration points
 	 			double dh - Hop distance (unused)
-	 			double ptick - virtual slant range p' (km). The caller passes the fM hop value (equation (19)
-						with dM); the text only says "p': slant path length".
+	 			double ptick - virtual slant range p' (km) of the fL hops: equation (19) with nL+1 hops of
+						dL at 300 km. The text only says "p': slant path length"; by the owner's ruling
+						it is that of the section 5.3.2 fL geometry.
 	 			double fH - Mean gyrofrequency at the two Table 1a) control points (MHz)
 	 			double i90 - angle of incidence at 90 km (radians) for the fL hops
 

@@ -278,7 +278,7 @@ void InitializeModes(struct Mode *M, int n) {
 			n initialized modes pointed to by the base pointer *M
 				BMUF = 0.0 marks a mode that does not exist (the test used throughout);
 				Ew, Prw, Grw = TINYDB (-307 dB); Lb = -TINYDB (+307 dB); MC = FALSE;
-				all MUFs, deciles, Fprob, fs, hr, tau, ele = 0.0
+				all MUFs, deciles, Fprob, fs, hr, tau, ele = 0.0; cpMUF = MP
 
 		SUBROUTINES
 			None
@@ -307,6 +307,7 @@ void InitializeModes(struct Mode *M, int n) {
 			(M+i)->hr = 0.0;
 			(M+i)->tau = 0.0;  
 			(M+i)->ele = 0.0;
+			(M+i)->cpMUF = MP;
 			(M+i)->MC = FALSE;
 
 	}

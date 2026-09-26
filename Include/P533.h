@@ -284,6 +284,8 @@ struct Mode {
 	double Prw;		// Available receiver power (dBW), equation (43)
 	double Grw;		// Receive antenna gain (dBi) at ele
 	double tau;		// Time delay (ms), equation (47)
+	int cpMUF;		// Control point (MP, Td02 or Rd02) whose value set BMUF (section 3.5); the MUF
+					// deciles of section 3.6 are read there (MUFVariability())
 	int MC;			// TRUE if the mode is included in Es (equation (28)), set by
 					// MedianSkywaveFieldStrengthShort()
 };
@@ -555,7 +557,10 @@ double CalcB(struct ControlPt *CP);
 
 // MUFVariability.c Prototype
 P533_API void MUFVariability(struct PathData *path);
-double FindfoF2var(struct PathData path, double hour, double lat, int decile);
+double FindfoF2var(struct PathData path, int season, double hour, double lat, int decile);
+
+// InitializePath.c helper: P.1239-4 section 3.2 season of a location's hemisphere
+int WhatSeason(struct Location L, int month);
 
 // MUFOperational.c Prototype
 P533_API void MUFOperational(struct PathData *path);
