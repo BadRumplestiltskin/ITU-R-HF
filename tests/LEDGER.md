@@ -100,7 +100,8 @@ suites; then CI green on all four jobs.
   Noise.c:391. Should be 103 / 110 / 111.
 - noise-lat-non-numeric: atof("north") = 0. Should be 110 (and lng 111).
 - noise-csv-hour-column-1-to-24: CSV prints the 0-based hour (ITURNoise.c:1012).
-- noise-flag-2-writes-MakeNoiseOut: file literally named ".\MakeNoiseOut.txt".
+- noise-flag-2-writes-MakeNoiseOut: file literally named ".\MakeNoiseOut.txt". Fixed: now
+  "MakeNoiseOut.txt" in the working directory; case promoted.
 - noise-flag-101-not-csv: undocumented flags 101/102 select CSV.
 - noise-mm-fractional-category: 2.5 taken as dB (FaM 201.5); README range 100-200.
 - noise-readme-arguments (upstream 29): README Mode 1 list omitted frequency

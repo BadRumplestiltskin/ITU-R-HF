@@ -64,7 +64,8 @@ int MakeNoise(
             int pntflag       MNNOPRINT 0 - no output
                               MNPRINTTOSTDOUT 1 - print report to stdout
                               MNPRINTTOFILE 2 - write report to
-                                  ".\\MakeNoiseOut.txt" (name hard coded)
+                                  "MakeNoiseOut.txt" in the current working
+                                  directory (name hard coded)
                               Any other value is treated as MNNOPRINT.
 
         OUTPUT
@@ -200,7 +201,7 @@ int MakeNoise(
     else if (pntflag == MNPRINTTOFILE) {
         sprintf(
             outputfile,
-            ".\\MakeNoiseOut.txt"
+            "MakeNoiseOut.txt"
         );
         fp = fopen(outputfile, "w");
         if (fp == NULL) {

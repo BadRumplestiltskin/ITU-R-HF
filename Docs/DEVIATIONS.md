@@ -66,11 +66,11 @@ for all of these.
 | # | Where | What |
 |---|---|---|
 | 1 | P372/Src/P372/NoiseDriver.c main | `noiseP.ManMadeNoise` is never set and `InitializeNoise` is not called, so `Noise()` reads an uninitialised value; return codes ignored; memory not freed. |
-| 2 | P372/Src/P372/MakeNoise.c | output file `".\\MakeNoiseOut.txt"` is a Windows path; on Linux it creates a file with a backslash in its name. |
+| 2 | P372/Src/P372/MakeNoise.c | output file `".\\MakeNoiseOut.txt"` is a Windows path; on Linux it creates a file with a backslash in its name. Fixed: `MakeNoiseOut.txt` in the working directory. |
 | 3 | P372 Noise.c AtmosphericNoise, AtmosphericNoise_LT | the adjacent 4-hour block is always the next one, where the code's own description says previous, same or next depending on the hour. |
 | 4 | P372 Noise.c Noise | FamT = min(upper-decile median, lower-decile median), commented "worst case"; override path sets FaM = input, FamT = -input. |
 | 5 | MUFBasic.c CalcF2DMUF | Cd is clamped at dmax, but the fH/2 (1 - d/dmax) term goes negative when a hop exceeds the recalculated dmax at a control point. |
-| 6 | Magfit.c | any height other than 100 or 300 km is written to the 100 km slot. |
+| 6 | Magfit.c | any height other than 100 or 300 km is written to the 100 km slot. Fixed: such a height now leaves the control point unchanged (the only callers pass 100 and 300). |
 | 7 | ReadType13.c | reads the maximum gain but does not add it (types 11 and 14 do). |
 | 8 | Include/P533.h | `path->B` is never stored; `struct Beam` is unused. |
 
