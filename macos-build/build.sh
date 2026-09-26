@@ -34,6 +34,6 @@ echo "== building ITURHFProp executable =="
 cc $CFLAGS $INC -I"$HFP" \
   "$HFP/DumpPathData.c" "$HFP/ITURHFProp.c" "$HFP/ReadInputConfiguration.c" \
   "$HFP/Report.c" "$HFP/ValidateITURHFP.c" \
-  -o ITURHFProp -ldl -lm
+  -L. -lp533 -lp372 -o ITURHFProp -lm
 echo "  ok: $(ls -la ITURHFProp | awk '{print $5}') bytes"
 echo "BUILD DONE"

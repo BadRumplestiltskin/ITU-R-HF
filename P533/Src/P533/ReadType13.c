@@ -9,7 +9,7 @@
 // End local includes
 
 
-DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value) {
+P533_API void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value) {
 	/*
 	SetAntennaPatternVal() - Set a value in an antenna pattern. This is especially useful for
 		when you're calling this from managed code.

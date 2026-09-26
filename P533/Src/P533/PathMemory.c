@@ -28,7 +28,7 @@ static int FreeAntenna(struct Antenna *ant, int retval);
  *		returns RTN_ALLOCATEP533OK (11), or RTN_ERRALLOCATEANT (137) for a bad shape (the antenna
  *		is then untouched) or a failed allocation (the antenna is then left empty)
  */
-DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen) {
+P533_API int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen) {
 	int m, n;
 
 	// The engine indexes every pattern as [freq][0..359][0..90] and
@@ -164,7 +164,7 @@ static int AllocFailed(struct PathData *path, int retval) {
 
 }
 
-DLLEXPORT int AllocatePathMemory(struct PathData *path) {
+P533_API int AllocatePathMemory(struct PathData *path) {
 	
 	/*
 
@@ -182,15 +182,11 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 					[season][local hour][latitude 0 - 90 by 5 degrees][R12 range][lower, upper decile]
 				path->A_tx, path->A_rx - set empty (pattern and freqs NULL, freqn 0); patterns are
 					allocated later by the antenna readers
-	 			path->noiseP - the P372 noise arrays (dud, fam, ...) via dllAllocateNoiseMemory()
+	 			path->noiseP - the P372 noise arrays (dud, fam, ...) via AllocateNoiseMemory() (P372 library)
 				returns RTN_ALLOCATEP533OK (11) on success; RTN_ERRALLOCATEFOF2 (131),
 				RTN_ERRALLOCATEM3KF2 (132) or RTN_ERRALLOCATEFOF2VAR (133) on a failed allocation
-				(everything built so far is then released); RTN_ERRP372DLL if the P372 library
-				cannot be loaded, or RTN_ERRALLOCATENOISE if its allocation fails (the maps are
-				then kept, and FreePathMemory() releases them)
-
-			NOTES
-				Loads the P372 library (LoadP372()) the first time it is called in a process. 
+				(everything built so far is then released); or RTN_ERRALLOCATENOISE if the noise
+				allocation fails (the maps are then kept, and FreePathMemory() releases them)
 	 
 	 		SUBROUTINES
 	 			None
@@ -313,22 +309,11 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 	// The arrays are attached to the path as they are completed, above, so that
 	// AllocFailed() can release a partially built structure.
 
-	// P372.dll **********************************************************
-    
-	// Load the Noise routines in P372 ********************************
-	// This used to open the library itself, with a local hLib that shadowed the
-	// global, no matching close, and exit() on failure. LoadP372() does it once
-	// per process and returns an error instead of killing the host program.
-	retval = LoadP372();
-	if (retval != RTN_P372LOADOK) return RTN_ERRP372DLL;
-	// End P372 Load ****************************************************
-	
-	// Allocate the memory in the noise structure
-	retval = dllAllocateNoiseMemory(&path->noiseP);
+	// Allocate the memory in the noise structure (libp372)
+	retval = AllocateNoiseMemory(&path->noiseP);
 	if (retval != RTN_ALLOCATEP372OK) {
 		return RTN_ERRALLOCATENOISE;
 	}
-	// P372.dll **********************************************************
 
 	return RTN_ALLOCATEP533OK;
 
@@ -354,7 +339,7 @@ DLLEXPORT int AllocatePathMemory(struct PathData *path) {
 		SUBROUTINES
 			None
 */
-DLLEXPORT void FreeIonMaps(struct PathData *path) {
+P533_API void FreeIonMaps(struct PathData *path) {
 
 	int i, j, k;
 
@@ -384,7 +369,7 @@ DLLEXPORT void FreeIonMaps(struct PathData *path) {
 
 }
 
-DLLEXPORT int FreePathMemory(struct PathData *path) {	
+P533_API int FreePathMemory(struct PathData *path) {	
 	/*
 
 	 	FreePathMemory() - Frees the memory that was dynamically (m) allocated for the structure PathData path
@@ -395,13 +380,12 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 	 
 	 		OUTPUT
 	 			path->foF2, path->M3kF2, path->foF2var, the antenna patterns and the noise arrays
-				are released; the pointers are set to NULL (noise arrays: as dllFreeNoiseMemory() leaves them)
+				are released; the pointers are set to NULL (noise arrays: as FreeNoiseMemory() leaves them)
 				returns RTN_PATHFREED (12), or the P372 FreeNoiseMemory() code if that is not
 				RTN_NOISEFREED
 
 			NOTES
-				Calls dllFreeNoiseMemory(), so the P372 library must have been loaded
-				(AllocatePathMemory() does this).
+				Calls FreeNoiseMemory() in the P372 library.
 	 
 	 		SUBROUTINES
 	 			None
@@ -455,7 +439,7 @@ DLLEXPORT int FreePathMemory(struct PathData *path) {
 	FreeAntenna(&path->A_rx, 0);
 
 	// Free the noise memory
-	retval = dllFreeNoiseMemory(&path->noiseP);
+	retval = FreeNoiseMemory(&path->noiseP);
 	if (retval != RTN_NOISEFREED) return retval; // check that the input parameters are correct
 	
 	return RTN_PATHFREED;

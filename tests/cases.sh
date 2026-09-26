@@ -12,7 +12,10 @@
 #               $P372DATA   P372/Data
 #               $ANT        "ITURHFProp/Data/Antenna/T13 Files" (Type 13; quote it: it has a space)
 #               $CASE       the case directory, read-only
-#   exit      the expected exit status, a number
+#   exit      the expected exit status: a number, or "nonzero" for a failure
+#             whose status is set by the platform rather than by the program
+#             (the dynamic loader refusing to start it: 127 on Linux, an
+#             abort on macOS)
 #   expect    optional: lines that must each appear in stdout+stderr
 #             (fixed strings, one per line)
 #   reject    optional: lines that must NOT appear in stdout+stderr
@@ -61,7 +64,11 @@ for case_dir in "$root"/tests/cases/$pattern/; do
 
 	why=
 	want=$(cat "$case_dir/exit")
-	[ "$status" -eq "$want" ] || why="exit $status, expected $want"
+	if [ "$want" = nonzero ]; then
+		[ "$status" -ne 0 ] || why="exit 0, expected nonzero"
+	else
+		[ "$status" -eq "$want" ] || why="exit $status, expected $want"
+	fi
 	if [ -z "$why" ] && [ -f "$case_dir/expect" ]; then
 		while IFS= read -r line; do
 			[ -n "$line" ] || continue

@@ -16,7 +16,7 @@ static double ClampUnit(double x) {
 	return x;
 }
 
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there) {
+P533_API double GreatCircleDistance(struct Location here, struct Location there) {
 
 /* 
 
@@ -50,7 +50,7 @@ DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there
 
 } //  GreatCircleDistance()
 
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction) {
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction) {
 
 /*
 
@@ -125,7 +125,7 @@ return;
 
 } // GreatCirclePoint()
 
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there) {
+P533_API void GeomagneticCoords(struct Location here, struct Location *there) {
 	
 /* 
 
@@ -170,7 +170,7 @@ DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there) {
 
 }
 
-DLLEXPORT double Bearing(struct Location here, struct Location there, int direction) {
+P533_API double Bearing(struct Location here, struct Location there, int direction) {
 
 /*
 

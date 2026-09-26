@@ -16,39 +16,6 @@
 #include "ITURNoise.h"
 // End Local includes
 
-/*
-	Definitions of the P372 handle and entry points that Noise.h declares extern.
-	This is the one translation unit in this artifact that defines them; every
-	other includer of Noise.h now merely declares them. Before this, each
-	includer defined its own copy and the link depended on -z muldefs.
-*/
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP372Info dllP372Version;
-	cP372Info dllP372CompileTime;
-	iNoise dllNoise;
-	iNoiseMemory dllAllocateNoiseMemory;
-	iNoiseMemory dllFreeNoiseMemory;
-	iReadFamDud dllReadFamDud;
-	vInitializeNoise dllInitializeNoise;
-	vAtmosphericNoise dllAtmosphericNoise;
-	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-	iMakeNoise dllMakeNoise;
-	dFamFreqVariation dllFamFreqVariation;
-#elif defined(__linux__) || defined(__APPLE__)
-	void *hLib;
-	char *(*dllP372Version)();
-	char *(*dllP372CompileTime)();
-	int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-	int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-	int (*dllFreeNoiseMemory)(struct NoiseParams *);
-	int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-	void (*dllInitializeNoise)(struct NoiseParams *);
-	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
-	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
-#endif
 
 
 
@@ -62,14 +29,12 @@ void FindV_d(double freq, double c[5], double d[5], double* V_d, double* sigma_V
 
 /*
 	Portability helpers. This program was originally written for Windows only:
-	it unloaded the library with FreeLibrary() unconditionally, spelled paths
-	with backslashes and created directories by shelling out to "mkdir".
+	it spelled paths with backslashes and created directories by shelling out
+	to "mkdir".
 */
 #ifdef _WIN32
-	#define P372_LIB_CLOSE(h) FreeLibrary((HMODULE)(h))
 	#define P372_MKDIR(p)     _mkdir(p)
 #else
-	#define P372_LIB_CLOSE(h) dlclose(h)
 	#define P372_MKDIR(p)     mkdir((p), 0775)
 #endif
 
@@ -322,63 +287,21 @@ int main(int argc, char* argv[]) {
 			mnpntflag = MNNOPRINT;
 		}
 
-	// Load the Noise routines in P372.dll ******************************
-#ifdef _WIN32
-			int mod[512];
-			// Get the handle to the P372 DLL.
-			hLib = LoadLibrary(TEXT("P372.dll"));
-			if (hLib == NULL) {
-				printf("ITURNoise: AllocatePathMemory: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
-				return RTN_ERRP372DLL;
-			}
-			// Get the handle to the DLL library, hLib.
-			GetModuleFileName((HMODULE)hLib, (LPTSTR)mod, 50);
-			// Get the P372Version() process from the DLL.
-			dllP372Version = (cP372Info)GetProcAddress((HMODULE)hLib, "P372Version");
-			// Get the P372CompileTime() process from the DLL.
-			dllP372CompileTime = (cP372Info)GetProcAddress((HMODULE)hLib, "P372CompileTime");
-			dllMakeNoise = (iMakeNoise)GetProcAddress((HMODULE)hLib, "__MakeNoise@52");
-#elif defined(__linux__) || defined(__APPLE__)
-			// Note: no local hLib here. The global declared in Noise.h is the one
-			// the matching P372_LIB_CLOSE() below unloads.
-			hLib = dlopen("libp372.so", RTLD_NOW);
-			if (hLib == NULL) {
-				printf("ITURNoise: Error %d Couldn't load libp372.so\n", RTN_ERRP372DLL);
-				return RTN_ERRP372DLL;
-			}
-			dllP372Version = dlsym(hLib, "P372Version");
-			dllP372CompileTime = dlsym(hLib, "P372CompileTime");
-			dllNoise = dlsym(hLib, "Noise");
-			dllAllocateNoiseMemory = dlsym(hLib, "AllocateNoiseMemory");
-			dllFreeNoiseMemory = dlsym(hLib, "FreeNoiseMemory");
-			dllInitializeNoise = dlsym(hLib, "InitializeNoise");
-			dllReadFamDud = dlsym(hLib, "ReadFamDud");
-			// MakeNoise() was resolved only in the Windows branch, so this program
-			// called through a NULL pointer on Linux and macOS.
-			dllMakeNoise = dlsym(hLib, "MakeNoise");
-#endif
+		// Load the version and compile time of the P372 library
+		P372ver = P372Version();
+		P372compt = P372CompileTime();
 
-			if (dllP372Version == NULL || dllP372CompileTime == NULL || dllMakeNoise == NULL) {
-				printf("ITURNoise: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
-				P372_LIB_CLOSE(hLib);
-				return RTN_ERRP372DLL;
-			}
-	
-			// Load the version and compile time of the P372.DLL
-			P372ver = dllP372Version();
-			P372compt = dllP372CompileTime();
+		// Run MakeNoise() which calculates the noise parameters for a single point 
+		retval = MakeNoise(month, hour, lat, lng, freq, mmnoise, datafilepath, &out[0], mnpntflag);
 
-			// Run MakeNoise() which calculates the noise parameters for a single point 
-			retval = dllMakeNoise(month, hour, lat, lng, freq, mmnoise, datafilepath, &out[0], mnpntflag);
-
-			if (retval == RTN_MAKENOISEOK) {
-				if (pntflag == PRINTCSVALL) {
-					PrintCSVHeader(P372ver, P372compt);
-				}
-				if ((pntflag == PRINTCSV) || (pntflag == PRINTCSVALL)){
-					PrintCSVLine(month, hour, freq, rlat, rlng, &out[0]);
-				}
+		if (retval == RTN_MAKENOISEOK) {
+			if (pntflag == PRINTCSVALL) {
+				PrintCSVHeader(P372ver, P372compt);
 			}
+			if ((pntflag == PRINTCSV) || (pntflag == PRINTCSVALL)){
+				PrintCSVLine(month, hour, freq, rlat, rlng, &out[0]);
+			}
+		}
 	}
 	else {
 		printf("ITURNoise: ERROR: Insufficient number (%d) of command line arguments, 7 required.\n", argc - 1);
@@ -386,8 +309,6 @@ int main(int argc, char* argv[]) {
 		PrintUsage();
 		return RTN_ERRCOMMANDLINEARGS;
 	}
-
-	P372_LIB_CLOSE(hLib);
 
 	// MakeNoise() reports success as RTN_MAKENOISEOK (26), which used to be the
 	// exit status: a shell or script saw a successful run as a failure.
@@ -416,56 +337,6 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	
 	*/
 
-	// Load the Noise routines in P372.dll ******************************
-#ifdef _WIN32
-	// Get the handle to the P372 DLL.
-	hLib = LoadLibrary(TEXT("P372.dll"));
-	if (hLib == NULL) {
-		printf("ITURHFProp: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
-		return RTN_ERRP372DLL;
-	}
-	// Get the P372Version() process from the DLL.
-	dllP372Version = (cP372Info)GetProcAddress((HMODULE)hLib, "P372Version");
-	// Get the P372CompileTime() process from the DLL.
-	dllP372CompileTime = (cP372Info)GetProcAddress((HMODULE)hLib, "P372CompileTime");
-
-	dllNoise = (iNoise)GetProcAddress((HMODULE)hLib, "Noise");
-	dllAllocateNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)hLib, "AllocateNoiseMemory");
-	dllFreeNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)hLib, "FreeNoiseMemory");
-	dllInitializeNoise = (vInitializeNoise)GetProcAddress((HMODULE)hLib, "InitializeNoise");
-	dllAtmosphericNoise_LT = (vAtmosphericNoise_LT)GetProcAddress((HMODULE)hLib, "AtmosphericNoise_LT");
-	dllAtmosphericNoise = (vAtmosphericNoise)GetProcAddress((HMODULE)hLib, "AtmosphericNoise");
-	dllFamFreqVariation = (dFamFreqVariation)GetProcAddress((HMODULE)hLib, "FamFreqVariation");
-	dllReadFamDud = (iReadFamDud)GetProcAddress((HMODULE)hLib, "ReadFamDud");
-#elif defined(__linux__) || defined(__APPLE__)
-	// Note: no local hLib here; the global from Noise.h is what gets unloaded.
-	hLib = dlopen("libp372.so", RTLD_NOW);
-	if (hLib == NULL) {
-		printf("ITURNoise: Error %d Couldn't load libp372.so\n", RTN_ERRP372DLL);
-		return RTN_ERRP372DLL;
-	}
-	dllReadFamDud = dlsym(hLib, "ReadFamDud");
-	dllP372Version = dlsym(hLib, "P372Version");
-	dllP372CompileTime = dlsym(hLib, "P372CompileTime");
-	dllNoise = dlsym(hLib, "Noise");
-	dllAllocateNoiseMemory = dlsym(hLib, "AllocateNoiseMemory");
-	dllFreeNoiseMemory = dlsym(hLib, "FreeNoiseMemory");
-	dllInitializeNoise = dlsym(hLib, "InitializeNoise");
-	// Both of these were resolved only in the Windows branch.
-	dllAtmosphericNoise = dlsym(hLib, "AtmosphericNoise");
-	dllAtmosphericNoise_LT = dlsym(hLib, "AtmosphericNoise_LT");
-	dllFamFreqVariation = dlsym(hLib, "FamFreqVariation");
-#endif
-
-	if (dllReadFamDud == NULL || dllP372Version == NULL || dllP372CompileTime == NULL ||
-		dllAtmosphericNoise == NULL || dllAtmosphericNoise_LT == NULL ||
-		dllFamFreqVariation == NULL || dllAllocateNoiseMemory == NULL ||
-		dllFreeNoiseMemory == NULL || dllInitializeNoise == NULL) {
-		printf("ITURNoise: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
-		P372_LIB_CLOSE(hLib);
-		return RTN_ERRP372DLL;
-	}
-
 	FILE* fp = NULL;
 	FILE* fp_V_d = NULL;
 	FILE* fp_sigma_V_d = NULL;
@@ -474,7 +345,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	int dummy = 0;
 	int s, tb; // s = season and tb = timeblock counter for reading V_d and sigma_V_d data 
 	int retval;
-	int noiseAllocated = FALSE;	// dllFreeNoiseMemory() is owed at done:
+	int noiseAllocated = FALSE;	// FreeNoiseMemory() is owed at done:
 	int fn = 41; // Number of elements in the f_log array below
 
 	const char* P372ver;
@@ -632,20 +503,20 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	//////////////////////////////////////////////////////////////////////////////
 	
 	// Allocate the memory in the noise structure
-	retval = dllAllocateNoiseMemory(&noiseP);
+	retval = AllocateNoiseMemory(&noiseP);
 	if (retval != RTN_ALLOCATEP372OK) {
 		retval = RTN_ERRALLOCATENOISE;
 		goto done;
 	}
 	noiseAllocated = TRUE;
 
-	// Initialize Noise from the P372.dll
-	dllInitializeNoise(&noiseP);
+	// Initialize Noise from the P372 library
+	InitializeNoise(&noiseP);
 	// End Initialize Noise
 
-	// Load the version and compile time of the P372.DLL
-	P372ver = dllP372Version();
-	P372compt = dllP372CompileTime();
+	// Load the version and compile time of the P372 library
+	P372ver = P372Version();
+	P372compt = P372CompileTime();
 
 	// Get the time to time stamp the output files.
 	tm = time(NULL);
@@ -682,8 +553,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	for (int m = 0; m < 12; m+=3) {
 
 		// Read in the atmospheric coefficients for the particular month.
-		// The subroutine dllReadFamDud() is from P372.dll
-		retval = dllReadFamDud(&noiseP, datafilepath, m);
+		// ReadFamDud() is from the P372 library
+		retval = ReadFamDud(&noiseP, datafilepath, m);
 		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h+=4) { // hour local time
@@ -708,9 +579,9 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 				for (int ilng = -180; ilng <= 180; ilng++) { //
 					rlng = ilng * D2R;
 					
-					// Call the AtmosphericNoise_LT() from the P372.dll
+					// Call the AtmosphericNoise_LT() from the P372 library
 					// Which calculates the atmospheric noise and returns the full statistics. 
-					dllAtmosphericNoise_LT(&noiseP, &FamS, h, rlng, rlat, freq);
+					AtmosphericNoise_LT(&noiseP, &FamS, h, rlng, rlat, freq);
 										
 					// Write the data out to the file
 					fprintf(fp, "%d, %d, %5.4f, %5.4f, %5.4f, %5.4f\n", 
@@ -743,8 +614,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 	for (int m = 0; m < 12; m += 3) {
 
 		// Read in the atmospheric coefficients for the particular month.
-		// The subroutine dllReadFamDud() is from P372.dll
-		retval = dllReadFamDud(&noiseP, datafilepath, m);
+		// ReadFamDud() is from the P372 library
+		retval = ReadFamDud(&noiseP, datafilepath, m);
 		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h += 4) { // hour local time
@@ -787,7 +658,7 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 
 					// The frequency-variation polynomial lives in Noise.c, shared
 					// with AtmosphericNoise(), which used to hold a verbatim copy.
-					Fam[F1] = dllFamFreqVariation(&noiseP, tmblk, Fam1MHz, f_log[f]);
+					Fam[F1] = FamFreqVariation(&noiseP, tmblk, Fam1MHz, f_log[f]);
 
 				} // End Fam1MHz loop
 
@@ -819,8 +690,8 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 		s = m / 3;
 
 		// Read in the atmospheric coefficients for the particular month.
-		// The subroutine dllReadFamDud() is from P372.dll
-		retval = dllReadFamDud(&noiseP, datafilepath, m);
+		// ReadFamDud() is from the P372 library
+		retval = ReadFamDud(&noiseP, datafilepath, m);
 		if (retval != RTN_READFAMDUDOK) goto done;
 
 		for (int h = 0; h <= 23; h += 4) { // hour local time
@@ -845,9 +716,9 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 
 			for (int f = 0; f < fn; f++) { //
 
-				// Call the AtmosphericNoise_LT() from the P372.dll
+				// Call the AtmosphericNoise_LT() from the P372 library
 				// Which calculates the atmospheric noise and returns the full statistics. 
-				dllAtmosphericNoise_LT(&noiseP, &FamS, h, rlng, rlat, f_log[f]);
+				AtmosphericNoise_LT(&noiseP, &FamS, h, rlng, rlat, f_log[f]);
 
 				// Determine V_d and sigma_V_d
 				FindV_d(f_log[f], c[s][tb], d[s][tb], &V_d, &sigma_V_d);
@@ -878,12 +749,9 @@ int RunAtmosNoiseMonths(char * datafilepath) {
 done:
 	if (fp_V_d != NULL) fclose(fp_V_d);
 	if (fp_sigma_V_d != NULL) fclose(fp_sigma_V_d);
-	if (noiseAllocated == TRUE) dllFreeNoiseMemory(&noiseP);
-	P372_LIB_CLOSE(hLib);
+	if (noiseAllocated == TRUE) FreeNoiseMemory(&noiseP);
 
 	return retval;
-	   
-	 // End P372.DLL Load ************************************************
 }
 
 void PrintUsage(void) {

@@ -13,18 +13,22 @@ bin_dir = ../Bin/
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g -I$(source_dir)
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -fPIC -Wall -Wextra -MMD -MP $(OPTIMIZE) -I$(source_dir) -I../../Include
-
-# Set linker flags based on the operating system
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-    LDFLAGS = -shared -lm -ldl
-else
-    LDFLAGS = -shared -lm -ldl
-endif
+# P372_BUILD makes P372_API (Noise.h) mark the exported functions, and
+# -fvisibility=hidden keeps every other symbol inside the library.
+CFLAGS = -fPIC -fvisibility=hidden -DP372_BUILD -Wall -Wextra -MMD -MP $(OPTIMIZE) -I$(source_dir) -I../../Include
 
 RM = rm -f
 TARGET_LIB = libp372.so
+
+# The library records its own name, so whatever links against it looks it up
+# by that name at run time: through the runner's rpath (@rpath on macOS) or the
+# system search path. -z defs fails the link if the library leaves any symbol
+# unresolved.
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS = -shared -Wl,-install_name,@rpath/$(TARGET_LIB) -lm
+else
+    LDFLAGS = -shared -Wl,-soname,$(TARGET_LIB) -Wl,-z,defs -lm
+endif
 
 prefix ?= /usr/local
 exec_prefix = $(prefix)

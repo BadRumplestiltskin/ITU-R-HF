@@ -283,15 +283,15 @@ Full documentation, including the column list and the status codes, is in
 The program P533.dll has the following entry points:
 
 ```c
-DLLEXPORT int P533(struct PathData *path)
-DLLEXPORT const char * P533Version();
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there);
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
-DLLEXPORT double Bearing(struct Location here, struct Location there);
-DLLEXPORT int AllocatePathMemory(struct PathData *path);
-DLLEXPORT int FreePathMemory(struct PathData *path);
-DLLEXPORT int InputDump(struct PathData *path);
+P533_API int P533(struct PathData *path)
+P533_API const char * P533Version();
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
+P533_API double GreatCircleDistance(struct Location here, struct Location there);
+P533_API void GeomagneticCoords(struct Location here, struct Location *there);
+P533_API double Bearing(struct Location here, struct Location there);
+P533_API int AllocatePathMemory(struct PathData *path);
+P533_API int FreePathMemory(struct PathData *path);
+P533_API int InputDump(struct PathData *path);
 ```
 
 An external program is necessary to run the P533.dll engine. An external program must create, manage
@@ -337,13 +337,13 @@ interface and troubleshoot the operations of an external management program. Ple
 definitions that appear in the following utility functions are defined in P533.h.
 
 ```c
-DLLEXPORT const char * P533Version();
+P533_API const char * P533Version();
 ```
 
 The program P533Version() takes no arguments and returns the version of P533.dll as string variable.
 
 ```c
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt,
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt,
                                 double distance, double fraction);
 ```
 
@@ -352,27 +352,27 @@ between the Locations, here and there, at a fraction of the distance from here. 
 the path is included for circumstances where the path takes the long way round the Earth.
 
 ```c
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there);
+P533_API double GreatCircleDistance(struct Location here, struct Location there);
 ```
 
 The program GreatCircleDistance() determines the great circle distance from the Location here to the
 Location there.
 
 ```c
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
+P533_API void GeomagneticCoords(struct Location here, struct Location *there);
 ```
 
 The Location here is converted to geomagnetic coordinates and returned as Location pointed to by
 there.
 
 ```c
-DLLEXPORT double Bearing(struct Location here, struct Location there);
+P533_API double Bearing(struct Location here, struct Location there);
 ```
 
 The program Bearing() returns the radian bearing from the Location here to Location there.
 
 ```c
-DLLEXPORT int AllocatePathMemory(struct PathData *path);
+P533_API int AllocatePathMemory(struct PathData *path);
 ```
 
 The program AllocatePathMemory() is designed to be used in external programs to allocate the structure
@@ -381,14 +381,14 @@ data structure. While this routine creates the data interface the program FreePa
 the memory.
 
 ```c
-DLLEXPORT int FreePathMemory(struct PathData *path);
+P533_API int FreePathMemory(struct PathData *path);
 ```
 
 The program FreePathMemory() is designed to release the memory that was created by
 AllocatePathMemory().
 
 ```c
-DLLEXPORT int InputDump(struct PathData *path);
+P533_API int InputDump(struct PathData *path);
 ```
 
 The program InputDump() is a utility to print the contents of the path structure. This utility is
@@ -654,13 +654,13 @@ The program P372.dll has the following entry points:
 
 ```c
 // Prototypes
-DLLEXPORT int AllocateNoiseMemory(struct NoiseParams *noiseP);
-DLLEXPORT int FreeNoiseMemory(struct NoiseParams *noiseP);
-DLLEXPORT int Noise(struct NoiseParams *noiseP, int hour, double lng, double lat, double frequency);
-DLLEXPORT int ReadFamDud(struct NoiseParams *noiseP, const char *DataFilePath, int month);
-DLLEXPORT void InitializeNoise(struct NoiseParams *noiseP);
-DLLEXPORT char const * P372CompileTime();
-DLLEXPORT char const * P372Version();
+P372_API int AllocateNoiseMemory(struct NoiseParams *noiseP);
+P372_API int FreeNoiseMemory(struct NoiseParams *noiseP);
+P372_API int Noise(struct NoiseParams *noiseP, int hour, double lng, double lat, double frequency);
+P372_API int ReadFamDud(struct NoiseParams *noiseP, const char *DataFilePath, int month);
+P372_API void InitializeNoise(struct NoiseParams *noiseP);
+P372_API char const * P372CompileTime();
+P372_API char const * P372Version();
 ```
 
 An external program is necessary to run the P372.dll engine. An external program must create, manage
@@ -722,10 +722,17 @@ There are three ranges of return codes:
     P533():      numbers less than 100 are normal; 100 to 199 are errors
     P372():      numbers less than 10 are normal; 200 to 209 are errors
 
+The programs are linked against the P533 and P372 libraries when they are built,
+so the system loader, not the program, reports a missing or mismatched library,
+and does so before the program starts: with a message naming the library, and an
+exit status set by the system (127 on Linux, an abort on macOS). For that reason
+51 and 206 (library not found) and CircuitCSV's 1006 and 1007 are no longer
+returned; the numbers are kept out of use.
+
 ITURHFProp: Return numbers from 50 to 78 are errors
 
     50    ERROR:    Can Not Open (or Write) Output File
-    51    ERROR:    Can Not Find P533.DLL
+    51    (no longer returned: see the note below)
     52    ERROR:    Can Not Open, or Unsupported Type of, Receive Antenna File
     53    ERROR:    Can Not Open, or Unsupported Type of, Transmit Antenna File
     54    ERROR:    Invalid Antenna Orientation
@@ -824,7 +831,7 @@ P372(): Return numbers greater than 200 and less than 210 are errors
     203    ERROR:    Allocating Memory for Fam
     204    ERROR:    Allocating Memory for FakP
     205    ERROR:    Allocating Memory for FakABP
-    206    ERROR:    Can Not Open P372.DLL
+    206    (no longer returned: see the note below)
     207    ERROR:    Allocating Memory for Noise Structure
     208    ERROR:    Can Not Open Output File in MakeNoise()
     209    ERROR:    Coefficient (COEFF) File Truncated or Malformed
@@ -839,7 +846,7 @@ ITURHFProp(): Return numbers less than 50 are normal and indicate no error in pr
 ITURHFProp(): Return numbers from 50 to 99 are errors. Errors found by P533() and P372() in the input (for example 101 month, 102 hour, 110 modulation, 111 frequency) are returned as listed for those programs above.
 
     50      ERROR:    Can Not Open Output File
-    51      ERROR:    Can Not Find P533.DLL
+    51      (no longer returned: see the note below)
     52      ERROR:    Can Not Open Receive Antenna File
     53      ERROR:    Can Not Open Transmit Antenna File
     54      ERROR:    Antenna Orientation (AntennaOrientation is not TX2RX, ARBITRARY or MANUAL)

@@ -189,7 +189,7 @@ void CircuitReliability(struct PathData *path) {
 	//		See MedianAvailableReceiverPower()
 
 	// Step 2: Median noise factor for atmospheric noise, galactic and man-made noise
-	//		See Noise() [P372.dll]
+	//		See Noise() [libp372]
 
 	// Step 3: "Median resultant signal-to-noise ratio (dB) for bandwidth b (Hz)"
 	// There is a difference between digial and analog modulation in how the signal is found

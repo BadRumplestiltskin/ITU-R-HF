@@ -170,6 +170,11 @@ copy $(TargetPath) $(TargetDir)..\..\..\..\P372\Src\AtmosPlots\$(TargetFileName)
     <ClInclude Include="..\..\Src\ITURNoise\ITURNoise.h" />
     <ClInclude Include="..\..\..\Include\Noise.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\P372\P372.vcxproj">
+      <Project>{116945DD-6897-46B9-80A0-A166A1139123}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -50,7 +50,7 @@ hour and frequency. The caller has already allocated the path
 | Field strength, paths from 7000 km | `MedianSkywaveFieldStrengthLong` (`MedianSkywaveFieldStrengthLong.c`) | 5.3 |
 | Interpolation between the two, 7000 to 9000 km | `Between7000kmand9000km` (`Between7000kmand9000km.c`) | 5.4 |
 | Received power | `MedianAvailableReceiverPower` (`MedianAvailableReceiverPower.c`) | 6 |
-| Noise at the receiver | `Noise` in the P372 library, through `dllNoise` | 7 (P.372) |
+| Noise at the receiver | `Noise` in the P372 library | 7 (P.372) |
 | S/N, reliability, digital performance, equatorial scattering | `CircuitReliability` (`CircuitReliability.c`) | 7 to 10, Attachment 1 |
 
 Each field-strength routine returns straight away when the path length is

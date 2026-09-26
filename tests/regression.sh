@@ -22,8 +22,9 @@ exe=$bindir/ITURHFProp
 
 [ -x "$exe" ] || { echo "regression: no executable at $exe - run 'make -C Linux all' first" >&2; exit 2; }
 
-# The engine dlopen()s libp533.so and libp372.so by leaf name, so the loader
-# search path has to name the build directories. DYLD_LIBRARY_PATH cannot be
+# The programs are linked against libp533.so and libp372.so, and their rpath
+# names the install layout, not the build tree, so the loader search path has
+# to name the build directories. DYLD_LIBRARY_PATH cannot be
 # exported here: macOS System Integrity Protection strips DYLD_* when it starts
 # a protected binary such as /bin/sh, so the variable would never reach the
 # executable. Injecting it with env(1) at exec time does reach it, because the

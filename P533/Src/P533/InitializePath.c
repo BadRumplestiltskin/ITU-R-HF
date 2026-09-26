@@ -39,7 +39,7 @@ void InitializePath(struct PathData *path) {
 					- path->distance (km): the great-circle distance, 2*PI*R0 minus it for
 					  a long path; a zero distance is replaced by DBL_EPSILON
 					- path->CP[] by InitializeCPs()
-					- path->noiseP initialised by dllInitializeNoise() (P372 library)
+					- path->noiseP initialised by InitializeNoise() (P372 library)
 					- path->season by WhatSeason() at the mid-path control point
 
 			SUBROUTINES
@@ -138,8 +138,8 @@ void InitializePath(struct PathData *path) {
 	InitializeCPs(path);
 	// End initializing control points
 
-	// Initialize Noise from the P372.dll
-	dllInitializeNoise(&path->noiseP);
+	// Initialize Noise from the P372 library
+	InitializeNoise(&path->noiseP);
 	// End Initialize Noise
 
 	// Initialize the path variables.
