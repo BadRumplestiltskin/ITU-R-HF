@@ -14,8 +14,9 @@
 #define RTN_ERRCSVOPENOUT			1003	// ERROR: Can not open the output csv
 #define RTN_ERRCSVHEADER			1004	// ERROR: Missing or unrecognised header
 #define RTN_ERRCSVFIELD				1005	// ERROR: Malformed record
-#define RTN_ERRCSVP533LIB			1006	// ERROR: Can not load the P533 library
-#define RTN_ERRCSVP372LIB			1007	// ERROR: Can not load the P372 library
+// 1006 and 1007 were RTN_ERRCSVP533LIB and RTN_ERRCSVP372LIB (a library could
+// not be loaded). They are no longer returned: the program is linked against
+// both, so the system loader refuses to start it without them.
 #define RTN_ERRCSVANTENNA			1008	// ERROR: Can not read an antenna pattern
 #define RTN_ERRCSVWORKER			1009	// ERROR: A -j worker process failed
 

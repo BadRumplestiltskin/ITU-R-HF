@@ -8,42 +8,6 @@
 // End Local Include **************************************************
 
 /*
-	Definitions of the P372 handle and entry points that Noise.h declares extern.
-	This is the one translation unit in this artifact that defines them; every
-	other includer of Noise.h now merely declares them. Before this, each
-	includer defined its own copy and the link depended on -z muldefs.
-*/
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP372Info dllP372Version;
-	cP372Info dllP372CompileTime;
-	iNoise dllNoise;
-	iNoiseMemory dllAllocateNoiseMemory;
-	iNoiseMemory dllFreeNoiseMemory;
-	iReadFamDud dllReadFamDud;
-	vInitializeNoise dllInitializeNoise;
-	vAtmosphericNoise dllAtmosphericNoise;
-	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-	iMakeNoise dllMakeNoise;
-	dFamFreqVariation dllFamFreqVariation;
-#elif defined(__linux__) || defined(__APPLE__)
-	void *hLib;
-	char *(*dllP372Version)();
-	char *(*dllP372CompileTime)();
-	int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-	int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-	int (*dllFreeNoiseMemory)(struct NoiseParams *);
-	int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-	void (*dllInitializeNoise)(struct NoiseParams *);
-	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
-	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
-#endif
-
-
-
-/*
 	BuildDataPath() - Joins a data directory and a file name into a bounded buffer.
 
 		The readers used to do strcpy(out, dir); strcat(out, file); into a fixed
@@ -61,7 +25,7 @@
 		SUBROUTINES
 			None
 */
-DLLEXPORT int BuildDataPath(char *out, size_t n, const char *dir, const char *file) {
+P533_API int BuildDataPath(char *out, size_t n, const char *dir, const char *file) {
 
 	size_t len;
 	const char *sep;
@@ -72,87 +36,6 @@ DLLEXPORT int BuildDataPath(char *out, size_t n, const char *dir, const char *fi
 	sep = (len == 0 || dir[len-1] == '/' || dir[len-1] == '\\') ? "" : "/";
 
 	return ((size_t)snprintf(out, n, "%s%s%s", dir, sep, file) < n) ? TRUE : FALSE;
-
-}
-
-/*
-	LoadP372() - Resolves the entry points of the P372 noise library.
-
-		The library is opened and its symbols resolved on the first call only;
-		every later call returns immediately. P533() is invoked once per point of
-		an analysis grid, so opening the library there would leak a loader
-		reference (and repeat the symbol lookups) on every point.
-
-		This routine is not thread safe, which matches the rest of the engine:
-		the dll* function pointers it fills in are process-wide globals.
-
-		INPUT
-			None
-
-		OUTPUT
-			returns RTN_P372LOADOK on success, otherwise RTN_ERRP372DLL
-
-		SUBROUTINES
-			None
-*/
-int LoadP372(void) {
-
-	// P372Lib is private to this file, unlike the hLib that Noise.h defines at
-	// file scope in every translation unit that includes it. Nothing outside
-	// LoadP372() needs the handle.
-	static void *P372Lib = NULL;
-	static int P372Loaded = FALSE;
-
-	if (P372Loaded == TRUE) return RTN_P372LOADOK;
-
-	#ifdef _WIN32
-		// Get the handle to the P372 DLL.
-		P372Lib = (void *)LoadLibrary("P372.dll");
-		if (P372Lib == NULL) {
-			printf("P533: Error %d P372.DLL Not Found\n", RTN_ERRP372DLL);
-			return RTN_ERRP372DLL;
-		}
-		// Get the P372Version() process from the DLL.
-		dllP372Version = (cP372Info)GetProcAddress((HMODULE)P372Lib, "P372Version");
-		// Get the P372CompileTime() process from the DLL.
-		dllP372CompileTime = (cP372Info)GetProcAddress((HMODULE)P372Lib, "P372CompileTime");
-
-		dllNoise = (iNoise)GetProcAddress((HMODULE)P372Lib, "Noise");
-		dllAllocateNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)P372Lib, "AllocateNoiseMemory");
-		dllFreeNoiseMemory = (iNoiseMemory)GetProcAddress((HMODULE)P372Lib, "FreeNoiseMemory");
-		dllInitializeNoise = (vInitializeNoise)GetProcAddress((HMODULE)P372Lib, "InitializeNoise");
-	#elif defined(__linux__) || defined(__APPLE__)
-		P372Lib = dlopen("libp372.so", RTLD_NOW);
-		if (P372Lib == NULL) {
-			// Return an error rather than exiting: P533 is a library and must not
-			// terminate the program that loaded it.
-			printf("P533: Error %d Couldn't load libp372.so\n", RTN_ERRP372DLL);
-			return RTN_ERRP372DLL;
-		}
-		dllP372Version = dlsym(P372Lib, "P372Version");
-		dllP372CompileTime = dlsym(P372Lib, "P372CompileTime");
-		dllNoise = dlsym(P372Lib, "Noise");
-		dllAllocateNoiseMemory = dlsym(P372Lib, "AllocateNoiseMemory");
-		dllFreeNoiseMemory = dlsym(P372Lib, "FreeNoiseMemory");
-		dllInitializeNoise = dlsym(P372Lib, "InitializeNoise");
-	#endif
-
-	// A missing symbol would otherwise surface as a call through a NULL pointer.
-	if (dllP372Version == NULL || dllP372CompileTime == NULL || dllNoise == NULL ||
-		dllAllocateNoiseMemory == NULL || dllFreeNoiseMemory == NULL || dllInitializeNoise == NULL) {
-		printf("P533: Error %d P372 entry point not found\n", RTN_ERRP372DLL);
-		#ifdef _WIN32
-			FreeLibrary((HMODULE)P372Lib);
-		#else
-			dlclose(P372Lib);
-		#endif
-		P372Lib = NULL;
-		return RTN_ERRP372DLL;
-	}
-
-	P372Loaded = TRUE;
-
-	return RTN_P372LOADOK;
 
 }
 
@@ -244,17 +127,17 @@ int LoadP372(void) {
 				MedianAvaiableReceiverPower()
 				CircuitReliability()
 
-			EXTERNAL DLL
-				The following subroutines are from the P372.dll
-				Any subroutine in the P533 projeect that starts with dll is refering to P372.dll
+			EXTERNAL LIBRARY
+				The following subroutines are from libp372 (P372.dll on Windows),
+				which this library is linked against
 
-				dllP372Version()
-				dllP372CompileTime()
-				dllNoise()
-				dllAllocateNoiseMemory()
-				dllFreeNoiseMemory()
-				dllReadFamDud()
-				dllInitializeNoise()
+				P372Version()
+				P372CompileTime()
+				Noise()
+				AllocateNoiseMemory()
+				FreeNoiseMemory()
+				ReadFamDud()
+				InitializeNoise()
 
 			STANDARDS
 				ITU-R P.533-14 (08/19)
@@ -306,14 +189,9 @@ int LoadP372(void) {
 
 	int retval; // return value
 
-	// Load the Noise routines from P372 and record the version. This is done
-	// once per process rather than once per call; see LoadP372() below.
-	retval = LoadP372();
-	if (retval != RTN_P372LOADOK) return retval;
-
-	// Before moving on load the version and compile time of the P372.DLL
-	path->P372ver = dllP372Version();
-	path->P372compt = dllP372CompileTime();
+	// Record the version and compile time of the P372 library.
+	path->P372ver = P372Version();
+	path->P372compt = P372CompileTime();
 	
 	// Validate the input data
 	retval = ValidatePath(path);
@@ -375,8 +253,8 @@ int LoadP372(void) {
 	/* Part 3 - The prediction of system performance            */
 	/************************************************************/
 
-	// Call noise from the P372.dll
-	retval = dllNoise(&path->noiseP, path->hour, path->L_rx.lng, path->L_rx.lat, path->frequency);
+	// Call noise from the P372 library
+	retval = Noise(&path->noiseP, path->hour, path->L_rx.lng, path->L_rx.lat, path->frequency);
 	if (retval != RTN_NOISEOK) return retval; // check that the input parameters are correct
 
 	CircuitReliability(path);
@@ -384,7 +262,7 @@ int LoadP372(void) {
 	return RTN_P533OK;  // Return no errors
 }
 
-DLLEXPORT char const * P533Version(void) {
+P533_API char const * P533Version(void) {
 
 	/*
 
@@ -405,7 +283,7 @@ DLLEXPORT char const * P533Version(void) {
 
 }
 
-DLLEXPORT char const * P533CompileTime(void) {
+P533_API char const * P533CompileTime(void) {
 
 	/*
 
@@ -426,7 +304,7 @@ DLLEXPORT char const * P533CompileTime(void) {
 
 }
 
-DLLEXPORT int sizeofPathDataStruct(void) {
+P533_API int sizeofPathDataStruct(void) {
 	/*
 		sizeofPathStruct() - Returns the sizeof(pathdata) for testing.
 			INPUT	

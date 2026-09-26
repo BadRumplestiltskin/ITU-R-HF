@@ -169,6 +169,14 @@ copy /y $(SolutionDir)..\..\..\P372\Bin\P372.dll $(SolutionDir)..\..\Bin\P372.dl
     <ClInclude Include="..\..\Src\CircuitCSV\CircuitCSV.h" />
     <ClInclude Include="..\..\Src\ITURHFProp\ITURHFProp.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\P533\Win32\P533\P533.vcxproj">
+      <Project>{D567A7CB-159C-419F-8217-F7BF5025E9BA}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\P372\Win32\P372\P372.vcxproj">
+      <Project>{116945DD-6897-46B9-80A0-A166A1139123}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

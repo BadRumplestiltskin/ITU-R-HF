@@ -397,9 +397,9 @@ void PrintITUHeader(FILE *fp, char * time, char const * P533Version, const char 
 	fprintf(fp, " International Telecommunications Union - Radiocommunication Sector (ITU-R)\n");
 	fprintf(fp, "     ITURHFProp         Ver %s\n", ITURHFPropVER);
 	fprintf(fp, "     HF Model (P533)    Ver %s\n", P533Version);
-	// If the output is going to stderr then P533() has not run yet so P372.DLL has not loaded
-	// so we do not know the P372.DLL version or compile time yet. If the P372Version 
-	// null than don't print it out
+	// A header written before the first P533() run has no P372 version or
+	// compile time yet, since P533() records them in the path. If the P372Version
+	// is empty then don't print it out
 	if (strcmp(P372Version, "")) {
 		fprintf(fp, "     Noise Model (P372) Ver %s\n", P372Version);
 	}

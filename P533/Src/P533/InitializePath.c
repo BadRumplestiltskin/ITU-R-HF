@@ -126,8 +126,8 @@ void InitializePath(struct PathData *path) {
 	InitializeCPs(path);
 	// End initializing control points
 
-	// Initialize Noise from the P372.dll
-	dllInitializeNoise(&path->noiseP);
+	// Initialize Noise from the P372 library
+	InitializeNoise(&path->noiseP);
 	// End Initialize Noise
 
 	// Initialize the path variables.

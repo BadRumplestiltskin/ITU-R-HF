@@ -13,18 +13,26 @@ bin_dir = ../Bin/
 #CFLAGS = -fPIC -Wall -Wextra -O0 -g -I$(source_dir)
 # Use the following for production
 OPTIMIZE ?= -O2
-CFLAGS = -std=c99 -fPIC -Wall -Wextra -MMD -MP $(OPTIMIZE) -I$(source_dir) -I../../Include
-
-# Set linker flags based on the operating system
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),Darwin)
-    LDFLAGS = -shared -lm -ldl
-else
-    LDFLAGS = -shared -lm -ldl
-endif
+# P533_BUILD makes P533_API (P533.h) mark the exported functions, and
+# -fvisibility=hidden keeps every other symbol inside the library.
+CFLAGS = -std=c99 -fPIC -fvisibility=hidden -DP533_BUILD -Wall -Wextra -MMD -MP $(OPTIMIZE) -I$(source_dir) -I../../Include
 
 RM = rm -f
 TARGET_LIB = libp533.so
+
+# libp533 calls into libp372, so it is linked against it. See P372/Linux/Makefile
+# for the library's recorded name and -z defs. The rpath finds libp372 in the
+# directory libp533 itself was loaded from, which is where "make install" puts
+# both.
+P372_DIR = ../../P372/Linux
+P372_LIB = $(P372_DIR)/libp372.so
+ifeq ($(UNAME_S),Darwin)
+    LDFLAGS = -shared -Wl,-install_name,@rpath/$(TARGET_LIB) -Wl,-rpath,@loader_path \
+              -L$(P372_DIR) -lp372 -lm
+else
+    LDFLAGS = -shared -Wl,-soname,$(TARGET_LIB) -Wl,-z,defs -Wl,-rpath,'$$ORIGIN' \
+              -L$(P372_DIR) -lp372 -lm
+endif
 
 prefix ?= /usr/local
 exec_prefix = $(prefix)
@@ -56,8 +64,8 @@ OBJS = $(SRCS:.c=.o)
 .PHONY: all
 all: ${TARGET_LIB}
 
-$(TARGET_LIB): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+$(TARGET_LIB): $(OBJS) $(P372_LIB)
+	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
 # -MMD -MP (in CFLAGS) writes a dependency file beside each object as it is
 # compiled; -MP adds an empty rule per header, so a deleted or renamed header

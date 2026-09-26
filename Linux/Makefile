@@ -7,8 +7,8 @@ man1dir = $(mandir)/man1
 
 TOPTARGETS := all clean
 
-SUBDIRS := ../P533/Linux/ \
-	../P372/Linux/ \
+SUBDIRS := ../P372/Linux/ \
+	../P533/Linux/ \
 	../ITURHFProp/Linux \
 	../ITURHFProp/Src/CircuitCSV \
 	../P372/Src/ITURNoise
@@ -19,6 +19,12 @@ datadir = $(datarootdir)
 $(TOPTARGETS): $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+# Each library is linked against before the programs are, so under make -j a
+# directory waits for the libraries it links against.
+../P533/Linux/: ../P372/Linux/
+../ITURHFProp/Linux ../ITURHFProp/Src/CircuitCSV: ../P533/Linux/ ../P372/Linux/
+../P372/Src/ITURNoise: ../P372/Linux/
 
 .PHONY: $(TOPTARGETS) $(SUBDIRS)
 

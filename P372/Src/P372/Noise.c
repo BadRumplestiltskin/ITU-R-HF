@@ -8,41 +8,6 @@
 #include "Common.h"
 #include "Noise.h"
 
-/*
-	Definitions of the P372 handle and entry points that Noise.h declares extern.
-	This is the one translation unit in this artifact that defines them; every
-	other includer of Noise.h now merely declares them. Before this, each
-	includer defined its own copy and the link depended on -z muldefs.
-*/
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP372Info dllP372Version;
-	cP372Info dllP372CompileTime;
-	iNoise dllNoise;
-	iNoiseMemory dllAllocateNoiseMemory;
-	iNoiseMemory dllFreeNoiseMemory;
-	iReadFamDud dllReadFamDud;
-	vInitializeNoise dllInitializeNoise;
-	vAtmosphericNoise dllAtmosphericNoise;
-	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-	iMakeNoise dllMakeNoise;
-	dFamFreqVariation dllFamFreqVariation;
-#elif defined(__linux__) || defined(__APPLE__)
-	void *hLib;
-	char *(*dllP372Version)();
-	char *(*dllP372CompileTime)();
-	int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-	int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-	int (*dllFreeNoiseMemory)(struct NoiseParams *);
-	int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-	void (*dllInitializeNoise)(struct NoiseParams *);
-	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
-	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
-#endif
-
-
 // Local prototypes
 void GalacticNoise(
     struct NoiseParams *noiseP,
@@ -289,7 +254,7 @@ int Noise(
 		SUBROUTINES
 			None
 */
-DLLEXPORT double FamFreqVariation(struct NoiseParams *noiseP, int tmblk,
+P372_API double FamFreqVariation(struct NoiseParams *noiseP, int tmblk,
                                   double Fam1MHz, double frequency) {
 
     double u[2];

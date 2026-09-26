@@ -8,7 +8,7 @@
 // End local include
 
 
-DLLEXPORT int InputDump(struct PathData *path) {
+P533_API int InputDump(struct PathData *path) {
 
 	/* 
 	 

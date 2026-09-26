@@ -6,82 +6,7 @@
 // Local includes
 #include "Common.h"
 #include "P533.h"
-#include "LoadLib.h"
 #include "ITURHFProp.h"
-
-/*
-	Definitions of the P533 handle and entry points that ITURHFProp.h declares
-	extern. This is the one translation unit in this program that defines them.
-*/
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP533Info dllP533Version;
-	cP533Info dllP533CompileTime;
-	iP533 dllP533;
-	iPathMemory dllAllocatePathMemory;
-	iPathMemory dllFreePathMemory;
-	iPathMemory dllAllocateAntennaMemory;
-	dBearing dllBearing;
-	iReadType11Func dllReadType11Func;
-	iReadType13Func dllReadType13Func;
-	iReadType14Func dllReadType14Func;
-	vIsotropicPatternFunc dllIsotropicPatternFunc;
-	iReadIonParametersBinFunc dllReadIonParametersBinFunc;
-	iReadIonParametersTxtFunc dllReadIonParametersTxtFunc;
-	iReadP1239Func dllReadP1239Func;
-#elif defined(__linux__) || defined(__APPLE__)
-	void * hLib;
-	char * (*dllP533Version)();
-	char * (*dllP533CompileTime)();
-	int (*dllP533)(struct PathData *);
-	int (*dllAllocatePathMemory)(struct PathData *);
-	int (*dllFreePathMemory)(struct PathData *);
-	int (*dllAllocateAntennaMemory)(struct Antenna *Ant, int freqn, int azin, int elen);
-	double (*dllBearing)(struct Location,struct Location,int direction);
-	int  (*dllReadType11Func)(struct Antenna *Ant, FILE *fp, int silent);
-	int  (*dllReadType13Func)(struct Antenna *Ant, FILE *fp, double bearing, int silent);
-	int  (*dllReadType14Func)(struct Antenna *Ant, FILE *fp, int silent);
-	void (*dllIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
-	int  (*dllReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
-	int  (*dllReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
-	int  (*dllReadP1239Func)(struct PathData *path, const char * DataFilePath);
-#endif
-
-
-
-/*
-	Definitions of the P372 handle and entry points that Noise.h declares extern.
-	This is the one translation unit in this artifact that defines them; every
-	other includer of Noise.h now merely declares them. Before this, each
-	includer defined its own copy and the link depended on -z muldefs.
-*/
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP372Info dllP372Version;
-	cP372Info dllP372CompileTime;
-	iNoise dllNoise;
-	iNoiseMemory dllAllocateNoiseMemory;
-	iNoiseMemory dllFreeNoiseMemory;
-	iReadFamDud dllReadFamDud;
-	vInitializeNoise dllInitializeNoise;
-	vAtmosphericNoise dllAtmosphericNoise;
-	vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-	iMakeNoise dllMakeNoise;
-	dFamFreqVariation dllFamFreqVariation;
-#elif defined(__linux__) || defined(__APPLE__)
-	void *hLib;
-	char *(*dllP372Version)();
-	char *(*dllP372CompileTime)();
-	int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-	int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-	int (*dllFreeNoiseMemory)(struct NoiseParams *);
-	int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-	void (*dllInitializeNoise)(struct NoiseParams *);
-	void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-	void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-	int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
-	double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
-#endif
 
 // End local includes
 
@@ -91,32 +16,6 @@ void AntennaType(struct PathData *path, int n);
 void PathConfig(struct PathData *path, int n);
 void help(void);
 // End local prototypes
-
-// Local globals
-char mod[512];
-
-#ifdef _WIN32
-	HINSTANCE hLib;
-	cP533Info dllP533Version;
-	cP533Info dllP533CompileTime;
-	iP533 dllP533;
-	iPathMemory dllAllocatePathMemory;
-	iPathMemory dllFreePathMemory;
-	dBearing dllBearing;
-	iInputDump dllInputDump;
-#elif __linux__ || __APPLE__
-	#include <dlfcn.h>
-	void * hLib;
-	char * (*dllP533Version)();
-	char * (*dllP533CompileTime)();
-	int (*dllP533)(struct PathData *);
-	int (*dllAllocatePathMemory)(struct PathData *);
-	int (*dllFreePathMemory)(struct PathData *);
-	double (*dllBearing)(struct Location,struct Location,int direction);
-	int (*dllInputDump)(struct PathData *);
-#endif
-
-// End local globals
 
 int main(int argc, char *argv[]) {
 	/*
@@ -170,49 +69,10 @@ int main(int argc, char *argv[]) {
 	OutFilePath[0] = EMPTY;
 	// End Initialization
 
-	//******************************************************************************************
-	// Load P533 DLL ***************************************************************************
-	//******************************************************************************************
-
-	// One row per entry point; hfLibBind() resolves them and names the first
-	// missing one. This used to be two hand-written #ifdef blocks that bound 15
-	// symbols and checked none of them.
-	{
-		static const struct hfSymbol p533syms[] = {
-			{ "P533Version",           (void **)&dllP533Version },
-			{ "P533CompileTime",       (void **)&dllP533CompileTime },
-			{ "P533",                  (void **)&dllP533 },
-			{ "AllocatePathMemory",    (void **)&dllAllocatePathMemory },
-			{ "FreePathMemory",        (void **)&dllFreePathMemory },
-			{ "InputDump",             (void **)&dllInputDump },
-			{ "Bearing",               (void **)&dllBearing },
-			{ "ReadType11",            (void **)&dllReadType11Func },
-			{ "ReadType13",            (void **)&dllReadType13Func },
-			{ "ReadType14",            (void **)&dllReadType14Func },
-			{ "IsotropicPattern",      (void **)&dllIsotropicPatternFunc },
-			{ "ReadIonParametersBin",  (void **)&dllReadIonParametersBinFunc },
-			{ "ReadIonParametersTxt",  (void **)&dllReadIonParametersTxtFunc },
-			{ "ReadP1239",             (void **)&dllReadP1239Func },
-		};
-
-		hLib = hfLibOpen(HFLIB_P533);
-		if (hLib == NULL) {
-			printf("Main: Error %d %s not found (%s)\n", RTN_ERRP533DLL, HFLIB_P533, hfLibError());
-			return RTN_ERRP533DLL;
-		}
-		if (hfLibBind(hLib, p533syms, (int)(sizeof(p533syms)/sizeof(p533syms[0])), "Main") == 0) {
-			return RTN_ERRP533DLL;
-		}
-	}
-
-	//********************************************************************************************
-	// End Load P533 DLL *************************************************************************
-	//********************************************************************************************
-
-	// Determine the P533() version of the DLL/SO.
-	ITURHFP.P533ver = dllP533Version();
+	// Determine the P533() version of the library.
+	ITURHFP.P533ver = P533Version();
 	// Determine the P533() compile time
-	ITURHFP.P533compt = dllP533CompileTime();
+	ITURHFP.P533compt = P533CompileTime();
 
 	//********************************************************************************************
 	// Parse Command Line ************************************************************************
@@ -289,9 +149,9 @@ int main(int argc, char *argv[]) {
 	//********************************************************************************************
 
 	// Create the foF2, M3kF2, foF2var and antenna arrays for the path structure.
-	retval = dllAllocatePathMemory(&path);
+	retval = AllocatePathMemory(&path);
 	if(retval != RTN_ALLOCATEP533OK) {
-		printf("Main: Error %d from dllAllocatePathMemory\n", retval);
+		printf("Main: Error %d from AllocatePathMemory\n", retval);
 		return retval;
 	}
 
@@ -305,8 +165,8 @@ int main(int argc, char *argv[]) {
     // Now that the input has been loaded the location of the transmitter and receiver are known
 	// so the bearing of the antennas can be determined if necessary.
 	if(ITURHFP.AntennaOrientation == TX2RX) {
-		ITURHFP.TXBearing = dllBearing(path.L_tx, path.L_rx, path.SorL); // Point the transmitter at the receiver.
-		ITURHFP.RXBearing = dllBearing(path.L_rx, path.L_tx, path.SorL); // Point the receiver at the transmitter.
+		ITURHFP.TXBearing = Bearing(path.L_tx, path.L_rx, path.SorL); // Point the transmitter at the receiver.
+		ITURHFP.RXBearing = Bearing(path.L_rx, path.L_tx, path.SorL); // Point the receiver at the transmitter.
 	}
 
     retval = ValidateITURHFP(ITURHFP);
@@ -375,7 +235,7 @@ int main(int argc, char *argv[]) {
 		printf(" path hour %d\n", path.hour);
 		printf("Main: Error %d from ITURHFProp\n", retval);
 		fclose(ITURHFP.rptfp);
-		dllFreePathMemory(&path);
+		FreePathMemory(&path);
 		return retval;
 	}
 
@@ -385,14 +245,14 @@ int main(int argc, char *argv[]) {
 	// failure (a full disk, say) means the report is incomplete.
 	if(fclose(ITURHFP.rptfp) != 0) {
 		printf("Main: Error %d Can't write output file %s\n", RTN_ERROPENOUTPUTFILE, ITURHFP.RptFilePath);
-		dllFreePathMemory(&path);
+		FreePathMemory(&path);
 		return RTN_ERROPENOUTPUTFILE;
 	}
 
 	// Free all the memory
-	retval = dllFreePathMemory(&path);
+	retval = FreePathMemory(&path);
 	if(retval != RTN_PATHFREED) {
-		printf("Main: Error %d from dllFreePathMemory\n", retval);
+		printf("Main: Error %d from FreePathMemory\n", retval);
 		return retval;
 	}
 
@@ -420,8 +280,9 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 	  			OUTPUT
 	  				Output files PDD or RPT that are time stamped with the data required.
 
-				EXTERNAL DLL
-					This program requires P533.dll and P372.dll
+				EXTERNAL LIBRARIES
+					This program is linked against libp533 and libp372
+					(P533.dll and P372.dll on Windows)
 
 	 */
 
@@ -443,7 +304,7 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 	++ITURHFP->ilngend;
 
 	// Read in the MUF decile values for the entire year.
-	retval = dllReadP1239Func(path, ITURHFP->DataFilePath);
+	retval = ReadP1239(path, ITURHFP->DataFilePath);
 	if(retval != RTN_READP1239OK) {
 		return retval;
 	}
@@ -454,25 +315,6 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 		return retval;
 	}
 
-    // Load the Noise routines in P372.dll ******************************
-	// Same loader as P533 in main(): the ReadFamDud lookup used to be unchecked,
-	// so a libp372 without it crashed on the first call instead of failing here.
-	{
-		static const struct hfSymbol p372syms[] = {
-			{ "ReadFamDud", (void **)&dllReadFamDud },
-		};
-		HFLIBHANDLE hP372;
-
-		hP372 = hfLibOpen(HFLIB_P372);
-		if (hP372 == NULL) {
-			printf("ITURHFProp: Error %d %s not found (%s)\n", RTN_ERRP372DLL, HFLIB_P372, hfLibError());
-			return RTN_ERRP372DLL;
-		}
-		if (hfLibBind(hP372, p372syms, (int)(sizeof(p372syms)/sizeof(p372syms[0])), "ITURHFProp") == 0) {
-			return RTN_ERRP372DLL;
-		}
-	}
-	// End P372.DLL Load ************************************************
 
 	// ********************** Month Loop **********************************************************
 	for(ITURHFP->imnth=0; ITURHFP->imnth<ITURHFP->imnthend; ITURHFP->imnth++) { // months
@@ -481,14 +323,14 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 
 
 		// Read in the ionospheric parameters for the particular month for the call to P533.
-		retval = dllReadIonParametersBinFunc(path->month, path->foF2, path->M3kF2, ITURHFP->DataFilePath, ITURHFP->silent);
+		retval = ReadIonParametersBin(path->month, path->foF2, path->M3kF2, ITURHFP->DataFilePath, ITURHFP->silent);
 		if(retval != RTN_READIONPARAOK) {
 			return retval;
 		}
 
         // Read in the atmospheric coefficients for the particular month.
-		// The subroutine dllReadFamDud() is from P372.dll
-		retval = dllReadFamDud(&path->noiseP, ITURHFP->DataFilePath, path->month);
+		// ReadFamDud() is from the P372 library
+		retval = ReadFamDud(&path->noiseP, ITURHFP->DataFilePath, path->month);
 		if(retval != RTN_READFAMDUDOK) {
 			return retval;
 		}
@@ -522,7 +364,7 @@ int ITURHFProp(struct PathData *path, struct ITURHFProp *ITURHFP) {
 						}
 
                         // Run the model
-						retval = dllP533(path); // Run P533()
+						retval = P533(path); // Run P533()
 						if(retval != RTN_P533OK) {
 							return retval;
 						}

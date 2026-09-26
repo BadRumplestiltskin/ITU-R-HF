@@ -729,10 +729,17 @@ There are three ranges of return codes:
     P533():      numbers less than 100 are normal; 100 to 199 are errors
     P372():      numbers less than 10 are normal; 200 to 209 are errors
 
+The programs are linked against the P533 and P372 libraries when they are built,
+so the system loader, not the program, reports a missing or mismatched library,
+and does so before the program starts: with a message naming the library, and an
+exit status set by the system (127 on Linux, an abort on macOS). For that reason
+51 and 206 (library not found) and CircuitCSV's 1006 and 1007 are no longer
+returned; the numbers are kept out of use.
+
 ITURHFProp: Return numbers from 50 to 78 are errors
 
     50    ERROR:    Can Not Open (or Write) Output File
-    51    ERROR:    Can Not Find P533.DLL
+    51    (no longer returned: see the note below)
     52    ERROR:    Can Not Open, or Unsupported Type of, Receive Antenna File
     53    ERROR:    Can Not Open, or Unsupported Type of, Transmit Antenna File
     54    ERROR:    Invalid Antenna Orientation
@@ -831,7 +838,7 @@ P372(): Return numbers greater than 200 and less than 210 are errors
     203    ERROR:    Allocating Memory for Fam
     204    ERROR:    Allocating Memory for FakP
     205    ERROR:    Allocating Memory for FakABP
-    206    ERROR:    Can Not Open P372.DLL
+    206    (no longer returned: see the note below)
     207    ERROR:    Allocating Memory for Noise Structure
     208    ERROR:    Can Not Open Output File in MakeNoise()
     209    ERROR:    Coefficient (COEFF) File Truncated or Malformed
@@ -846,7 +853,7 @@ ITURHFProp(): Return numbers less than 50 are normal and indicate no error in pr
 ITURHFProp(): Return numbers from 50 to 99 are errors. Errors found by P533() and P372() in the input (for example 101 month, 102 hour, 110 modulation, 111 frequency) are returned as listed for those programs above.
 
     50      ERROR:    Can Not Open Output File
-    51      ERROR:    Can Not Find P533.DLL
+    51      (no longer returned: see the note below)
     52      ERROR:    Can Not Open Receive Antenna File
     53      ERROR:    Can Not Open Transmit Antenna File
     54      ERROR:    Antenna Orientation (AntennaOrientation is not TX2RX, ARBITRARY or MANUAL)

@@ -64,4 +64,18 @@ jobs:
         msbuild /p:Configuration=Release /p:Platform="x86" ITURNoise.sln
         cd ../../..
         cd ITURHFProp/Win32/Combined
-        msbuild /p:Configuration=Release /p:Platform="Win32" Combined.sln              
+        msbuild /p:Configuration=Release /p:Platform="Win32" Combined.sln
+    # The build links each program against the DLLs; running them proves the
+    # Windows loader finds every export at start-up (a missing one stops the
+    # program before main()). ITURNoise computes one point, so P372.dll is
+    # exercised as well as loaded.
+    - name: run
+      shell: pwsh
+      run: |
+        function Check($what) { if ($LASTEXITCODE -ne 0) { throw "$what exited $LASTEXITCODE" } }
+        $combined = "ITURHFProp/Win32/Combined/Release"
+        $noise = "P372/Win32/ITURNoise/Release"
+        Get-ChildItem $combined, $noise -Filter *.exe | Select-Object FullName
+        & "$combined/ITURHFProp.exe" -v; Check "ITURHFProp -v"
+        & "$combined/CircuitCSV.exe" -h; Check "CircuitCSV -h"
+        & "$noise/ITURNoise.exe" 1 14 1 40 165 0 "$env:GITHUB_WORKSPACE/P372/Data/"; Check "ITURNoise"              

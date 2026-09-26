@@ -8,8 +8,12 @@ $ make all
 The following command installs the libraries and application in /usr/local/lib and /usr/local/bin ;
 ```
 $ sudo make install
-$ sudo ldconfig
 ```
+The programs are linked against libp533.so and libp372.so, and look for them in the lib directory beside their bin directory (an rpath of $ORIGIN/../lib), so an installed copy runs without ldconfig or LD_LIBRARY_PATH, under any prefix. To run the programs from the build tree instead, name the two build directories on the library path:
+```
+$ LD_LIBRARY_PATH=../P533/Linux:../P372/Linux ../ITURHFProp/Linux/ITURHFProp -v
+```
+On macOS use DYLD_LIBRARY_PATH, set on the command itself (as above) rather than exported: macOS removes DYLD_ variables when it starts a system program such as /bin/sh.
 
 #### Data Directory
 Operation of the application requires the presence a number of data files. This may be performed manually using a location of the user's choice or by using the command ```sudo make install-data``` to copy the files to /usr/local/share/p533/data.  The location of the data directory is a required parameter in input files.  e.g. If the files are copied to /usr/local/share/p533/data, input files should contain the line;
