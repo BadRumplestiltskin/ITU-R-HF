@@ -1,17 +1,27 @@
 #ifndef NOISE_H
 #define NOISE_H
 
-/* Operating system preprocessor directives */
-#ifdef _WIN32
-    #define DLLEXPORT __declspec(dllexport)
+/*
+	P372_API marks the functions libp372 exports.
+
+	Programs link against the library when they are built, so the compiler
+	checks every call against the prototypes below. On Windows a function is
+	visible outside its DLL only when it is exported: the library is built with
+	P372_BUILD defined, so the declarations here export, and every other
+	includer sees them as imports. Elsewhere the library is built with
+	-fvisibility=hidden, so these are the only symbols it exports.
+*/
+#if defined(_WIN32)
+	#ifdef P372_BUILD
+		#define P372_API __declspec(dllexport)
+	#else
+		#define P372_API __declspec(dllimport)
+	#endif
+#elif defined(__GNUC__)
+	#define P372_API __attribute__((visibility("default")))
+#else
+	#define P372_API
 #endif
-#ifdef __linux__
-    #define DLLEXPORT
-#endif
-#ifdef __APPLE__
-    #define DLLEXPORT
-#endif
-/* End operating system preprocessor directives */
 
 /* Defines */
 // Version number.
@@ -51,8 +61,9 @@
 #define RTN_ERRALLOCATEFAKP 204
 // ERROR: Allocating Memory for FakABP// Return ERROR from P533().
 #define RTN_ERRALLOCATEFAKABP 205
-// ERROR: Can Not Open P372.DLL.
-#define RTN_ERRP372DLL 206
+// 206 was RTN_ERRP372DLL (P372 library not found or incomplete). It is no longer
+// returned: programs and libp533 are linked against libp372, so the system
+// loader refuses to start without it. The number is kept out of use.
 // ERROR: Allocating Memory for Noise Structure.
 #define RTN_ERRALLOCATENOISE 207
 // ERROR: Can't open output file in MakeNoise().
@@ -73,8 +84,7 @@
 #define RTN_NOISEMANMADEOK 25
 // MakeNoise() Stand alone P372 caller.
 #define RTN_MAKENOISEOK 26
-// P533.c LoadP372() resolved the P372 entry points.
-#define RTN_P372LOADOK 27
+// 27 was RTN_P372LOADOK, returned by P533.c LoadP372(), which is gone.
 /* End Defines */
 
 /* Struct Definitions */
@@ -130,67 +140,6 @@ struct NoiseParams {
 };
 /* End Struct Definitions */
 
-/* Start P372.DLL typedef */
-#ifdef _WIN32
-    #include <Windows.h>
-    // P372Version() & P372CompileTime()
-    typedef const char *(__cdecl *cP372Info)(void);
-    // AllocateNoiseMemory() & FreeNoiseMemory()
-    typedef int(__cdecl *iNoiseMemory)(
-        struct NoiseParams *noiseP
-    );
-    // Noise()
-    typedef int(__cdecl *iNoise)(
-        struct NoiseParams *noiseP,
-        int hour,
-        double lng,
-        double lat,
-        double frequency
-    );
-    // ReadFamDud()
-    typedef int(__cdecl *iReadFamDud)(
-        struct NoiseParams *noiseP,
-        const char *DataFilePath,
-        int month
-    );
-    // InitializeNoise()
-    typedef void(__cdecl *vInitializeNoise)(
-        struct NoiseParams *noiseP
-    );
-    // AtmosphericNoise()
-    typedef void(__cdecl *vAtmosphericNoise)(
-        struct NoiseParams *noiseP,
-        int iutc,
-        double lng,
-        double lat,
-        double frequency
-    );
-    // AtmosphericNoise_LT()
-    typedef void(__cdecl *vAtmosphericNoise_LT)(
-        struct NoiseParams *noiseP,
-        struct FamStats *FamS,
-        int lrxmt,
-        double lng,
-        double lat,
-        double frequency
-    );
-    // FamFreqVariation()
-    typedef double(__cdecl *dFamFreqVariation)(struct NoiseParams *, int, double, double);
-    // MakeNoise().
-    typedef int(__stdcall *iMakeNoise)(
-        int month,
-        int hour,
-        double lat,
-        double lng,
-        double freq,
-        double mmnoise,
-        char *datafilepath,
-        double *out,
-        int pntflag
-    );
-#endif
-/* End P372.DLL typedef */
-
 /* Prototypes */
 // _cdecl exports for all environments __linux__ && __APPLE__ && _WIN32.
 // Full descriptions are in the function headers in the .c files:
@@ -210,37 +159,37 @@ struct NoiseParams {
 //                          1 MHz for a hemisphere-adjusted time block
 //   MakeNoise()            MakeNoise.c  stand alone wrapper, lat/lng in
 //                          degrees, 12 results in out[]; RTN_MAKENOISEOK
-DLLEXPORT int AllocateNoiseMemory(
+P372_API int AllocateNoiseMemory(
     struct NoiseParams *noiseP
 );
-DLLEXPORT int FreeNoiseMemory(
+P372_API int FreeNoiseMemory(
     struct NoiseParams *noiseP
 );
-DLLEXPORT int Noise(
+P372_API int Noise(
     struct NoiseParams *noiseP,
     int hour,
     double rlng,
     double rlat,
     double frequency
 );
-DLLEXPORT int ReadFamDud(
+P372_API int ReadFamDud(
     struct NoiseParams *noiseP,
     const char *DataFilePath,
     int month
 );
-DLLEXPORT void InitializeNoise(
+P372_API void InitializeNoise(
     struct NoiseParams *noiseP
 );
-DLLEXPORT char const *P372CompileTime(void);
-DLLEXPORT char const *P372Version(void);
-DLLEXPORT void AtmosphericNoise(
+P372_API char const *P372CompileTime(void);
+P372_API char const *P372Version(void);
+P372_API void AtmosphericNoise(
     struct NoiseParams *noiseP,
     int iutc,
     double rlng,
     double rlat,
     double frequency
 );
-DLLEXPORT void AtmosphericNoise_LT(
+P372_API void AtmosphericNoise_LT(
     struct NoiseParams *noiseP,
     struct FamStats *FamS,
     int lrxmt,
@@ -249,8 +198,8 @@ DLLEXPORT void AtmosphericNoise_LT(
     double frequency
 );
 // Note: MakeNoise() requires decimal degrees lat and lng.
-DLLEXPORT double FamFreqVariation(struct NoiseParams *noiseP, int tmblk, double Fam1MHz, double frequency);
-DLLEXPORT int MakeNoise(
+P372_API double FamFreqVariation(struct NoiseParams *noiseP, int tmblk, double Fam1MHz, double frequency);
+P372_API int MakeNoise(
     int month,
     int hour,
     double lat,
@@ -262,42 +211,42 @@ DLLEXPORT int MakeNoise(
     int pntflag
 );
 
-#if _WIN32
+#ifdef _WIN32
     // _stdcall exports dummies used to provide entry points in the DLL for 
     // MS Excel.
     // Each passes its arguments to the _cdecl routine of the same name
     // without the leading underscore (see Noise.c).
-    DLLEXPORT int __stdcall _AllocateNoiseMemory(
+    P372_API int __stdcall _AllocateNoiseMemory(
         struct NoiseParams *noiseP
     );
-    DLLEXPORT int __stdcall _FreeNoiseMemory(
+    P372_API int __stdcall _FreeNoiseMemory(
         struct NoiseParams *noiseP
     );
-    DLLEXPORT int __stdcall _Noise(
+    P372_API int __stdcall _Noise(
         struct NoiseParams *noiseP,
         int hour,
         double rlng,
         double rlat,
         double frequency
     );
-    DLLEXPORT int __stdcall _ReadFamDud(
+    P372_API int __stdcall _ReadFamDud(
         struct NoiseParams *noiseP,
         const char *DataFilePath,
         int month
     );
-    DLLEXPORT void __stdcall _InitializeNoise(
+    P372_API void __stdcall _InitializeNoise(
         struct NoiseParams *noiseP
     );
-    DLLEXPORT char const *__stdcall _P372CompileTime(void);
-    DLLEXPORT char const *__stdcall _P372Version(void);
-    DLLEXPORT void __stdcall _AtmosphericNoise(
+    P372_API char const *__stdcall _P372CompileTime(void);
+    P372_API char const *__stdcall _P372Version(void);
+    P372_API void __stdcall _AtmosphericNoise(
         struct NoiseParams *noiseP,
         int iutc,
         double rlng,
         double rlat,
         double frequency
     );
-    DLLEXPORT void __stdcall _AtmosphericNoise_LT(
+    P372_API void __stdcall _AtmosphericNoise_LT(
         struct NoiseParams *noiseP,
         struct FamStats *FamS,
         int lrxmt,
@@ -306,7 +255,7 @@ DLLEXPORT int MakeNoise(
         double frequency
     );
     // Note: MakeNoise() requires decimal degrees lat and lng as input.
-    DLLEXPORT int __stdcall _MakeNoise(
+    P372_API int __stdcall _MakeNoise(
         int month,
         int hour,
         double lat,
@@ -320,43 +269,4 @@ DLLEXPORT int MakeNoise(
 #endif
 /* End Prototypes */
 
-/* Operating system preprocessor */
-/*
-	These are declarations, not definitions. Every translation unit that includes
-	this header used to define its own copy of hLib and the dll* pointers, so the
-	link only succeeded because the Makefiles passed -z muldefs, which silently
-	keeps the first definition and discards the rest. The single definition of
-	each now lives in one .c file per built artifact.
-*/
-#ifdef _WIN32
-    extern HINSTANCE hLib;
-    extern cP372Info dllP372Version;
-    extern cP372Info dllP372CompileTime;
-    extern iNoise dllNoise;
-    extern iNoiseMemory dllAllocateNoiseMemory;
-    extern iNoiseMemory dllFreeNoiseMemory;
-    extern iReadFamDud dllReadFamDud;
-    extern vInitializeNoise dllInitializeNoise;
-    extern vAtmosphericNoise dllAtmosphericNoise;
-    extern vAtmosphericNoise_LT dllAtmosphericNoise_LT;
-    extern iMakeNoise dllMakeNoise;
-    extern dFamFreqVariation dllFamFreqVariation;
-#elif defined(__linux__) || defined(__APPLE__)
-    #include <dlfcn.h>
-    extern void *hLib;
-    extern char *(*dllP372Version)();
-    extern char *(*dllP372CompileTime)();
-    extern int (*dllNoise)(struct NoiseParams *, int, double, double, double);
-    extern int (*dllAllocateNoiseMemory)(struct NoiseParams *);
-    extern int (*dllFreeNoiseMemory)(struct NoiseParams *);
-    extern int (*dllReadFamDud)(struct NoiseParams *, const char *, int);
-    extern void (*dllInitializeNoise)(struct NoiseParams *);
-    /* These three were declared only in the _WIN32 block above, so ITURNoise
-       could not be built on Linux or macOS. */
-    extern void (*dllAtmosphericNoise)(struct NoiseParams *, int, double, double, double);
-    extern void (*dllAtmosphericNoise_LT)(struct NoiseParams *, struct FamStats *, int, double, double, double);
-    extern int (*dllMakeNoise)(int, int, double, double, double, double, char *, double *, int);
-    extern double (*dllFamFreqVariation)(struct NoiseParams *, int, double, double);
-#endif
-/* End operating system preprocessor */
 #endif // NOISE_H

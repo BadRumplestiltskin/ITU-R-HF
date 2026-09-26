@@ -565,7 +565,7 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	// Determine the type of receiver antenna file.
 	if(strcmp(ITURHFP.RXAntFilePath, "ISOTROPIC") == 0) { // Isotropic Antenna
 		ITURHFP.rxantfp = NULL;
-		dllIsotropicPatternFunc(&path->A_rx, ITURHFP.RXGOS, ITURHFP.silent);
+		IsotropicPattern(&path->A_rx, ITURHFP.RXGOS, ITURHFP.silent);
 		// Store the name of the antenna to the path structure.
 		strcpy(path->A_rx.Name, "ISOTROPIC");
 	} else {
@@ -590,19 +590,19 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	    }
 
 	    if(antType == 11) {
-		    retval = dllReadType11Func(&path->A_rx, fp, ITURHFP.silent);
+		    retval = ReadType11(&path->A_rx, fp, ITURHFP.silent);
             fclose(fp);
 		    if(retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;
             }
 		} else if(antType == 13) {
-		    retval = dllReadType13Func(&path->A_rx, fp, ITURHFP.RXBearing, ITURHFP.silent);
+		    retval = ReadType13(&path->A_rx, fp, ITURHFP.RXBearing, ITURHFP.silent);
             fclose(fp);
 		    if (retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;
 		    }
         } else if (antType == 14) {
-		    retval = dllReadType14Func(&path->A_rx, fp, ITURHFP.silent);
+		    retval = ReadType14(&path->A_rx, fp, ITURHFP.silent);
             fclose(fp);
 		    if (retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;
@@ -617,7 +617,7 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	// Determine the type of transmitter antenna file.
 	if(strcmp(ITURHFP.TXAntFilePath, "ISOTROPIC") == 0) { // Isotropic Antenna
 		ITURHFP.txantfp = NULL;
-		dllIsotropicPatternFunc(&path->A_tx, ITURHFP.TXGOS, ITURHFP.silent);
+		IsotropicPattern(&path->A_tx, ITURHFP.TXGOS, ITURHFP.silent);
 		// Store the name of the antenna to the path structure.
 		strcpy(path->A_tx.Name, "ISOTROPIC");
 	} else {
@@ -636,19 +636,19 @@ int ReadAntennaPatterns(struct PathData *path, struct ITURHFProp ITURHFP) {
 	    }
 
 	    if(antType == 11) {
-		    retval = dllReadType11Func(&path->A_tx, fp, ITURHFP.silent);
+		    retval = ReadType11(&path->A_tx, fp, ITURHFP.silent);
             fclose(fp);
 		    if(retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;
             }
 		} else if(antType == 13) {
-		    retval = dllReadType13Func(&path->A_tx, fp, ITURHFP.TXBearing, ITURHFP.silent);
+		    retval = ReadType13(&path->A_tx, fp, ITURHFP.TXBearing, ITURHFP.silent);
             fclose(fp);
 		    if(retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;
             }
 		} else if (antType == 14) {
-		    retval = dllReadType14Func(&path->A_tx, fp, ITURHFP.silent);
+		    retval = ReadType14(&path->A_tx, fp, ITURHFP.silent);
             fclose(fp);
 		    if (retval != RTN_READANTENNAPATTERNSOK) {
 				    return retval;

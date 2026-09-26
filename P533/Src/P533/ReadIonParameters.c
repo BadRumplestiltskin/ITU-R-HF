@@ -271,7 +271,7 @@ static void FreeIonMap(float ****m) {
 		SUBROUTINES
 			AllocIonMap(), FreeIonMap(), ReadIonParametersBin()
 */
-DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent,
+P533_API int IonMapGet(int month, char *DataFilePath, int silent,
                         float *****foF2, float *****M3kF2) {
 
 	int retval;
@@ -337,7 +337,7 @@ DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent,
 		SUBROUTINES
 			FreeIonMap()
 */
-DLLEXPORT void IonMapFree(void) {
+P533_API void IonMapFree(void) {
 
 	int m;
 

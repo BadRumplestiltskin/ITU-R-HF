@@ -1,15 +1,20 @@
 #ifndef P533_H
 #define P533_H
 
-// Operating system preprocessor directives *********************************************************
-#ifdef _WIN32
-	#define DLLEXPORT __declspec(dllexport)
-#endif
-#ifdef __linux__
-	#define DLLEXPORT
-#endif
-#ifdef __APPLE__
-	#define DLLEXPORT
+/*
+	P533_API marks the functions libp533 exports; see P372_API in Noise.h for
+	how it works. The library is built with P533_BUILD defined.
+*/
+#if defined(_WIN32)
+	#ifdef P533_BUILD
+		#define P533_API __declspec(dllexport)
+	#else
+		#define P533_API __declspec(dllimport)
+	#endif
+#elif defined(__GNUC__)
+	#define P533_API __attribute__((visibility("default")))
+#else
+	#define P533_API
 #endif
 
 // External Preprocessors Dependancies
@@ -508,59 +513,57 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN);
 // Initialize.c Prototypes
 //	Only three of the five control points are determined in InitializePath() T + 1000, M and R - 1000.
 //	The control points T + d0/2 and R - d0/2  are determined in MUFBasic()
-// Exported: CircuitCSV binds these to run the MUF chain without a full P533().
-// Without DLLEXPORT they are absent from P533.dll and the bind fails on Windows.
-DLLEXPORT void InitializePath(struct PathData *path);
+// Exported: CircuitCSV calls these to run the MUF chain without a full P533().
+P533_API void InitializePath(struct PathData *path);
 
 // P533.c Prototype for the P533 propagation model engine
 //
-// THREAD SAFETY: the library is not thread safe. It holds three process-wide
-// caches with no locking - the P372 entry points (LoadP372(), reached from
-// AllocatePathMemory()), the ionospheric maps (IonMapGet()/IonMapFree()) and
+// THREAD SAFETY: the library is not thread safe. It holds two process-wide
+// caches with no locking - the ionospheric maps (IonMapGet()/IonMapFree()) and
 // libp372's Fam/Dud coefficients (ReadFamDud()). Callers must serialise every
 // call into the library: AllocatePathMemory(), IonMapGet(), ReadP1239(),
 // P533() and IonMapFree() must not run concurrently with one another. Note
 // that concurrent P533() calls on separate PathData structs are not safe
 // either, since each reads the shared caches that another may be refilling.
-DLLEXPORT int P533(struct PathData *path);
-// Resolves the P372 entry points once per process; see P533.c.
-int LoadP372(void);
+P533_API int P533(struct PathData *path);
 // Joins a data directory and a file name into a bounded buffer; see P533.c.
-DLLEXPORT int BuildDataPath(char *out, size_t n, const char *dir, const char *file);
+P533_API int BuildDataPath(char *out, size_t n, const char *dir, const char *file);
 // Returns the version string P533VER.
-DLLEXPORT char const * P533Version(void);
+P533_API char const * P533Version(void);
+P533_API char const * P533CompileTime(void);
 
 // Geometry.c Prototypes
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
 double LocalMeanTime(struct ControlPt CP);
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there);
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
-DLLEXPORT double Bearing(struct Location here, struct Location there, int direction);
+P533_API double GreatCircleDistance(struct Location here, struct Location there);
+P533_API void GeomagneticCoords(struct Location here, struct Location *there);
+P533_API double Bearing(struct Location here, struct Location there, int direction);
 
 // ValidataPath.c Prototypes
-DLLEXPORT int ValidatePath(struct PathData *path);
+P533_API int ValidatePath(struct PathData *path);
 
 // magfit.c Prototype
 void magfit(struct ControlPt *here, double height);
 
 // MUFBasic Prototype
 //	Note MUFBasic() determines the control points T + d0/2 and R - d0/2
-DLLEXPORT void MUFBasic(struct PathData *path);
+P533_API void MUFBasic(struct PathData *path);
 double CalcCd(double d, double dmax);
 double CalcF2DMUF(struct ControlPt *CP, double distance, double dmax, double B);
 double Calcdmax(struct ControlPt *CP);
 double CalcB(struct ControlPt *CP);
 
 // MUFVariability.c Prototype
-DLLEXPORT void MUFVariability(struct PathData *path);
+P533_API void MUFVariability(struct PathData *path);
 double FindfoF2var(struct PathData path, double hour, double lat, int decile);
 
 // MUFOperational.c Prototype
-DLLEXPORT void MUFOperational(struct PathData *path);
+P533_API void MUFOperational(struct PathData *path);
 
 // ELayerScreeningFrequency.c Prototype
 void ELayerScreeningFrequency(struct PathData *path);
-double ElevationAngle(double dh, double hr);
+// Exported: CircuitCSV derives the group range of the dominant mode with it.
+P533_API double ElevationAngle(double dh, double hr);
 double IncidenceAngle(double deltaf, double hr);
 
 // MedianSkywaveFieldStrengthShort.c Prototype
@@ -584,24 +587,24 @@ void CircuitReliability(struct PathData *path);
 // PathMemory.c prototype
 // Allocates the ionospheric maps, foF2 variability array and noise arrays of a path
 // (RTN_ALLOCATEP533OK on success); FreePathMemory() releases them (RTN_PATHFREED).
-DLLEXPORT int AllocatePathMemory(struct PathData *path);
-DLLEXPORT int FreePathMemory(struct PathData *path);
+P533_API int AllocatePathMemory(struct PathData *path);
+P533_API int FreePathMemory(struct PathData *path);
 // Allocates an antenna pattern of freqn x 360 x 91 (RTN_ALLOCATEP533OK or RTN_ERRALLOCATEANT).
-DLLEXPORT int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen);
+P533_API int AllocateAntennaMemory(struct Antenna *ant, int freqn, int azin, int elen);
 
 // InputDump. c Prototype
-DLLEXPORT int InputDump(struct PathData *path);
+P533_API int InputDump(struct PathData *path);
 
 //Antenna file AND COEFFICIENT routines
 // ReadType11/13/14 read VOACAP antenna files from an open FILE (RTN_READANTENNAPATTERNSOK on
 // success); bearing is in radians. IsotropicPattern() sets a constant gain G (dBi).
 // ReadIonParametersBin()/ReadIonParametersTxt() read the monthly ionos MM .bin/.txt maps
 // (RTN_READIONPARAOK); month is the 0-based index. See ReadType13.c and ReadIonParameters.c.
-DLLEXPORT int ReadType11(struct Antenna *Ant, FILE *fp, int silent);
-DLLEXPORT int ReadType13(struct Antenna *Ant, FILE *fp, double bearing, int silent);
-DLLEXPORT int ReadType14(struct Antenna *Ant, FILE *fp, int silent);
-DLLEXPORT void IsotropicPattern(struct Antenna *Ant, double G, int silent);
-DLLEXPORT int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
+P533_API int ReadType11(struct Antenna *Ant, FILE *fp, int silent);
+P533_API int ReadType13(struct Antenna *Ant, FILE *fp, double bearing, int silent);
+P533_API int ReadType14(struct Antenna *Ant, FILE *fp, int silent);
+P533_API void IsotropicPattern(struct Antenna *Ant, double G, int silent);
+P533_API int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
 // Ionospheric map cache: one parsed copy per month, shared by every circuit.
 // The maps belong to the cache; release them with IonMapFree(), not free().
 // Not thread safe: see THREAD SAFETY above P533().
@@ -609,19 +612,19 @@ DLLEXPORT int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, c
 #define IONMAPLNG	241		// longitudes at 1.5-degree increments
 #define IONMAPLAT	121		// latitudes at 1.5-degree increments
 #define IONMAPSSN	2		// sunspot numbers, high and low
-DLLEXPORT int IonMapGet(int month, char *DataFilePath, int silent, float *****foF2, float *****M3kF2);
-DLLEXPORT void IonMapFree(void);
+P533_API int IonMapGet(int month, char *DataFilePath, int silent, float *****foF2, float *****M3kF2);
+P533_API void IonMapFree(void);
 // Releases only path->foF2/M3kF2, so the path can instead point at the cache.
-DLLEXPORT void FreeIonMaps(struct PathData *path);
-DLLEXPORT int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int silent) ;
+P533_API void FreeIonMaps(struct PathData *path);
+P533_API int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int silent) ;
 // Reads the P.1239 foF2 decile factors into path->foF2var (RTN_READP1239OK).
-DLLEXPORT int ReadP1239(struct PathData *path, const char * DataFilePath);
+P533_API int ReadP1239(struct PathData *path, const char * DataFilePath);
 // Sets one gain (dBi) at a whole-degree azimuth and elevation of the tx (TXorRX == 0) or rx pattern.
-DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value);
+P533_API void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azimuth, int elevation, double value);
 
 //Testing Routines
 // Returns sizeof(struct PathData), for checking a foreign-language copy of the layout.
-DLLEXPORT int sizeofPathDataStruct(void);
+P533_API int sizeofPathDataStruct(void);
 
 
 // End Prototypes *********************************************************************************

@@ -1,84 +1,6 @@
 #ifndef ITURHFPROP_H
 #define ITURHFPROP_H
 
-// Operating system preprocessor ****************************************************************
-#ifdef _WIN32
-	#include <Windows.h>
-
-	// P533.DLL typedefs ***************************************************
-	// P533 functions
-	typedef const char * (__cdecl *cP533Info)(void);
-	typedef int(__cdecl * iP533)(struct PathData * path);
-	typedef int(__cdecl * iPathMemory)(struct PathData * path);
-	typedef int(__cdecl* iReadType11Func)(struct Antenna* Ant, FILE* DataFilePath, int silent);
-	typedef int(__cdecl* iReadType13Func)(struct Antenna* Ant, FILE* DataFilePath, double bearing, int silent);
-	typedef int(__cdecl* iReadType14Func)(struct Antenna* Ant, FILE* DataFilePath, int silent);
-	typedef void(__cdecl * vIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
-	typedef int(__cdecl * iReadFamDudFunc)(struct PathData *path, char * DataFilePath);
-	typedef int(__cdecl * iReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
-	typedef int(__cdecl * iReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
-	typedef int(__cdecl * iReadP1239Func)(struct PathData *path, char * DataFilePath);
-	typedef int(__cdecl * iInputDump)(struct PathData *path);
-
-	// Geometry functions
-	// GreatCirclePoint()
-	typedef void(__cdecl * vGreatCirclePoint)(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
-	// GreatCircleDistance()
-	typedef double(__cdecl * dGreatCircleDistance)(struct Location here, struct Location there);
-	// Bearing()
-	typedef double(__cdecl * dBearing)(struct Location here, struct Location there, int direction);
-	// GeomagneticCoords()
-	typedef void(__cdecl * vGeomagneticCoords)(struct Location here, struct Location *there);
-
-#endif
-// End P533.dll typedefs ************************************************
-
-/*
-	Declarations, not definitions. Every translation unit that includes this
-	header used to define its own copy of hLib and the dll* pointers, so all
-	five ITURHFProp objects emitted them and the link succeeded only because
-	-z muldefs discarded the duplicates, or because a toolchain still defaulted
-	to common symbols. Under -fno-common -- the default for GCC 10 and Clang 11
-	onwards -- that link fails with 16 duplicate symbols. The single definition
-	of each now lives in ITURHFProp.c.
-*/
-#ifdef _WIN32
-	extern HINSTANCE hLib;
-	extern cP533Info dllP533Version;
-	extern cP533Info dllP533CompileTime;
-	extern iP533 dllP533;
-	extern iPathMemory dllAllocatePathMemory;
-	extern iPathMemory dllFreePathMemory;
-	extern iPathMemory dllAllocateAntennaMemory;
-	extern dBearing dllBearing;
-	extern iReadType11Func dllReadType11Func;
-	extern iReadType13Func dllReadType13Func;
-	extern iReadType14Func dllReadType14Func;
-	extern vIsotropicPatternFunc dllIsotropicPatternFunc;
-	extern iReadIonParametersBinFunc dllReadIonParametersBinFunc;
-	extern iReadIonParametersTxtFunc dllReadIonParametersTxtFunc;
-	extern iReadP1239Func dllReadP1239Func;
-#elif __linux__ || __APPLE__
-	#include <dlfcn.h>
-	extern void * hLib;
-	extern char * (*dllP533Version)();
-	extern char * (*dllP533CompileTime)();
-	extern int (*dllP533)(struct PathData *);
-	extern int (*dllAllocatePathMemory)(struct PathData *);
-	extern int (*dllFreePathMemory)(struct PathData *);
-	extern int (*dllAllocateAntennaMemory)(struct Antenna *Ant, int freqn, int azin, int elen);
-	extern double (*dllBearing)(struct Location,struct Location,int direction);
-	extern int  (*dllReadType11Func)(struct Antenna *Ant, FILE *fp, int silent);
-	extern int  (*dllReadType13Func)(struct Antenna *Ant, FILE *fp, double bearing, int silent);
-	extern int  (*dllReadType14Func)(struct Antenna *Ant, FILE *fp, int silent);
-	extern void (*dllIsotropicPatternFunc)(struct Antenna *Ant, double G, int silent);
-	extern int  (*dllReadIonParametersTxtFunc)(struct PathData *path, char DataFilePath[256], int silent);
-        extern int  (*dllReadIonParametersBinFunc)(int month, float ****foF2, float ****M3kF2, char DataFilePath[256], int silent);
-	extern int  (*dllReadP1239Func)(struct PathData *path, const char * DataFilePath);
-#endif
-
-// End operating system preprocessor **************************************************************
-
 // ITURHFProp **************************************************************************************
 
 // #defines
@@ -153,7 +75,9 @@
 // Return ERROR >= 50 and < 100 (P533's own errors start at 100)
 
 #define RTN_ERROPENOUTPUTFILE		50 // ERROR: Can Not Open Output File
-#define RTN_ERRP533DLL				51 // ERROR: Can Not Find P533.DLL
+// 51 was RTN_ERRP533DLL (P533 library not found). It is no longer returned: the
+// program is linked against the library, so the system loader refuses to start
+// it without one. The number is kept out of use.
 #define	RTN_ERRCANTOPENRXANTFILE	52 // ERROR: Can Not Open Recieve Antenna File
 #define	RTN_ERRCANTOPENTXANTFILE	53 // ERROR: Can Not Open Transmit Antenna File
 #define RTN_ERRANTENNAORN			54 // ERROR: Antenna Orientation

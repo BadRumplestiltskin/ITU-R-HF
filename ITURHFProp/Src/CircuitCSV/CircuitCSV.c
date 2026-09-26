@@ -20,7 +20,6 @@
 #include "Common.h"
 #include "P533.h"
 #include "ITURHFProp.h"
-#include "LoadLib.h"
 #include "CircuitCSV.h"
 // End local includes
 
@@ -49,33 +48,8 @@
 			columns. See PrintHeader() for the column list and the units.
 
 		SUBROUTINES
-			LoadP533(), LoadAntennas(), ReadCircuit(), RunCircuit(), WriteRow()
+			LoadAntennas(), ReadCircuit(), RunCircuit(), WriteRow()
 */
-
-// Library loading goes through the shared shim in LoadLib.h.
-static HFLIBHANDLE P533Lib = NULL;
-static HFLIBHANDLE P372Lib = NULL;
-
-static int    (*csvP533)(struct PathData *);
-static int    (*csvAllocatePathMemory)(struct PathData *);
-static int    (*csvFreePathMemory)(struct PathData *);
-static double (*csvBearing)(struct Location, struct Location, int);
-static int    (*csvReadIonParametersBin)(int, float ****, float ****, char *, int);
-static int    (*csvReadP1239)(struct PathData *, const char *);
-static int    (*csvReadType13)(struct Antenna *, FILE *, double, int);
-static void   (*csvIsotropicPattern)(struct Antenna *, double, int);
-static int    (*csvReadType11)(struct Antenna *, FILE *, int);
-static int    (*csvReadType14)(struct Antenna *, FILE *, int);
-static double (*csvElevationAngle)(double, double);
-static int    (*csvReadFamDud)(struct NoiseParams *, const char *, int);
-static int    (*csvIonMapGet)(int, char *, int, float *****, float *****);
-static void   (*csvIonMapFree)(void);
-static void   (*csvFreeIonMaps)(struct PathData *);
-static int    (*csvValidatePath)(struct PathData *);
-static void   (*csvInitializePath)(struct PathData *);
-static void   (*csvMUFBasic)(struct PathData *);
-static void   (*csvMUFVariability)(struct PathData *);
-static void   (*csvMUFOperational)(struct PathData *);
 
 // The three characteristic frequencies each circuit is evaluated at.
 #define FRQBUF	0	// basic MUF of the dominant mode
@@ -129,71 +103,6 @@ struct AntennaMaster {
 static struct AntennaMaster TxMaster, RxMaster;
 static int  SaveAntennaMaster(struct AntennaMaster *m, struct Antenna *ant);
 static void OrientAntenna(struct Antenna *ant, struct AntennaMaster *m, double bearing);
-
-/*
-	LoadP533() - Resolves the entry points of the P533 and P372 libraries.
-
-		Done once, before any circuit is read.
-
-		INPUT
-			None
-
-		OUTPUT
-			returns RTN_CSVOK, or an error
-
-		SUBROUTINES
-			None
-*/
-static int LoadP533(void) {
-
-	// One row per entry point; the shim binds them and names the first missing.
-	static const struct hfSymbol p533syms[] = {
-		{ "P533",                 (void **)&csvP533 },
-		{ "AllocatePathMemory",   (void **)&csvAllocatePathMemory },
-		{ "FreePathMemory",       (void **)&csvFreePathMemory },
-		{ "Bearing",              (void **)&csvBearing },
-		{ "ReadIonParametersBin", (void **)&csvReadIonParametersBin },
-		{ "ReadP1239",            (void **)&csvReadP1239 },
-		{ "ReadType13",           (void **)&csvReadType13 },
-		{ "ReadType11",           (void **)&csvReadType11 },
-		{ "ReadType14",           (void **)&csvReadType14 },
-		{ "ElevationAngle",       (void **)&csvElevationAngle },
-		{ "IsotropicPattern",     (void **)&csvIsotropicPattern },
-		{ "IonMapGet",            (void **)&csvIonMapGet },
-		{ "IonMapFree",           (void **)&csvIonMapFree },
-		{ "FreeIonMaps",          (void **)&csvFreeIonMaps },
-		{ "ValidatePath",         (void **)&csvValidatePath },
-		{ "InitializePath",       (void **)&csvInitializePath },
-		{ "MUFBasic",             (void **)&csvMUFBasic },
-		{ "MUFVariability",       (void **)&csvMUFVariability },
-		{ "MUFOperational",       (void **)&csvMUFOperational },
-	};
-	static const struct hfSymbol p372syms[] = {
-		{ "ReadFamDud",           (void **)&csvReadFamDud },
-	};
-
-	P533Lib = hfLibOpen(HFLIB_P533);
-	if (P533Lib == NULL) {
-		printf("CircuitCSV: Error %d Can't load %s (%s)\n",
-			RTN_ERRCSVP533LIB, HFLIB_P533, hfLibError());
-		return RTN_ERRCSVP533LIB;
-	}
-
-	P372Lib = hfLibOpen(HFLIB_P372);
-	if (P372Lib == NULL) {
-		printf("CircuitCSV: Error %d Can't load %s (%s)\n",
-			RTN_ERRCSVP372LIB, HFLIB_P372, hfLibError());
-		return RTN_ERRCSVP372LIB;
-	}
-
-	if (hfLibBind(P533Lib, p533syms, (int)(sizeof(p533syms)/sizeof(p533syms[0])), "CircuitCSV") == 0 ||
-		hfLibBind(P372Lib, p372syms, (int)(sizeof(p372syms)/sizeof(p372syms[0])), "CircuitCSV") == 0) {
-		return RTN_ERRCSVP533LIB;
-	}
-
-	return RTN_CSVOK;
-
-}
 
 /*
 	Trim() - Removes leading and trailing white space and any quotes in place.
@@ -839,7 +748,7 @@ static int ParseScan(const char *spec) {
 			r->scanned and the summary fields; one -S row per frequency
 
 		SUBROUTINES
-			SetPath(), csvP533(), DominantMode()
+			SetPath(), P533(), DominantMode()
 */
 static void ScanCircuit(struct PathData *path, struct Circuit *c, struct Result *r, int number) {
 
@@ -856,7 +765,7 @@ static void ScanCircuit(struct PathData *path, struct Circuit *c, struct Result 
 		int ok;
 
 		SetPath(path, c, f);
-		ok = (csvP533(path) == RTN_P533OK);
+		ok = (P533(path) == RTN_P533OK);
 
 		if (ok) {
 			if (r->luf == 0.0 && path->SNR >= path->SNRr) r->luf = f;
@@ -908,7 +817,7 @@ static void ScanCircuit(struct PathData *path, struct Circuit *c, struct Result 
 			returns RTN_CSVOK, or the engine's error
 
 		SUBROUTINES
-			SetPath(), DominantMode(), csvP533()
+			SetPath(), DominantMode(), P533()
 */
 static double FreqMargin = 1.0;
 
@@ -931,17 +840,17 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 	*/
 	SetPath(path, c, 10.0);
 
-	retval = csvValidatePath(path);
+	retval = ValidatePath(path);
 	if (retval != RTN_VALIDDATAOK) return retval;
 
-	csvInitializePath(path);
-	csvMUFBasic(path);
-	csvMUFVariability(path);
-	csvMUFOperational(path);
+	InitializePath(path);
+	MUFBasic(path);
+	MUFVariability(path);
+	MUFOperational(path);
 
 	r->dist      = path->distance;
-	r->txBearing = csvBearing(path->L_tx, path->L_rx, path->SorL) * R2D;
-	r->rxBearing = csvBearing(path->L_rx, path->L_tx, path->SorL) * R2D;
+	r->txBearing = Bearing(path->L_tx, path->L_rx, path->SorL) * R2D;
+	r->rxBearing = Bearing(path->L_rx, path->L_tx, path->SorL) * R2D;
 
 	// Point each antenna along this circuit's great circle, as ITURHFProp's
 	// AntennaOrientation TX2RX does, before any gain is evaluated.
@@ -995,7 +904,7 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		r->status = "LONG_PATH";
 
 		SetPath(path, c, 10.0);
-		retval = csvP533(path);
+		retval = P533(path);
 		if (retval != RTN_P533OK) return retval;
 
 		/*
@@ -1017,11 +926,11 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 
 		if (r->fM >= 1.0 && r->fM <= 30.0) {
 			SetPath(path, c, r->fM * FreqMargin);
-			if (csvP533(path) == RTN_P533OK) { r->snfM = path->SNR; r->fMok = TRUE; }
+			if (P533(path) == RTN_P533OK) { r->snfM = path->SNR; r->fMok = TRUE; }
 		}
 		if (r->fL >= 1.0 && r->fL <= 30.0) {
 			SetPath(path, c, r->fL * FreqMargin);
-			if (csvP533(path) == RTN_P533OK) { r->snfL = path->SNR; r->fLok = TRUE; }
+			if (P533(path) == RTN_P533OK) { r->snfL = path->SNR; r->fLok = TRUE; }
 		}
 
 		r->valid = TRUE;
@@ -1060,7 +969,7 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 		// that step is gone, so the default of 1.0 is now the right choice and
 		// the option remains only for probing below a MUF deliberately.
 		SetPath(path, c, f);
-		retval = csvP533(path);
+		retval = P533(path);
 		if (retval != RTN_P533OK) return retval;
 
 		r->sn[n]   = path->SNR;
@@ -1099,7 +1008,7 @@ static int RunCircuit(struct PathData *path, struct Circuit *c, struct Result *r
 					*/
 					double dh    = path->distance / hops;
 					double hr    = (layer == 'E') ? 110.0 : path->DMptr->hr;
-					double delta = csvElevationAngle(dh, hr);
+					double delta = ElevationAngle(dh, hr);
 					double psi   = dh / (2.0*R0);
 					double ptick = 2.0*R0*(sin(psi)/cos(delta - psi));
 					r->grange = hops * ptick;
@@ -1432,7 +1341,7 @@ static void OrientAntenna(struct Antenna *ant, struct AntennaMaster *m, double b
 			returns RTN_CSVOK, or RTN_ERRCSVANTENNA
 
 		SUBROUTINES
-			csvIsotropicPattern(), csvReadType13()
+			IsotropicPattern(), ReadType13()
 */
 static int LoadAntenna(struct Antenna *ant, const char *spec, double gos, int silent) {
 
@@ -1440,7 +1349,7 @@ static int LoadAntenna(struct Antenna *ant, const char *spec, double gos, int si
 	int retval;
 
 	if (spec == NULL || strcmp(spec, "ISOTROPIC") == 0) {
-		csvIsotropicPattern(ant, gos, silent);
+		IsotropicPattern(ant, gos, silent);
 		return RTN_CSVOK;
 	}
 
@@ -1473,9 +1382,9 @@ static int LoadAntenna(struct Antenna *ant, const char *spec, double gos, int si
 
 		// A bearing of 0.0 loads the pattern unrotated; OrientAntenna() points
 		// it along each circuit's own great circle.
-		if (antType == 11)      retval = csvReadType11(ant, fp, silent);
-		else if (antType == 13) retval = csvReadType13(ant, fp, 0.0, silent);
-		else if (antType == 14) retval = csvReadType14(ant, fp, silent);
+		if (antType == 11)      retval = ReadType11(ant, fp, silent);
+		else if (antType == 13) retval = ReadType13(ant, fp, 0.0, silent);
+		else if (antType == 14) retval = ReadType14(ant, fp, silent);
 		else {
 			printf("CircuitCSV: Error %d Unsupported antenna type %d in %s\n",
 				RTN_ERRCSVANTENNA, antType, spec);
@@ -1642,7 +1551,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 
 				float ****foF2, ****M3kF2;
 
-				retval = csvIonMapGet(c.month - 1, dp, silent, &foF2, &M3kF2);
+				retval = IonMapGet(c.month - 1, dp, silent, &foF2, &M3kF2);
 				if (retval != RTN_READIONPARAOK) {
 					printf("CircuitCSV: Error %d from IonMapGet for month %d\n", retval, c.month);
 					free(line);
@@ -1652,7 +1561,7 @@ static int ProcessRows(FILE *fin, FILE *fout, struct PathData *path, int *col, c
 				path->foF2  = foF2;
 				path->M3kF2 = M3kF2;
 
-				retval = csvReadFamDud(&path->noiseP, dp, c.month - 1);
+				retval = ReadFamDud(&path->noiseP, dp, c.month - 1);
 				if (retval != RTN_READFAMDUDOK) {
 					printf("CircuitCSV: Error %d from ReadFamDud for month %d\n", retval, c.month);
 					free(line);
@@ -2091,15 +2000,12 @@ int main(int argc, char *argv[]) {
 		return RTN_ERRCSVARGS;
 	}
 
-	retval = LoadP533();
-	if (retval != RTN_CSVOK) return retval;
-
 	// PathData is large and P533() reads fields this program does not set.
 	// Clear it before AllocatePathMemory() fills in the pointers, so that no
 	// result depends on whatever was on the stack.
 	memset(&path, 0, sizeof(path));
 
-	retval = csvAllocatePathMemory(&path);
+	retval = AllocatePathMemory(&path);
 	if (retval != RTN_ALLOCATEP533OK) {
 		printf("CircuitCSV: Error %d from AllocatePathMemory\n", retval);
 		return retval;
@@ -2117,9 +2023,9 @@ int main(int argc, char *argv[]) {
 
 	// The path's own 10.7 MB maps are released immediately: from here on it
 	// borrows the library's month cache instead, so nothing is duplicated.
-	csvFreeIonMaps(&path);
+	FreeIonMaps(&path);
 
-	retval = csvReadP1239(&path, dpath);
+	retval = ReadP1239(&path, dpath);
 	if (retval != RTN_READP1239OK) {
 		printf("CircuitCSV: Error %d from ReadP1239\n", retval);
 		return retval;
@@ -2228,10 +2134,8 @@ int main(int argc, char *argv[]) {
 	// not see them; it skips NULL.
 	path.foF2  = NULL;
 	path.M3kF2 = NULL;
-	csvFreePathMemory(&path);
-	csvIonMapFree();
-	if (P533Lib != NULL) hfLibClose(P533Lib);
-	if (P372Lib != NULL) hfLibClose(P372Lib);
+	FreePathMemory(&path);
+	IonMapFree();
 
 	return retval;
 

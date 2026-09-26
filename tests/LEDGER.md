@@ -117,6 +117,27 @@ suites; then CI green on all four jobs.
 - sprintf in ReadIonParameters.c, MakeNoise.c, Noise.c, DumpPathData.c,
   ReadInputConfiguration.c, Report.c: deprecated on macOS; move to snprintf.
 
+## L1 Libraries bound at run time by name - medium - FIXED
+Found 2026-09-26, outside the U units. Every program (and libp533 itself)
+opened libp533/libp372 with LoadLibrary/dlopen and looked each function up by
+name, through function-pointer typedefs copied into four places. The compiler
+checked none of the calls, and a missing export surfaced only when a program
+ran - which CI never did on Windows:
+- CircuitCSV looked up ElevationAngle, which P533.dll did not export, so it
+  could not start on Windows.
+- The x64 builds name their DLLs P372_x64.dll / P533_x64.dll, but the loaders
+  asked for P372.dll / P533.dll.
+- libp533 and libp372 exported every internal function, including the dll*
+  pointer variables, which also existed in each program.
+Now: the programs and libp533 are linked against the libraries they call
+(ProjectReference on Windows); P372_API / P533_API export exactly the header
+API (dllimport for callers, -fvisibility=hidden elsewhere); installed programs
+find their libraries through an rpath of ../lib; -z now makes a missing or
+mismatched library stop a program at start-up. Codes 51, 206, 1006 and 1007
+are retired. The Windows CI job now runs each program. Cases: the four
+*-library-* cases rewritten, prop-lib-p533-missing, csv-lib-p533-missing,
+lib-installed-layout.
+
 ## Upstream issues
 Open issues on ITU-R-Study-Group-3/ITU-R-HF, checked against this fork on
 2026-09-25. Recorded here only; nothing is posted upstream.

@@ -140,7 +140,7 @@ int MakeNoise(
     );
 
     // Read in the atmospheric coefficients for the particular month.
-    // The subroutine dllReadFamDud() is from P372.dll
+    // Read the Fam and Dud coefficients
     retval = ReadFamDud(
         &noiseP,
         datafilepath,
