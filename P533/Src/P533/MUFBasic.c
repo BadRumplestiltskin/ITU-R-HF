@@ -454,10 +454,11 @@ double CalcF2DMUF(struct ControlPt *CP, double distance, double dmax, double B) 
 	 			return the F2 layer MUF (MHz)
 
 			NOTES
-				If distance > dmax, Cd is evaluated at dmax, but the gyrofrequency term still
-				uses distance/dmax and so becomes negative. Section 3.5.1.2 callers pass
-				distance = dmax; in section 3.5.2.2 the Mn/Mn0 hops D/n are compared with the
-				recalculated (unlimited) dmax.
+				The text does not say how equation (3) applies when d > dmax, which can
+				happen in section 3.5.2.2, where the Mn/Mn0 hops D/n are compared with the
+				dmax recalculated at the control point. By the owner's ruling d is limited
+				to dmax in both terms, so the gyrofrequency term is never negative.
+				Section 3.5.1.2 callers pass distance = dmax.
 	 
 	 		SUBROUTINES
 				CalcCd()
@@ -469,22 +470,17 @@ double CalcF2DMUF(struct ControlPt *CP, double distance, double dmax, double B) 
 	double Cd;	// Cd at D
 	double F2DMUF;
 
-	// If the distance is less than dmax use the distance
-	if(distance <= dmax) {
-		d = distance;
-	}
-	else {
-		d = dmax;
-	}
+	// Limit the hop distance to dmax for both terms of equation (3) (owner's ruling)
+	const double dh = (distance <= dmax) ? distance : dmax;
 
     // ITU-R P.533-12 Eqn (4)
-	Cd = CalcCd(d, dmax);
+	Cd = CalcCd(dh, dmax);
 
 	d = 3000.0; // From ITU-R P.533-12 "C sub 3000 : value of Cd for D = 3 000 km" 
 
 	C3k = CalcCd(d, dmax);
 
-	F2DMUF = (1.0 + (Cd/C3k)*(B - 1.0))*CP->foF2 + (CP->fH[HR300km]/2.0)*(1.0 - (distance/dmax));
+	F2DMUF = (1.0 + (Cd/C3k)*(B - 1.0))*CP->foF2 + (CP->fH[HR300km]/2.0)*(1.0 - (dh/dmax));
 
 	return F2DMUF;
  

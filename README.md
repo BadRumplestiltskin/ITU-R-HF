@@ -477,7 +477,6 @@ struct PathData {
     double ptick;          // Slant range
     double dmax;           // d sub max (km) determined as a function of the midpoint of the path and other parameter
 
-    double B;              // Intermediate value when calculating dmax also determined at midpoint of the path
 
     double ele;            // For paths that are longer than 9000 km this is the composite elevation angle MUFs
 
@@ -632,12 +631,6 @@ struct Mode {
     double Grw;         // Receive antenna gain (dBi)
     double tau;         // Time delay
     in MC;              // Mode Considered Flag (TRUE/FALSE)
-};
-
-struct Beam {
-    double azm;          // Azimuth
-    double ele;          // Elevation angle
-    double G;            // Gain for the azimuth and elevation
 };
 
 struct Antenna {
