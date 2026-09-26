@@ -19,7 +19,7 @@ D40); where an item below has a number there, it is given.
 | P.842-5 Table 2 note (1) on short paths (D23) | "... between control points located 1 000 km from each end of the path, reaches a geomagnetic latitude of 60 deg or more ..." | A path of 2000 km or less has no such segment and takes the < 60 deg values. | unchanged (the code already did this) |
 | Long-path zenith angle, eq. (33)-(35) (D20) | delta "can be approximated" by Table 4; eta "can be approximated" by eq. (35) | Full solar geometry. | unchanged |
 | Long-path local noon, eq. (32) | "value of fBM for a time corresponding to local noon" | The whole UTC hour nearest 12 - lng/15, where eq. (35) puts the hour angle at zero. | 86c022c |
-| Eq. (3) for a hop longer than dmax (3.5.1.1, 3.5.2.2; MATLAB D41) | silent: 3.5.2.2 recalculates dmax at each control point for Mn/Mn0, so the hop D/n can exceed it | d is limited to dmax in both terms of eq. (3); the fH term is never negative. Was: Cd at min(d, dmax), fH term at d. | this change |
+| Eq. (3) for a hop longer than dmax (3.5.1.1, 3.5.2.2; MATLAB D41) | silent: 3.5.2.2 recalculates dmax at each control point for Mn/Mn0, so the hop D/n can exceed it | d is limited to dmax in both terms of eq. (3); the fH term is never negative. Was: Cd at min(d, dmax), fH term at d. | 457d411 |
 | Long-path current-hour fL | "the current hour fL value is selected" | fL[path->hour], the hour the rest of the engine computes for (was hour + 1). | 86c022c |
 
 ## 2. Corrected to the text, no ruling needed
