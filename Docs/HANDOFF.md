@@ -60,6 +60,10 @@ chmod +x .git/hooks/pre-push
 
 ## Open, in order
 
+0. **Pull requests awaiting the owner's merge** (opened 2026-09-26):
+   ITU-R-HF #11 (the rulings, reference outputs and these notes) and
+   p533-matlab #7 (the same rulings, the man-made noise fix and the
+   comparison tools). Check their state first; merge #11 only on green CI.
 1. **P.372-17 text.** The owner said it was attached on 2026-09-26, but no
    P.372 file reached the session; ask for it again. With it, settle:
    - the decile rule: Noise.c replaces the log-normal sigma by
