@@ -13,12 +13,21 @@ P533_API int InputDump(struct PathData *path) {
 	/* 
 	 
 	  InputDump() - Dumps the path passed in so that it can be examined for proper passing.
-	  
-	 		INPUT 
-	 			struct PathData *path
-	 
+			A debugging aid only; it implements nothing from the Recommendations.
+
+	 		INPUT
+	 			struct PathData *path - must be fully allocated: the antenna patterns, the
+					foF2/M3kF2 maps (hour 23, lng index 240, lat index 120), foF2var and the
+					noise coefficient arrays in path->noiseP are all dereferenced, so calling
+					it before they are loaded is undefined behaviour
+
 	 		OUTPUT
 	 			prints the path data for trouble shooting the use of the DLL
+				(to stdout: addresses and contents of the input fields, sample entries of
+				each array, and the atmospheric noise coefficient tables fakabp/fakp for the
+				six time blocks, whose layout the printout attributes to NTIA Report 85-173)
+				returns RTN_INPUTDUMPOK (13); there is no error return
+				Does not modify *path.
 	 
 			SUBROUTINES
 				None

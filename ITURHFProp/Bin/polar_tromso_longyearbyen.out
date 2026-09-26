@@ -3,7 +3,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 12:03:44 2026
+     Analysis Prepared  Fri Sep 25 21:18:02 2026
 
 ---------------------------------------------------------------------------
 
@@ -20,11 +20,11 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Tromso
-	Tx latitude  =  1.216 ( 69.650) [ 69 38 59]
-	Tx longitude =  0.331 ( 18.960) [ 18 57 35]
+	Tx latitude  =  1.216 ( 69.650) [ 69 39 0]
+	Tx longitude =  0.331 ( 18.960) [ 18 57 36]
 	Rx Location Longyearbyen
 	Rx latitude  =  1.365 ( 78.220) [ 78 13 11]
-	Rx longitude =  0.273 ( 15.650) [ 15 38 59]
+	Rx longitude =  0.273 ( 15.650) [ 15 39 0]
 	local time Rx   =  13 
 	local time Tx   =  13 
 	Frequency =  7.000 (MHz)
@@ -46,8 +46,8 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  957.992
-	slant range =  3974.586
+	distance =  957.991
+	slant range =  3974.585
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  10.879
@@ -86,7 +86,7 @@
 	Total noise lower decile       =  5.177
 	Total noise                    =  49.235
 ********************** SNR Parameters (dB) *************************************
-	Monthly median resultant signal-to-noise ratio =  58.332
+	Monthly median resultant signal-to-noise ratio =  58.331
 	Upper decile deviation signal-to-noise ratio   =  9.393
 	Lower decile deviation signal-to-noise ratio   =  15.469
 	Signal-to-noise exceeded for 90% of the month  =  42.862
@@ -142,7 +142,7 @@
 	Median Field Strength     = -3.471 (dB(1 uV/m))
 	Receiver Power            = -123.799 (dBW)
 	Delay                     =  0.000 (mS)
-	Elevation angle   =  51.503 (degs)
+	Elevation angle   =  51.504 (degs)
 	Reflection height =  348.962 (km)
 	Receiver Gain =  3.774 (dBi)
 **********************************************************
@@ -182,7 +182,7 @@
 	E Layer Screen Frequency  =  3.140 (MHz)
 	Basic Loss (< 7000 km)    =  170.158 (dB)
 	Median Field Strength     = -28.109 (dB(1 uV/m))
-	Receiver Power            = -153.665 (dBW)
+	Receiver Power            = -153.664 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  68.529 (degs)
 	Reflection height =  342.027 (km)
@@ -203,7 +203,7 @@
 	E Layer Screen Frequency  =  3.074 (MHz)
 	Basic Loss (< 7000 km)    =  177.384 (dB)
 	Median Field Strength     = -36.431 (dB(1 uV/m))
-	Receiver Power            = -163.082 (dBW)
+	Receiver Power            = -163.081 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  72.555 (degs)
 	Reflection height =  340.640 (km)
@@ -347,9 +347,9 @@
 	Fprob        =  1.000 (%)
 	Lower decile =  0.950
 	Upper decile =  1.050
-	Basic Loss (< 7000 km)    =  131.706 (dB)
-	Median Field Strength     =  13.974 (dB(1 uV/m))
-	Receiver Power            = -107.948 (dBW)
+	Basic Loss (< 7000 km)    =  131.705 (dB)
+	Median Field Strength     =  13.976 (dB(1 uV/m))
+	Receiver Power            = -107.947 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  10.667 (degs)
 	Reflection height =  110.000 (km)
@@ -367,9 +367,9 @@
 	Fprob        =  0.022 (%)
 	Lower decile =  0.950
 	Upper decile =  1.050
-	Basic Loss (< 7000 km)    =  145.999 (dB)
+	Basic Loss (< 7000 km)    =  146.000 (dB)
 	Median Field Strength     =  4.145 (dB(1 uV/m))
-	Receiver Power            = -113.314 (dBW)
+	Receiver Power            = -113.315 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  23.403 (degs)
 	Reflection height =  110.000 (km)
@@ -388,8 +388,8 @@
 	Lower decile =  0.950
 	Upper decile =  1.050
 	Basic Loss (< 7000 km)    =  169.297 (dB)
-	Median Field Strength     = -18.861 (dB(1 uV/m))
-	Receiver Power            = -136.030 (dBW)
+	Median Field Strength     = -18.862 (dB(1 uV/m))
+	Receiver Power            = -136.031 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  33.615 (degs)
 	Reflection height =  110.000 (km)
@@ -461,7 +461,7 @@
 **********************************************************
 	Latitude	=	 1.291	( 73.941)	[73 56 27]
 	Longitude	=	 0.310	( 17.736)	[17 44 8]
-	distance =  478.996
+	distance =  478.995
 	Magnetic dip (100 km)  =  79.828 (deg)
 	Gyrofrequency (100 km) =  1.414 (MHz)
 	Magnetic dip (300 km)  =  79.881 (deg)
@@ -528,7 +528,7 @@
      ITURHFProp         Ver Sep 25 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 12:03:44 2026
+     Analysis Prepared  Fri Sep 25 21:18:02 2026
 
 ---------------------------------------------------------------------------
 
@@ -545,11 +545,11 @@
 	SSN (R12) = 10
 	Tx power = -10.000 (dB(1kW))
 	Tx Location Tromso
-	Tx latitude  =  1.216 ( 69.650) [ 69 38 59]
-	Tx longitude =  0.331 ( 18.960) [ 18 57 35]
+	Tx latitude  =  1.216 ( 69.650) [ 69 39 0]
+	Tx longitude =  0.331 ( 18.960) [ 18 57 36]
 	Rx Location Longyearbyen
 	Rx latitude  =  1.365 ( 78.220) [ 78 13 11]
-	Rx longitude =  0.273 ( 15.650) [ 15 38 59]
+	Rx longitude =  0.273 ( 15.650) [ 15 39 0]
 	local time Rx   =  13 
 	local time Tx   =  13 
 	Frequency =  7.000 (MHz)
@@ -571,7 +571,7 @@
 *                 Calculated Parameters                  *
 **********************************************************
 ****************** Distances (km) ************************
-	distance =  957.992
+	distance =  957.991
 	slant range =  3306.773
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
@@ -728,7 +728,7 @@
 	E Layer Screen Frequency  =  1.003 (MHz)
 	Basic Loss (< 7000 km)    =  178.817 (dB)
 	Median Field Strength     = -36.961 (dB(1 uV/m))
-	Receiver Power            = -162.708 (dBW)
+	Receiver Power            = -162.709 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  69.192 (degs)
 	Reflection height =  246.578 (km)
@@ -749,7 +749,7 @@
 	E Layer Screen Frequency  =  0.982 (MHz)
 	Basic Loss (< 7000 km)    =  183.544 (dB)
 	Median Field Strength     = -42.563 (dB(1 uV/m))
-	Receiver Power            = -169.185 (dBW)
+	Receiver Power            = -169.186 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  72.442 (degs)
 	Reflection height =  246.357 (km)
@@ -873,8 +873,8 @@
 	Lower decile =  0.950
 	Upper decile =  1.050
 	Basic Loss (< 7000 km)    =  205.497 (dB)
-	Median Field Strength     = -59.816 (dB(1 uV/m))
-	Receiver Power            = -181.739 (dBW)
+	Median Field Strength     = -59.817 (dB(1 uV/m))
+	Receiver Power            = -181.740 (dBW)
 	Delay                     =  0.000 (mS)
 	Elevation angle   =  10.667 (degs)
 	Reflection height =  110.000 (km)
@@ -986,7 +986,7 @@
 **********************************************************
 	Latitude	=	 1.291	( 73.941)	[73 56 27]
 	Longitude	=	 0.310	( 17.736)	[17 44 8]
-	distance =  478.996
+	distance =  478.995
 	Magnetic dip (100 km)  =  79.828 (deg)
 	Gyrofrequency (100 km) =  1.414 (MHz)
 	Magnetic dip (300 km)  =  79.881 (deg)

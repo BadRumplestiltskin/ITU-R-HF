@@ -18,13 +18,24 @@ int AllocateNoiseMemory(
             struct NoiseParams *noiseP
 
         OUTPUT
-            noiseP->fakp
-            noiseP->fakabp
-            noiseP->fam
-            noiseP->dud
+            noiseP->fakp    double[6][16][29]  (zero filled by calloc)
+            noiseP->fakabp  double[6][2]
+            noiseP->fam     double[12][14]
+            noiseP->dud     double[5][12][5]
+            (Meaning of each array: see ReadFamDud() in Noise.c and
+            struct NoiseParams in Noise.h.)
+
+            Returns
+                RTN_ALLOCATEP372OK     all arrays allocated
+                RTN_ERRALLOCATEFAKP    fakp allocation failed
+                RTN_ERRALLOCATEFAKABP  fakabp allocation failed
+                RTN_ERRALLOCATEDUD     dud allocation failed
+                RTN_ERRALLOCATEFAM     fam allocation failed
+            On any failure everything allocated so far has already been
+            released with FreeNoiseMemory() and the four pointers are NULL.
 
         SUBROUTINES
-            None
+            FreeNoiseMemory() (on failure only)
      */
 
     int m, n;
@@ -121,7 +132,13 @@ int FreeNoiseMemory(
             struct NoiseParams *noiseP
 
         OUTPUT
-            void
+            noiseP->dud, fam, fakp, fakabp freed and set to NULL. NULL or
+            partially built arrays are tolerated, so the routine is safe to
+            call twice or after a failed AllocateNoiseMemory(). The scalar
+            results (FaA ... FamT, ManMadeNoise) are not touched.
+
+            Returns
+                RTN_NOISEFREED (always)
 
          SUBROUTINES
              None

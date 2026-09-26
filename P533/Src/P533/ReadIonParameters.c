@@ -19,7 +19,7 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 	/*
 	 * ReadIonParametersTxt() is a routine to read ionospheric parameters from a file into arrays necessary for the ITU-R P.533 
 	 *		calculation engine. All of the input data here that is "hard coded" will be passed presumably to the final version
-	 *		of thewith relative accuracy  P.533 engine.
+	 *		of the P.533 engine.
 	 *
 	 *	This routine reads Peter Suessman's ionospheric parameters from the program iongrid.
 	 *	The file that is read is a text file. Once the file is read, the result is stored in two arrays. foF2 and M3kF2
@@ -39,11 +39,27 @@ int ReadIonParametersTxt(struct PathData *path, char DataFilePath[256], int sile
 	 *	on work of several administrations. These ionospheric parameter files are based on CCIR spherical harmonic coefficients from 
 	 *	the 1958 Geophysical year. Please refer to P.1239 for details on how to convert between the coefficients and foF2 and M(3000)F2
 	 *
+	 *	These are the monthly median foF2 and M(3000)F2 for R12 = 0 and 100 of P.533-14 section 3.4
+	 *	(numerical maps of Recommendation ITU-R P.1239), held on a 1.5-degree grid; linear
+	 *	interpolation in R12 and bilinear interpolation in position are done elsewhere
+	 *	(CalculateCPParameters()).
+	 *
+	 *	File format: "ionosMM.txt", MM = month + 1 (01 - 12), in DataFilePath. The foF2 map and then
+	 *	the M(3000)F2 map, each ordered R12 (0, 100), then longitude (241, from 180 W), then latitude
+	 *	(121, from 90 S), each grid point being its 24 hourly values on six lines of 5, 3, 5, 3, 5 and
+	 *	3 numbers. The hour index h is the one the engine uses with path->hour (h:00 UTC).
+	 *
 	 *		INPUT
-	 *			struct PathData *path
+	 *			struct PathData *path - path->month (0-based) selects the file; path->foF2 and
+	 *				path->M3kF2 must already be allocated (AllocatePathMemory())
+	 *			char DataFilePath[256] - directory holding the file (a separator is added if needed)
+	 *			int silent - TRUE suppresses the progress messages
 	 *	
 	 *		OUTPUT
-	 *			Data is read into the arrays foF2 and M3kF2
+	 *			Data is read into the arrays path->foF2 (MHz) and path->M3kF2
+	 *			returns RTN_READIONPARAOK (14), or RTN_ERRREADIONPARAMETERS (141) if the path is too
+	 *			long, the file cannot be opened, or it is truncated or malformed (the maps are then
+	 *			partly filled)
 	 *
 	 */
 
@@ -158,6 +174,10 @@ static struct {
 static float ****AllocIonMap(void) {
 
 	/*
+		AllocIonMap() - Allocates one zero-filled [IONMAPHRS][IONMAPLNG][IONMAPLAT][IONMAPSSN]
+		float map for the cache and returns it, or NULL if any allocation fails (nothing is
+		then held).
+
 		One contiguous block for the 698,544 floats, plus three small blocks of
 		pointers indexing into it, rather than 700,000 separate allocations of
 		two floats each. The jagged form costs more in allocator headers than in
@@ -206,6 +226,9 @@ static float ****AllocIonMap(void) {
 static void FreeIonMap(float ****m) {
 
 	/*
+		FreeIonMap() - Releases a map made by AllocIonMap(); NULL is accepted. Must not be
+		given a map from AllocatePathMemory(), whose layout is different (FreeIonMaps()).
+
 		Mirrors AllocIonMap(). Four blocks were allocated and each is reachable
 		from the first entry of the level above, so they are released innermost
 		first: the float data, then the level-3, level-2 and level-1 pointers.
@@ -240,7 +263,10 @@ static void FreeIonMap(float ****m) {
 
 		OUTPUT
 			*foF2 and *M3kF2 point at the cached maps
-			returns RTN_READIONPARAOK, or an error
+			returns RTN_READIONPARAOK (14), or RTN_ERRREADIONPARAMETERS (141) for a month outside
+			0 - 11, a NULL argument, a DataFilePath of 512 characters or more, an allocation
+			failure or a failed read (ReadIonParametersBin()); on error *foF2 and *M3kF2 are not
+			written and any cached month is kept
 
 		SUBROUTINES
 			AllocIonMap(), FreeIonMap(), ReadIonParametersBin()
@@ -329,6 +355,14 @@ P533_API void IonMapFree(void) {
 /*
 	IonBinFailed() - Releases what ReadIonParametersBin() holds when a read
 		fails and returns the error. free(NULL) is harmless.
+
+		INPUT
+			FILE *fp - the open map file (closed here)
+			float *readBuffer - the read buffer or NULL (freed here)
+			char *InFilePath - the file's path, for the message
+
+		OUTPUT
+			returns RTN_ERRREADIONPARAMETERS (141)
 */
 static int IonBinFailed(FILE *fp, float *readBuffer, char *InFilePath) {
 	printf("ReadIonParameters: ERROR %s is truncated or unreadable\n", InFilePath);
@@ -344,7 +378,7 @@ int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFi
 	 *		of the P.533 engine.
 	 *
 	 *	This routine reads Peter Suessman's ionospheric parameters from the program iongrid.
-	 *	The file that is read is a text file. Once the file is read, the result is stored in two arrays, foF2 and M3kF2, 
+	 *	The file that is read is a binary file. Once the file is read, the result is stored in two arrays, foF2 and M3kF2,  
 	 *	that will be passed to the ITU HFProp engine to the propagation prediction
 	 *	The arrays are of the format
 	 *
@@ -361,11 +395,27 @@ int ReadIonParametersBin(int month, float ****foF2, float ****M3kF2, char DataFi
 	 *	on work of several administrations. These ionospheric parameter files are based on CCIR spherical harmonic coefficients from 
 	 *	the 1958 Geophysical year. Please refer to P.1239 for details on how to convert between the coefficients and foF2 and M(3000)F2
 	 *
+	 *	These are the monthly median foF2 and M(3000)F2 for R12 = 0 and 100 of P.533-14 section 3.4
+	 *	(numerical maps of Recommendation ITU-R P.1239) on a 1.5-degree grid.
+	 *
+	 *	File format: "ionosMM.bin", MM = month + 1 (01 - 12), in DataFilePath, written by Fortran
+	 *	as unformatted records: 5 bytes of record overhead, 24 x 241 x 121 x 2 foF2 values as
+	 *	4-byte floats in the reading machine's byte order, 10 bytes (the end of the foF2 record and
+	 *	the start of the M(3000)F2 record), then the same number of M(3000)F2 floats. Within each
+	 *	block the order is R12 (0, 100), longitude (from 180 W), latitude (from 90 S), hour (fastest).
+	 *	The hour index h is the one the engine uses with path->hour (h:00 UTC).
+	 *
 	 *		INPUT
-	 *			struct PathData *path
+	 *			int month - 0-based month index (selects the file)
+	 *			float ****foF2, float ****M3kF2 - allocated [24][241][121][2] maps to fill
+	 *			char DataFilePath[256] - directory holding the file (a separator is added if needed)
+	 *			int silent - TRUE suppresses the progress messages
 	 *	
 	 *		OUTPUT
-	 *			data is read into the arrays foF2 and M3kF2
+	 *			data is read into the arrays foF2 (MHz) and M3kF2
+	 *			returns RTN_READIONPARAOK (14), or RTN_ERRREADIONPARAMETERS (141) if the path is too
+	 *			long, the file cannot be opened, memory runs out, or the file is short (foF2 may then
+	 *			be filled while M3kF2 is not)
 	 *
 	 */
 	#ifdef __GNUC__

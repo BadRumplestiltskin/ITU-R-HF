@@ -15,23 +15,44 @@ void MUFVariability(struct PathData *path) {
 	 		Section 3.7 "The path operational MUF" and
 	 		Section 3.6 "Within the month probability of ionospheric propagation support" 
 	 
+			Verified against P.533-14 section 3.6: MUF(50) is the median (basic) MUF of
+			sections 3.3 and 3.5; for F2 modes the decile ratios deltal = MUF(90)/MUF(50) and
+			deltau = MUF(10)/MUF(50) are from P.1239 Tables 2 and 3 (P.1239-4 section 3.2);
+			for E modes they are 0.95 and 1.05; Fprob from equation (9) when f < MUF(50),
+			equation (10) otherwise.
+
 	 		INPUT
-	 			struct PathData *path
-	 
+	 			struct PathData *path - reads distance (km), frequency (MHz), BMUF and the
+					mode BMUFs (MUFBasic()), CP[MP] (location, ltime = UTC hour), season,
+					SSN and the foF2var decile tables
+
 	 		OUTPUT
-	 			path->MUF50 = Path basic MUF 50% of a month 
-	 			path->MUF90 = Path basic MUF 90% of a month 
+	 			path->MUF50 = Path basic MUF 50% of a month (MHz), = path->BMUF
+	 			path->MUF90 = Path basic MUF 90% of a month (MHz)
+	 			path->MUF10 = Path basic MUF 10% of a month (MHz)
+				(MUF90 and MUF10 are each the largest over all modes, taken separately, so
+				 they need not come from the same mode as MUF50)
 	 			path->Md_E[].MUF50 = E layer 50% of the month MUF
 	 			path->Md_F2[].MUF50 = F2 Layer 50% of the month MUF
 	 			path->Md_E[].MUF90 = E layer 90% of the month MUF
 	 			path->Md_F2[].MUF90 = F2 Layer 90% of the month MUF
+	 			path->Md_E[].MUF10, path->Md_F2[].MUF10 = 10% of the month MUF
 	 			path->Md_F2[].deltal = F2 layer lower decile deviation of the MUF
 	 			path->Md_F2[].deltau = F2 layer upper decile deviation of the MUF
 	 			path->Md_E[].deltal = E layer lower decile deviation of the MUF
-	 			path->Md_E[].deltau = E layer lower decile deviation of the MUF
-	 			path->Md_F2[].Fprob = F2 layer within the month probability of ionospheric propagation support 
+	 			path->Md_E[].deltau = E layer upper decile deviation of the MUF
+					(deltal and deltau are ratios to MUF(50), not dB)
+	 			path->Md_F2[].Fprob = F2 layer within the month probability of ionospheric propagation support
 	 			path->Md_E[].Fprob = E layer within the month probability of ionospheric propagation support
-	 	
+					(Fprob is a probability 0 to 1)
+				Only modes with BMUF != 0 are set. Nothing is set for D > 9000 km.
+
+			NOTES
+				The F2 decile factors of every F2 mode are read at the mid-path control point:
+				its local mean time (LocalMeanTime()), its geographic latitude and path->season,
+				also for paths longer than dmax. P.1239-4 section 3.2 says only "the local time
+				and geographic latitude at the control point".
+
 
 			SUBROUTINES
 				FindfoF2var()
@@ -151,14 +172,28 @@ double FindfoF2var(struct PathData path, double hour, double lat, int decile) {
 	  FindfoF2var() - Determines the variation in foF2 given the season, hour, latitude ss and decile
 	 		This routine uses the bilinear interpolation method in ITU-R P.1144-5
 	 
+			The table is P.1239-4 Table 2 (lower decile) or Table 3 (upper decile), "for the
+			local time and geographic latitude at the control point", in three ranges of R12
+			and three seasons (P.1239-4 section 3.2), interpolated bilinearly in latitude
+			(5 degree rows) and hour (1 hour columns) as section 3.2 permits.
+
 	 		INPUT
-	 			struct PathData path 
-	 			double hour - Hour of interest
-	 			double lat - Latitude of interest
-	 			int decile - Upper or lower decile index
-	 
+	 			struct PathData path - reads path.season (WINTER/EQUINOX/SUMMER), path.SSN and
+					path.foF2var[season][hour 0-23][|lat| index 0-18 in 5 deg steps][R12 range][decile]
+	 			double hour - Hour of interest: local time, hours 0 to < 24 (callers pass
+					LocalMeanTime()); hour 23 to 24 interpolates towards hour 0
+	 			double lat - Latitude of interest (radians); only |lat| is used, the tables
+					being given for latitude without hemisphere
+	 			int decile - Upper or lower decile index: DL (0, Table 2) or DU (1, Table 3)
+
 	 		OUTPUT
-	 			return interpolated value
+	 			return interpolated value: the decile ratio foF2(decile)/foF2(median),
+				dimensionless
+
+			NOTES
+				R12 range index: R12 < 50 -> 0, 50 <= R12 <= 100 -> 1, R12 > 100 -> 2, matching
+				the P.1239-4 table headings. The negative-index and above-18 rollovers in the
+				body cannot occur for |lat| <= 90 deg and are kept only as guards.
 
 			SUBROUTINES
 				BilinearInterpolation()

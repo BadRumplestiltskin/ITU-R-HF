@@ -283,15 +283,15 @@ Full documentation, including the column list and the status codes, is in
 The program P533.dll has the following entry points:
 
 ```c
-DLLEXPORT int P533(struct PathData *path)
-DLLEXPORT const char * P533Version();
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there);
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
-DLLEXPORT double Bearing(struct Location here, struct Location there);
-DLLEXPORT int AllocatePathMemory(struct PathData *path);
-DLLEXPORT int FreePathMemory(struct PathData *path);
-DLLEXPORT int InputDump(struct PathData *path);
+P533_API int P533(struct PathData *path)
+P533_API const char * P533Version();
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt, double distance, double fraction);
+P533_API double GreatCircleDistance(struct Location here, struct Location there);
+P533_API void GeomagneticCoords(struct Location here, struct Location *there);
+P533_API double Bearing(struct Location here, struct Location there);
+P533_API int AllocatePathMemory(struct PathData *path);
+P533_API int FreePathMemory(struct PathData *path);
+P533_API int InputDump(struct PathData *path);
 ```
 
 An external program is necessary to run the P533.dll engine. An external program must create, manage
@@ -337,13 +337,13 @@ interface and troubleshoot the operations of an external management program. Ple
 definitions that appear in the following utility functions are defined in P533.h.
 
 ```c
-DLLEXPORT const char * P533Version();
+P533_API const char * P533Version();
 ```
 
 The program P533Version() takes no arguments and returns the version of P533.dll as string variable.
 
 ```c
-DLLEXPORT void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt,
+P533_API void GreatCirclePoint(struct Location here, struct Location there, struct ControlPt *midpnt,
                                 double distance, double fraction);
 ```
 
@@ -352,27 +352,27 @@ between the Locations, here and there, at a fraction of the distance from here. 
 the path is included for circumstances where the path takes the long way round the Earth.
 
 ```c
-DLLEXPORT double GreatCircleDistance(struct Location here, struct Location there);
+P533_API double GreatCircleDistance(struct Location here, struct Location there);
 ```
 
 The program GreatCircleDistance() determines the great circle distance from the Location here to the
 Location there.
 
 ```c
-DLLEXPORT void GeomagneticCoords(struct Location here, struct Location *there);
+P533_API void GeomagneticCoords(struct Location here, struct Location *there);
 ```
 
 The Location here is converted to geomagnetic coordinates and returned as Location pointed to by
 there.
 
 ```c
-DLLEXPORT double Bearing(struct Location here, struct Location there);
+P533_API double Bearing(struct Location here, struct Location there);
 ```
 
 The program Bearing() returns the radian bearing from the Location here to Location there.
 
 ```c
-DLLEXPORT int AllocatePathMemory(struct PathData *path);
+P533_API int AllocatePathMemory(struct PathData *path);
 ```
 
 The program AllocatePathMemory() is designed to be used in external programs to allocate the structure
@@ -381,14 +381,14 @@ data structure. While this routine creates the data interface the program FreePa
 the memory.
 
 ```c
-DLLEXPORT int FreePathMemory(struct PathData *path);
+P533_API int FreePathMemory(struct PathData *path);
 ```
 
 The program FreePathMemory() is designed to release the memory that was created by
 AllocatePathMemory().
 
 ```c
-DLLEXPORT int InputDump(struct PathData *path);
+P533_API int InputDump(struct PathData *path);
 ```
 
 The program InputDump() is a utility to print the contents of the path structure. This utility is
@@ -477,7 +477,6 @@ struct PathData {
     double ptick;          // Slant range
     double dmax;           // d sub max (km) determined as a function of the midpoint of the path and other parameter
 
-    double B;              // Intermediate value when calculating dmax also determined at midpoint of the path
 
     double ele;            // For paths that are longer than 9000 km this is the composite elevation angle MUFs
 
@@ -634,12 +633,6 @@ struct Mode {
     in MC;              // Mode Considered Flag (TRUE/FALSE)
 };
 
-struct Beam {
-    double azm;          // Azimuth
-    double ele;          // Elevation angle
-    double G;            // Gain for the azimuth and elevation
-};
-
 struct Antenna {
     char Name[256];
     // 2D double pointer to the antenna pattern data
@@ -661,13 +654,13 @@ The program P372.dll has the following entry points:
 
 ```c
 // Prototypes
-DLLEXPORT int AllocateNoiseMemory(struct NoiseParams *noiseP);
-DLLEXPORT int FreeNoiseMemory(struct NoiseParams *noiseP);
-DLLEXPORT int Noise(struct NoiseParams *noiseP, int hour, double lng, double lat, double frequency);
-DLLEXPORT int ReadFamDud(struct NoiseParams *noiseP, const char *DataFilePath, int month);
-DLLEXPORT void InitializeNoise(struct NoiseParams *noiseP);
-DLLEXPORT char const * P372CompileTime();
-DLLEXPORT char const * P372Version();
+P372_API int AllocateNoiseMemory(struct NoiseParams *noiseP);
+P372_API int FreeNoiseMemory(struct NoiseParams *noiseP);
+P372_API int Noise(struct NoiseParams *noiseP, int hour, double lng, double lat, double frequency);
+P372_API int ReadFamDud(struct NoiseParams *noiseP, const char *DataFilePath, int month);
+P372_API void InitializeNoise(struct NoiseParams *noiseP);
+P372_API char const * P372CompileTime();
+P372_API char const * P372Version();
 ```
 
 An external program is necessary to run the P372.dll engine. An external program must create, manage

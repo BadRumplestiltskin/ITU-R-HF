@@ -9,6 +9,13 @@
 
 /*
 	P1239Fail() - Closes the decile file, reports it and returns RTN_ERRNOTP12393.
+
+		INPUT
+			FILE *fp - the open decile file
+			const char *InFilePath - its path, for the message
+
+		OUTPUT
+			returns RTN_ERRNOTP12393 (140)
 */
 static int P1239Fail(FILE *fp, const char *InFilePath) {
 	fclose(fp);
@@ -20,14 +27,27 @@ static int P1239Fail(FILE *fp, const char *InFilePath) {
 int ReadP1239(struct PathData *path, const char * DataFilePath) {
 
 	/*
-	 * ReadP1239() - Read the file "P1239-2 Decile Factors.txt", which is Table 2 and 3 in ITU-R P1239-2 (10/09).
-	 *		The data in this file are the decile factors for within-the-month variations of foF2.
+	 * ReadP1239() - Read the file "P1239-3 Decile Factors.txt", which is Tables 2 and 3 of ITU-R P.1239.
+	 *		The data in this file are the decile factors for within-the-month variations of foF2
+	 *		(P.1239-4 section 3.2, Table 2 lower decile, Table 3 upper decile), given for the local
+	 *		time and geographic latitude at the control point, three ranges of R12 and three
+	 *		seasons. They are used for MUF(90)/MUF(50) and MUF(10)/MUF(50) (P.533-14 sections 3.6
+	 *		and 3.7).
+	 *
+	 *		File format (text): two header lines, then for each decile (lower, upper), each season
+	 *		(winter, equinox, summer) and each R12 range (R12 < 50, 50 <= R12 <= 100, R12 > 100):
+	 *		four title lines followed by 19 lines for latitudes 90, 85, ..., 0 degrees, each a
+	 *		latitude label and 24 factors for local times 00 - 23 h.
 	 *
 	 *			INPUT
-	 *				struct PathData *path
+	 *				struct PathData *path - path->foF2var must already be allocated (AllocatePathMemory())
+	 *				const char *DataFilePath - directory holding the file (a separator is added if needed)
 	 *
 	 *			OUTPUT
-	 *				data is written into the array path.foF2var
+	 *				path->foF2var[season][hour][latitude index 0 - 18 = 0 - 90 degrees][R12 range][decile]
+	 *				returns RTN_READP1239OK (15); RTN_ERRCANTOPENP1239FILE (139) if the path is too long
+	 *				or the file cannot be opened; RTN_ERRNOTP12393 (140) if it is truncated or a
+	 *				latitude line does not hold a label and 24 numbers (foF2var is then partly filled)
 	 *
 	 */
 	#ifdef __GNUC__

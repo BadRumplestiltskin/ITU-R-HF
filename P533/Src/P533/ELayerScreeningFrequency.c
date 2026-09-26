@@ -15,20 +15,37 @@ void ELayerScreeningFrequency(struct PathData *path) {
 
 	/*
 
-	 	ELayerScreeningFrequency() Calculates the E-Layer screening frequency for the F2 modes 
+	 	ELayerScreeningFrequency() Calculates the E-Layer screening frequency for the F2 modes
 	 		from Section 4 E-layer maximum screening frequency (fs) ITU-R P533-11.
-	 		
+			Verified against P.533-14 section 4, equations (11) fs = 1.05 foE sec i and (12),
+			with the foE of Table 1b): the mid-path foE for D <= 2000 km, otherwise the higher
+			of the foE at T + 1000 km and R - 1000 km. It also sets the F2 mirror-reflection
+			height hr of every F2 mode (P.533-14 section 5.1, equations (14)-(16), at the
+			control points of Table 1c): mid-path for D <= dmax, otherwise the mean over
+			T + d0/2, M and R - d0/2).
+
 	 		INPUT
-	 			struct PathData *path
-	 	
+	 			struct PathData *path - reads path->distance (km), path->dmax (km),
+					path->n0_F2, path->CP[MP, T1k, R1k, Td02, Rd02] and, through
+					MirrorReflectionHeight(), path->frequency and path->SSN
+
 	 		OUTPUT
-	 			path->Md_F2[k].hr - Reflection height
-	 			path->Md_F2[k].fs - E layer screening frequency
+	 			path->Md_F2[k].hr - Reflection height (km), for k = n0_F2 .. MAXF2MDS-1, D <= 9000 km
+	 			path->Md_F2[k].fs - E layer screening frequency (MHz), only for D <= 4000 km;
+					left at its initial 0.0 beyond 4000 km
+
+			NOTES
+				- hr is set for every index from n0_F2 up, including modes that have no basic
+				  MUF; it is needed up to 9000 km for the mode delays of equation (47).
+				- For D <= dmax the hr of each mode uses its own hop d = D/n, as equation (16)
+				  depends on d.
+				- Must run after MUFBasic() (n0_F2, dmax and the Td02/Rd02 control points).
+				  If n0_F2 is NOLOWESTMODE (99) the loop does nothing.
 
 			SUBROUTINES
 				MirrorReflectionHeight()
 				ElevationAngle()
-				IncidentAngle()
+				IncidenceAngle()
 	 
 	 */
 
@@ -66,7 +83,8 @@ void ELayerScreeningFrequency(struct PathData *path) {
 		}
 		else if(path->distance > path->dmax){
 			// In this case you have to find the mirror reflection height at all the control points and take the mean.
-			// Assume that the hop distance is path->dmax.
+			// (P.533-14 section 5.1 last paragraph and Table 1c).) The hop distance used is the
+			// mode's own dh = D/n, not dmax.
 			path->Md_F2[k].hr = (MirrorReflectionHeight(*path, path->CP[Td02], dh) +
 					            MirrorReflectionHeight(*path, path->CP[MP], dh) +
 					            MirrorReflectionHeight(*path, path->CP[Rd02], dh))/3.0;
@@ -75,7 +93,7 @@ void ELayerScreeningFrequency(struct PathData *path) {
         if(path->distance > 4000) continue; // no E-layer screening beyond 4000 km
 
 		// Find the elevation angle from equation 13 Section 5.1 Elevation angle.
-		// ITU-R P.533-12
+		// ITU-R P.533-12 (same equation (13) in P.533-14 section 5.1)
 		deltaf = ElevationAngle(dh, path->Md_F2[k].hr);
 
 		// angle of incidence at height hr = 110 km
@@ -101,14 +119,25 @@ double MirrorReflectionHeight(struct PathData path, struct ControlPt CP, double 
 
 	 	MirrorReflectionHeight() - Calculates the mirror reflection height by the method
 	 		in ITU-R P.533-12 Section 5.1 "Elevation angle".
-	 
+			Verified against P.533-14 section 5.1: x = foF2/foE, y = max(x, 1.8),
+			deltaM = 0.18/(y - 1.4) + 0.096 (R12 - 25)/150, H = 1490/(M(3000)F2 + deltaM) - 316,
+			xr = f/foF2, and
+				a) x > 3.33 and xr >= 1: equation (14) (A1, B1, E1, F1, G, ds, a)
+				b) x > 3.33 and xr < 1:  equation (15) (A2, B2, E2, F2, Z, df, b)
+				c) x <= 3.33:            equation (16) (J, U)
+			each limited to 800 km.
+
 	 		INPUT
-	 			struct PathData path
-	 			struct ControlPt CP - The control point of interest
-	 			double d - The hop length
-	 
+	 			struct PathData path - reads path.frequency (MHz) and path.SSN (R12, not limited)
+	 			struct ControlPt CP - The control point of interest (CP.foF2, CP.foE in MHz,
+					CP.M3kF2)
+	 			double d - The hop length (km)
+
 	 		OUTPUT
-	 			returns the mirror reflection height
+	 			returns the mirror reflection height hr (km), at most 800 km
+
+			NOTES
+				CP.foE must be non-zero (x = foF2/foE is not guarded).
 	 
 			SUBROUTINES
 				None
@@ -209,13 +238,17 @@ double ElevationAngle(double dh, double hr) {
 
 	 	ElevationAngle() - Determines the elevation angle from P.533-12 equation (13) Section 5.1 Elevation angle
 	 		given the hop distance (dh) and the mirror reflection height (hr)
-	  
+			(Verified: P.533-14 section 5.1, equation (13),
+			 Delta = arctan(cot(d/2R0) - (R0/(R0 + hr)) cosec(d/2R0)), R0 = 6371 km.)
+
 	 		INPUT
-	 			double dh - Hop distance
-	 			double hr - Reflection height
-	 
+	 			double dh - Hop distance (km), > 0
+	 			double hr - Reflection height (km)
+
 	 		OUTPUT
-	 			returns the elevation angle
+	 			returns the elevation angle (radians). It is not limited: it goes negative when
+				the hop is beyond the geometric horizon for hr, and a minimum elevation angle
+				(e.g. MINELEANGLES) is the caller's business.
 	 
 	 		SUBROUTINES
 				None
@@ -236,15 +269,19 @@ double IncidenceAngle(double deltaf, double hr) {
 	/*
 
 	 	IncidenceAngle() Determine the angle of incidence from  P.533-12 equation (12).
-	 		Section 4 E-layer maximum screening frequency (fs) given the 
+	 		Section 4 E-layer maximum screening frequency (fs) given the
 	 		mirror reflection height (hr) and the elevation angle (deltaf)
-	 
+			(Verified: P.533-14 section 4, equation (12), i = arcsin(R0 cos(Delta_F)/(R0 + hr)),
+			 R0 = 6371 km. Also used for i110 of equation (1) in MUFBasic() and there, with the
+			 minimum elevation angle, to find the lowest-order F2 mode.)
+
 	 		INPUT
-	 			double deltaf - Elevation angle
-	 			double hr - Reflection height
-	 
+	 			double deltaf - Elevation angle (radians)
+	 			double hr - Height at which the angle of incidence is wanted (km); 110 km
+					for equations (1) and (12)
+
 	 		OUTPUT
-	 			returns the incidence angle
+	 			returns the incidence angle (radians)
 	 
 			SUBROUTINES
 				None

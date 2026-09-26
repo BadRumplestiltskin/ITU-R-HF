@@ -13,10 +13,13 @@
 #define TRUE 1
 #define FALSE 0
 #define PI 3.14159265358979323846
-// International Union of Geodesy and Geophysics mean Earth radius.
-#define R0 6371.009 // km
-#define D2R 0.0174532925 // PI/180
-#define R2D 57.2957795 // 180/PI
+// Radius of the Earth, P.533-14 section 4: "R0: radius of the Earth, 6 371 km".
+// It was 6371.009 km (the IUGG mean radius), which put paths of exactly 2 500 km
+// on the far side of the Table 2 a)/b) boundary. The magnetic field model uses
+// its own radius, 6371.2 km (P.1239-4 equation (8)); see Magfit.c.
+#define R0 6371.0 // km
+#define D2R (PI/180.0)	// was 0.0174532925, truncated
+#define R2D (180.0/PI)	// was 57.2957795, truncated
 #define VofL 299792458.0 // Velocity of light (m/s)
 
 // Numbers used as indicators

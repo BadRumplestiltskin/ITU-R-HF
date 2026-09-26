@@ -31,6 +31,10 @@
 #define P372CT __TIMESTAMP__
 
 // Noise calculation (See ITU-R P.372).
+// Man-made noise category codes for NoiseParams.ManMadeNoise. They are
+// compared exactly (==) in ManMadeNoise() (Noise.c). Any other value >= 0 is
+// a user value (FaM = 204 - value); a value < 0 makes Noise() skip the
+// calculation and set FamT = -value (dB above kT0b).
 #define CITY 0.0
 #define RESIDENTIAL 1.0
 #define RURAL 2.0
@@ -84,8 +88,11 @@
 /* End Defines */
 
 /* Struct Definitions */
+// Atmospheric noise statistics for one 4-hour time block (GetFamParameters())
+// or interpolated to a local hour (AtmosphericNoise_LT()). All values in dB.
 struct FamStats {
-  int tmblk;       // Timeblock
+  int tmblk;       // Timeblock: 0-5 = local time 00-04 ... 20-24 h;
+                   // 99 on return from AtmosphericNoise_LT()
   double FA;       // Atmospheric noise in dB above kT0b at 1 MHz
   double SigmaFam; // Standard deviation of values, Fam
   double Du;       // Ratio of upper decile to median value, Fam
@@ -94,12 +101,18 @@ struct FamStats {
   double SigmaDl;  // Standard deviation of values of Dl
 };
 
+// Inputs, coefficients and results of the P372 noise calculation.
+// Life cycle: AllocateNoiseMemory() -> InitializeNoise() -> ReadFamDud()
+// -> set ManMadeNoise -> Noise() -> ... -> FreeNoiseMemory().
+// Noise figures (Fa*) are in dB above kT0b at the operating frequency;
+// deciles (Du*, Dl*) are deviations from the median in dB.
+// InitializeNoise() sets all twelve outputs to TINYDB.
 struct NoiseParams {
-  // Output Parameters
+  // Output Parameters (set by Noise())
   double FaA;  // Atmospheric noise
   double DuA;  // Atmospheric noise upper decile
   double DlA;  // Atmospheric noise lower decile
-  double FaM;  // Man-made noise
+  double FaM;  // Man-made noise (holds ManMadeNoise itself on override)
   double DuM;  // Man-made noise upper decile
   double DlM;  // Man-made noise lower decile
   double FaG;  // Galactic noise
@@ -110,15 +123,42 @@ struct NoiseParams {
   double FamT; // Total noise
 
   // Non-Output Parameters
-  double ManMadeNoise;
-  double ***fakp;
-  double **fakabp;
-  double **fam;
-  double ***dud;
+  double ManMadeNoise; // Input selector: category code CITY..QUIET (0-5),
+                       // other value >= 0 = user value, < 0 = override
+                       // (see the defines above and Noise() in Noise.c)
+  // Atmospheric noise coefficients for one month, filled by ReadFamDud()
+  // from COEFFmmW.txt, allocated by AllocateNoiseMemory():
+  double ***fakp;   // [6][16][29] Fourier coefficients of Fam at 1 MHz:
+                    // [time block][longitude term 0-14, 15 = constant]
+                    // [latitude term 0-28]
+  double **fakabp;  // [6][2] linear latitude term per time block
+  double **fam;     // [12][14] frequency-variation polynomial coefficients
+                    // per time block (0-5 north, 6-11 south)
+  double ***dud;    // [5][12][5] polynomial coefficients in log10(f) for
+                    // [Du, Dl, SigmaDu, SigmaDl, SigmaFam][time block
+                    // 0-5 north, 6-11 south][coefficient]
 };
 /* End Struct Definitions */
 
 /* Prototypes */
+// _cdecl exports for all environments __linux__ && __APPLE__ && _WIN32.
+// Full descriptions are in the function headers in the .c files:
+//   AllocateNoiseMemory()  NoiseMemory.c  allocate fakp, fakabp, fam, dud;
+//                          RTN_ALLOCATEP372OK or RTN_ERRALLOCATE*
+//   FreeNoiseMemory()      NoiseMemory.c  free them; RTN_NOISEFREED
+//   Noise()                Noise.c  all components and the total for UTC
+//                          hour, rlng/rlat (rad), frequency (MHz);
+//                          RTN_NOISEOK
+//   ReadFamDud()           Noise.c  read COEFF<month+1>W.txt (0-based
+//                          month); RTN_READFAMDUDOK or an error code
+//   InitializeNoise()      InitializeNoise.c  outputs = TINYDB
+//   P372CompileTime(), P372Version()  Noise.c  build strings
+//   AtmosphericNoise()     Noise.c  FaA, DuA, DlA for UTC hour iutc
+//   AtmosphericNoise_LT()  Noise.c  full FamStats for local hour lrxmt
+//   FamFreqVariation()     Noise.c  Fam at frequency (MHz) from Fam at
+//                          1 MHz for a hemisphere-adjusted time block
+//   MakeNoise()            MakeNoise.c  stand alone wrapper, lat/lng in
+//                          degrees, 12 results in out[]; RTN_MAKENOISEOK
 P372_API int AllocateNoiseMemory(
     struct NoiseParams *noiseP
 );
@@ -174,6 +214,8 @@ P372_API int MakeNoise(
 #ifdef _WIN32
     // _stdcall exports dummies used to provide entry points in the DLL for 
     // MS Excel.
+    // Each passes its arguments to the _cdecl routine of the same name
+    // without the leading underscore (see Noise.c).
     P372_API int __stdcall _AllocateNoiseMemory(
         struct NoiseParams *noiseP
     );

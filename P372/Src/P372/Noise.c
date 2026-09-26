@@ -41,18 +41,29 @@ int Noise(
         written for consistancy.
         The Noise() routine also determines the combined noise.
 
+        All noise figures are in dB above kT0b; deciles are in dB.
+
         INPUT
-            struct NoiseParams *noiseP
-            double manMadeNoise
-            int hour
-            double rlng (rad)
-            double rlat (rad)
-            double frequency
+            struct NoiseParams *noiseP  Allocated structure whose fakp,
+                    fakabp, fam and dud arrays hold the month's coefficients
+                    (ReadFamDud()), and whose ManMadeNoise member selects the
+                    man-made noise:
+                      0..5 (CITY, RESIDENTIAL, RURAL, QUIETRURAL, NOISY,
+                      QUIET; Noise.h)  category codes, see ManMadeNoise()
+                      other value >= 0 user value, see ManMadeNoise()
+                      value < 0        override, see below
+                    (There is no separate manMadeNoise argument; it is the
+                    structure member.)
+            int hour          UTC hour; AtmosphericNoise() converts it to
+                              receiver local mean time
+            double rlng (rad) Receiver longitude, east positive
+            double rlat (rad) Receiver latitude, north positive
+            double frequency  (MHz)
 
         OUTPUT
-            noiseP->DlT - Upper decile total noise
             noiseP->FamT - Total noise
-            noiseP->DuT - Lower decile total noise
+            noiseP->DuT - Upper decile deviation of total noise
+            noiseP->DlT - Lower decile deviation of total noise
 
             via AtmosphericNoise()
             noiseP->FaA - Atmospheric noise
@@ -68,6 +79,41 @@ int Noise(
             noiseP->FaM - Man-made noise
             noiseP->DuM - Upper decile deviation of man-made noise
             noiseP->DlM - Lower decile deviation of man-made noise
+
+            Returns RTN_NOISEOK in every case (including the override); no
+            input is validated.
+
+        OVERRIDE (noiseP->ManMadeNoise < 0.0)
+            No noise calculation is done. FaA, FaG, all component deciles and
+            DuT, DlT are set to 0.0; FaM is set to ManMadeNoise itself (the
+            negative number); FamT is set to -ManMadeNoise, i.e. a value of
+            -X requests a total noise of X dB above kT0b.
+
+        COMBINATION (the code cites ITU-R P.372-10 Section 8)
+            The three components are combined as log-normal variables, once
+            with the upper deciles and once with the lower deciles.
+            With c = 10/ln(10) and, for each component i,
+                sigma_i = D_i / 1.282 (atmospheric and man-made),
+                sigma_G = 1.56 (galactic, fixed),
+                alpha_T = sum exp(Fa_i/c + sigma_i^2/(2 c^2))
+                beta_T  = sum exp(Fa_i/c + sigma_i^2/(2 c^2))^2
+                              * (exp((sigma_i/c)^2) - 1)
+                gamma_T = sum exp(Fa_i/c)
+            the default is
+                sigma_T = c * sqrt(ln(1 + beta_T / alpha_T^2)).
+            Decile rule: if ANY component decile of the side being computed
+            (DuA, DuG, DuM for the upper; DlA, DlG, DlM for the lower)
+            exceeds 12 dB, the code instead uses
+                sigma_T = c * sqrt(2 ln(alpha_T / gamma_T))
+            as a replacement for the expression above. Another
+            implementation treats this expression as a maximum (upper bound)
+            on sigma_T rather than a replacement. Which reading is correct
+            awaits a check against the P.372-17 text; the code is left
+            as it is.
+            Then Fam_T = c * (ln(alpha_T) - sigma_T^2/(2 c^2)) and
+            D_T = 1.282 * sigma_T (DuT from the upper pass, DlT from the
+            lower pass). FamT is the smaller of the two Fam_T values
+            (commented in the code as "Worst-case noise").
 
         SUBROUTINES
             AtmosphericNoise()
@@ -242,10 +288,16 @@ int Noise(
 		one the moment either was corrected; the figure generator is what
 		implementers validate against, so the two must not diverge.
 
+		The polynomial is evaluated twice by Horner's rule: first at
+		u = -0.75 (giving the constant cz from Fam1MHz), then at
+		u = (8 * 2^log10(frequency) - 11) / 4; the result is cz * pz + px.
+		Coefficients fam[tmblk][0..6] feed pz and fam[tmblk][7..13] feed px.
+
 		INPUT
-			struct NoiseParams *noiseP
+			struct NoiseParams *noiseP	supplies noiseP->fam (from ReadFamDud())
 			int tmblk		the time-block index, already adjusted for hemisphere
-			double Fam1MHz	the noise figure at 1 MHz
+							(0-5 northern, 6-11 southern: row of fam[12][14])
+			double Fam1MHz	the noise figure at 1 MHz (dB above kT0b)
 			double frequency (MHz)
 
 		OUTPUT
@@ -329,17 +381,31 @@ void AtmosphericNoise(
     This routine is based on portions of the REC533() routines:
     GENFAM(), GENOIS1(), ANOIS1() and NOISY().
 
+     NOTE ON THE TEXT ABOVE: the code below does not select the previous
+     or the same block as described. It always takes FS_adj.tmblk as the
+     NEXT block, (FS_now.tmblk + 1) % 6, and interpolates linearly in power
+     with slp = (lrxmt mod 4) / 4, so slp is 0, 0.25, 0.5 or 0.75.
+
+     What the code does:
+         1) lrxmt = hour + (int)(rlng / 15 degrees), truncated toward zero,
+            wrapped once into 0..23.
+         2) FS_now.tmblk = lrxmt / 4; FS_adj.tmblk = the following block.
+         3) GetFamParameters() for both blocks.
+         4) FaA, DuA and DlA are each interpolated between the two blocks
+            as powers (10^(x/10)) and converted back to dB.
+
      INPUT
-         struct NoiseParams *noiseP
-         int hour
-         double lng (rad)
-         double lat (rad)
-         double frequency
+         struct NoiseParams *noiseP  Coefficient arrays from ReadFamDud()
+         int hour           UTC hour (0-23 expected)
+         double lng (rad)   East positive
+         double lat (rad)   North positive
+         double frequency   (MHz)
 
      OUTPUT
-         noiseP->FaA - Atmospheric noise
-         noiseP->DuA - Upper decile deviation of atmospheric noise
-         noiseP->DlA - Lower decile deviation of atmospheric noise
+         noiseP->FaA - Atmospheric noise (dB above kT0b)
+         noiseP->DuA - Upper decile deviation of atmospheric noise (dB)
+         noiseP->DlA - Lower decile deviation of atmospheric noise (dB)
+         Nothing is returned.
 
      SUBROUTINES
          GetFamParameters()
@@ -423,15 +489,38 @@ void GetFamParameters(
      This routine is based on portions of the REC533() routines:
      GENFAM(), GENOIS1(), ANOIS1() and NOISY().
 
+     Steps:
+         1) Fam at 1 MHz (dB above kT0b) from a double Fourier (sine)
+            series: for each of 29 latitude terms, a 15-term sine series in
+            q = (east longitude, 0..2 pi)/2 using fakp[tmblk][0..14][j] plus
+            the constant fakp[tmblk][15][j]; then a 29-term sine series in
+            q = lat + pi/2, plus the linear term
+            fakabp[tmblk][0] + fakabp[tmblk][1] * q.
+         2) The time-block index is shifted by 6 for a southern-hemisphere
+            receiver (lat < 0) to address the fam and dud rows.
+         3) FA at the operating frequency from FamFreqVariation().
+         4) Du, Dl, SigmaDu, SigmaDl and SigmaFam from 4th-order
+            polynomials in x = log10(frequency) with coefficients
+            dud[0..4][row][0..4]; x is capped at log10(20) (the code notes
+            the curves stop at 20 MHz), and for SigmaFam x is set to 1.0
+            (10 MHz) above 10 MHz.
+
          INPUT
-             struct NoiseParams *noiseP
-             struct FamStats *FS
-             double lng
-             double lat
-             double frequency
+             struct NoiseParams *noiseP  fakp, fakabp, fam, dud arrays
+             struct FamStats *FS  FS->tmblk (0-5, receiver local time
+                                  block) must be set by the caller
+             double lng   (rad) east positive; negative values are mapped
+                          to 0..2 pi
+             double lat   (rad) north positive
+             double frequency (MHz)
 
         OUTPUT
             struct FamStats *FS - structure containing the noise parameters
+                FS->FA        Fam at frequency (dB above kT0b)
+                FS->Du, FS->Dl                     deciles (dB)
+                FS->SigmaDu, FS->SigmaDl, FS->SigmaFam  standard
+                                                   deviations (dB)
+                FS->tmblk is not changed.
 
         SUBROUTINES
             None
@@ -541,15 +630,33 @@ void ManMadeNoise(
     Determine the man-made noise in accordance with Section 5 
     "Man-made noise" P.372-10.
 
+    FaM = c - d * log10(frequency), with c, d and the deciles chosen by the
+    value of noiseP->ManMadeNoise (compared exactly with ==):
+
+        code  name        c      d     DuM   DlM   (deciles taken from)
+        0.0   CITY        76.8   27.7  11.0  6.7   CITY
+        1.0   RESIDENTIAL 72.5   27.7  10.6  5.3   RESIDENTIAL
+        2.0   RURAL       67.2   27.7   9.2  4.6   RURAL
+        3.0   QUIETRURAL  53.6   28.6   9.2  4.6   RURAL
+        5.0   QUIET       65.2   29.1   9.2  4.6   RURAL
+        4.0   NOISY       83.2   37.5  11.0  6.7   CITY
+        other (user value)  c = 204 - ManMadeNoise, d = 0, so FaM is
+              204 - ManMadeNoise independent of frequency; deciles CITY.
+
+    The code states that QUIET and NOISY are not categories of P.372-10.
+    Negative values never reach this routine (Noise() handles them as an
+    override). The units intended for a user value are not stated in the
+    code; the arithmetic only shows FaM = 204 - value.
+
         INPUT
-            struct NoiseParams *noiseP
-            double manMadeNoise
-            double frequency
+            struct NoiseParams *noiseP  noiseP->ManMadeNoise is the selector
+                    (there is no separate manMadeNoise argument)
+            double frequency (MHz)
 
         OUTPUT
-            noiseP->FaM - Man-made noise
-            noiseP->DuM - Upper decile deviation of man-made noise
-            noiseP->DlM - Lower decile deviation of man-made noise
+            noiseP->FaM - Man-made noise (dB above kT0b)
+            noiseP->DuM - Upper decile deviation of man-made noise (dB)
+            noiseP->DlM - Lower decile deviation of man-made noise (dB)
 
         SUBROUTINES
             None
@@ -621,15 +728,17 @@ void GalacticNoise(
     /*
     Determine the galactic noise in accordance with Section 5 "Man-made noise" 
     Table 1 P.372-10.
+    FaG = 52 - 23 * log10(frequency); both deciles are fixed at 2 dB.
+    (Noise() uses sigma_G = 1.56 dB, i.e. 2/1.282, for this component.)
 
         INPUT
-            struct NoiseParams *noiseP
-            double frequency
+            struct NoiseParams *noiseP  structure to fill
+            double frequency (MHz)
 
         OUTPUT
-            noiseP->FaG - Galactic noise
-            noiseP->DuG - Upper decile deviation of galactic noise
-            noiseP->DlG - Lower decile deviation of galactic noise
+            noiseP->FaG - Galactic noise (dB above kT0b)
+            noiseP->DuG - Upper decile deviation of galactic noise (2 dB)
+            noiseP->DlG - Lower decile deviation of galactic noise (2 dB)
 
         SUBROUTINES
             None
@@ -677,7 +786,9 @@ static struct {
 	FamDudCopyOut() - Fills a NoiseParams from a cached month.
 
 		INPUT
-			struct NoiseParams *noiseP, int month
+			struct NoiseParams *noiseP	allocated destination
+			int month	0-based month (0-11); the caller has checked the
+						range and that FamDudCache[month] is loaded
 
 		OUTPUT
 			noiseP->fakp, fakabp, dud and fam
@@ -709,10 +820,12 @@ static void FamDudCopyOut(struct NoiseParams *noiseP, int month) {
 	FamDudCopyIn() - Saves a freshly parsed month into the cache.
 
 		INPUT
-			struct NoiseParams *noiseP, int month
+			struct NoiseParams *noiseP	freshly filled source arrays
+			int month	0-based month (0-11), range checked by the caller
+			const char *path	file the month was parsed from (<= 269 chars)
 
 		OUTPUT
-			FamDudCache[month], tagged with the file path
+			FamDudCache[month], tagged with the file path, loaded = TRUE
 
 		SUBROUTINES
 			None
@@ -757,15 +870,55 @@ int ReadFamDud(
     from these coefficient files are the arrays fakp[][], fakabp[][], dud[][][]
     and fam[][] for the calculation of the atmospheric noise.
 
+    The file actually opened is <DataFilePath>[/]COEFF<mm>W.txt, where mm
+    is month + 1 with two digits; a '/' is inserted only if DataFilePath
+    does not already end in '/' or '\\'.
+
+    File format (fixed layout, as read by the code): one header line; then
+    1563 lines of other coefficient sets that are skipped (if2/xf2,
+    ifm3/xfm3, ie/xe, iesu/xesu, ies/xes, iels/xels, ihpo1/xhpo1,
+    ihpo2/xhpo2, ihp/xhp); then four blocks, each introduced by one label
+    line and holding whitespace separated numbers, five per line, with a
+    shorter last line:
+        fakp(29,16,6)  2784 values (556 lines of 5 + 1 of 4)
+                       -> fakp[6][16][29]
+        fakabp(2,6)    12 values (2 lines of 5 + 1 of 2) -> fakabp[6][2]
+        dud(5,12,5)    300 values (60 lines of 5)        -> dud[5][12][5]
+        fam(14,12)     168 values (33 lines of 5 + 1 of 3) -> fam[12][14]
+    The values are stored in file order with the last C index varying
+    fastest (Fortran-style dimensions in the labels are reversed).
+
+    Parsed months are cached per month and per file path (see
+    FamDudCache above); a repeat call copies from the cache without opening
+    the file.
+
         INPUT
-            struct NoiseParams *noiseP
-            int month
+            struct NoiseParams *noiseP  arrays allocated by
+                                        AllocateNoiseMemory()
+            const char *DataFilePath    directory holding the COEFF files
+            int month                   0-based month (0 = January). A value
+                                        outside 0-11 is not rejected: the
+                                        file name is still built from it and
+                                        the result is not cached.
 
         OUTPUT
             noiseP->fam
             noiseP->dud
             noiseP->fakp
             noiseP->fakabp
+
+            Returns
+                RTN_READFAMDUDOK      success (from file or cache)
+                RTN_ERROPENCOEFFFILE  path too long or file not found
+                RTN_ERRREADCOEFFFILE  file truncated or a line did not parse
+                RTN_ERRALLOCATEFAKP, RTN_ERRALLOCATEFAKABP,
+                RTN_ERRALLOCATEDUD, RTN_ERRALLOCATEFAM
+                                      temporary buffer allocation failed
+            On failure the arrays may hold a partial month and are not
+            cached. Error messages are printed to stdout.
+
+        SUBROUTINES
+            FamDudCopyOut(), FamDudCopyIn()
      */
 
 	#ifdef __GNUC__
@@ -1095,6 +1248,8 @@ fail:
 char const* P372Version(void) {
     /*
     Return the version of the P533 DLL.
+    (The string returned is P372VER from Noise.h, i.e. the P372 library
+    version.)
 
         INPUT
            None
@@ -1112,6 +1267,8 @@ char const* P372Version(void) {
 char const* P372CompileTime(void) {
     /*
     Return the compile time of the P533 DLL.
+    (The string returned is P372CT, the __TIMESTAMP__ of this file's
+    compilation, i.e. of the P372 library.)
 
         INPUT
             None
@@ -1142,19 +1299,26 @@ void AtmosphericNoise_LT(
 
         INPUT
             struct NoiseParams *noiseP This is used solely to pass in the arrays for the atmospheric noise
-            struct FamStats *FamS
-            int lrxmt     Local time (0-23)
+            struct FamStats *FamS  receives the results
+            int lrxmt     Local time (0-23); wrapped once if in -24..47
             double rlng   (rad)
             double rlat   (rad)
             double frequency (MHz)
 
+        Unlike AtmosphericNoise() there is no UTC-to-local conversion. The
+        same next-block linear power interpolation is used, applied to all
+        six statistics (the standard deviations are also interpolated as
+        if they were powers in dB).
+
         OUTPUT
-            FamS->Fa  Atmospheric noise
+            FamS->FA  Atmospheric noise (dB above kT0b)
             FamS->Du  Upper decile deviation of atmospheric noise
             FamS->Dl  Lower decile deviation of atmospheric noise
             FamS->SigmaFam  Standard deviation of values, Fam
             FamS->SigmaDu   Standard deviations of values of Du
             FamS->SigmaDl   Standard deviations of values of Dl
+            FamS->tmblk     set to 99 (not meaningful on return)
+            noiseP is only read.
 
         SUBROUTINES
             GetFamParameters()
@@ -1240,6 +1404,11 @@ void AtmosphericNoise_LT(
     /* 
     All these silly functions do is allow __stdcall to access __cdel functions
     so that the P372.dll can interface to Windows programs like Excel.
+    Each _Name() below passes its arguments unchanged to Name() and
+    returns its result; parameters, units and return codes are those of
+    the wrapped routine. Exceptions: _P372CompileTime() and _P372Version()
+    discard the wrapped call's result and return P372CT / P372VER directly.
+    Compiled only on _WIN32.
     */
     int __stdcall _AllocateNoiseMemory(
         struct NoiseParams* noiseP

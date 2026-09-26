@@ -29,8 +29,9 @@ double DiurnalAbsorptionExponent(struct ControlPt CP, int month);
 double AbsorptionFactor(struct ControlPt CP, int month);
 double AbsorptionLayerPenetrationFactor(double T);
 double AbsorptionTerm(struct ControlPt CP, int month, double fv);
-double FindLh(struct ControlPt CP, double dh, double hour, int month);
+double FindLh(struct ControlPt CP, double D, double hour, int month);
 double PenetrationPoints(struct PathData * path, double noh, double fv);
+static double LongitudinalGyrofrequency(struct ControlPt P);
 int WhatSeasonforLh(struct Location L, int month); 
 int SmallestCPfoF2(struct PathData path);
 // End local prototypes
@@ -39,8 +40,21 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 
 	/*
 
-	 	MedianSkywaveFieldStrengthShort() - Calculate the median skywave field strength as described in ITU-R P.533-12 
-	 		Section 5.2 paths up to 7000 km
+	 	MedianSkywaveFieldStrengthShort() - Calculate the median skywave field strength as described in ITU-R P.533-14
+	 		section 5.2 "Paths up to 9 000 km" (the only method below 7000 km; interpolated with section 5.3
+			between 7000 and 9000 km). For each mode selected by section 5.2.1:
+				Ew = 136.6 + Pt + Gt + 20 log f - Lb                                   equation (17)
+				Lb = 32.45 + 20 log f + 20 log p' + Li + Lm + Lg + Lh + Lz             equation (18)
+				p' from equation (19) with the elevation angle of equation (13)
+				Li from equation (20) (with (21), (22), (23) and Figs. 1 - 3), see PenetrationPoints()
+				Lm from equations (24), (25) (E modes) and (26) (F2 modes)
+				Lg = 2(n - 1)                                                          equation (27)
+				Lh from Table 2, mean over the Table 1d) control points, see FindLh()
+				Lz = 8.72 dB
+			and the resultant Es = 10 log10(sum 10^(Ew/10)) over the modes, equation (28).
+			Mirror-reflection heights (section 5.2.1): 110 km for E modes; for F2 modes equation (2)'s hr at
+			the mid-path control point (D <= dmax) or at the Table 1c) control point with the lowest foF2
+			(dmax < D <= 9000 km).
 	  		There is an unavoidable amount of redundancy in this routine. The same code statements are executed for the E and F2 layers. 
 	  		This means that if alterations to the subroutine are necessary, the changes must be in the E layer and F2 layer loop. The advantage to 
 	  		doing it this way is that a jumbling of the E and F2 layers is avoided. All of the nine modes could be treated together in an array. 
@@ -48,23 +62,47 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 	 
 	 		INPUT
 	 			struct PathData *path
-	 
+					path->distance - D (km); nothing is done for D > 9000 km
+					path->frequency - f (MHz), path->txpower - Pt (dB(1 kW)), path->SSN - R12 (not limited
+						to MAXSSN in equation (20): section 3.4 limits R12 "in the case of foF2 only")
+					path->month - 0-based month index
+					path->dmax (km), path->n0_E, path->n0_F2, path->Md_E[].BMUF, path->Md_F2[].BMUF,
+					path->Md_F2[].fs - from MUFBasic() and ELayerScreeningFrequency()
+					path->CP[] - the Table 1 control points with their parameters at the current hour
+					path->A_tx - transmit antenna pattern
+
 	 		OUTPUT
-	 			path->Md_E[].Lb - E mode losses (dB)
-	 			path->Md_E[].Ew - E mode field strength (dB(1uV/m))
-	 			path->Md_F2[].Lb - F2 mode losses (dB)
-	 			path->Md_F2[].Ew - F2 mode field strength (dB(1uV/m))
-	 			path->Es - Median field strength with E layer screening
-	 			path->Md_F2[n].ele - F2 mode elevation angle 
-	 			path->Md_E[n].ele - E mode elevation angle
-	 
+	 			path->Md_E[].Lb - E mode basic transmission loss (dB), equation (18)
+	 			path->Md_E[].Ew - E mode field strength (dB(1 uV/m)), equation (17)
+	 			path->Md_F2[].Lb - F2 mode basic transmission loss (dB)
+	 			path->Md_F2[].Ew - F2 mode field strength (dB(1 uV/m))
+	 			path->Md_F2[n].ele - F2 mode elevation angle (radians)
+	 			path->Md_E[n].ele - E mode elevation angle (radians)
+				path->Md_E[].MC, path->Md_F2[].MC - TRUE for each mode included in Es
+	 			path->Es - Median field strength with E layer screening, equation (28) (dB(1 uV/m));
+						TINYDB (-307) if no mode is available
+				path->Lz - 8.72 dB (NOIL)
+				path->ptick - p' (km) of the last mode calculated (overwritten mode by mode)
+
+			NOTES
+				Mode n is the C index, so the mode has n+1 hops.
+				Lh uses the mid-path local mean time for every control point (Table 2 is indexed by
+				"Mid-path local time"). The absorption, fL and Lh averages over 1, 3 or 5 control points
+				follow Table 1d) (D <= 2000, 2000 < D <= dmax, D > dmax); with PEN TRUE the absorption
+				is instead evaluated at the 90 km penetration points (PenetrationPoints()), and the
+				averaged fL is then only printed in diagnostics.
+				The E-mode loop stops at the first slot that fails the mode test; the F2-mode loop
+				tests every slot.
+
 	 		SUBROUTINES
 				SmallestCPfoF2()
 				ElevationAngle()
 				IncidenceAngle()
-				AbsorptionTerm()
+				PenetrationPoints()
+				AbsorptionTerm() (only when PEN is FALSE)
 				FindLh()
 				AntennaGain()
+				LocalMeanTime()
 
 	 */
 
@@ -144,7 +182,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						((n > path->n0_E) && (path->Md_E[n].BMUF != 0.0))) { // higher order modes
 
 				// Find the elevation angle from equation 13 Section 5.1 Elevation angle
-				// ITU-R P.533-12
+				// ITU-R P.533-14
 				delta = ElevationAngle(path->distance/(n+1.0), hr_E);
 				
 				// Store the elevation angle, but use delta elsewhere here for readability.
@@ -180,7 +218,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 					fL = fabs(path->CP[MP].fH[HR100km]*sin(path->CP[MP].dip[HR100km])); 
 
 					// Determine auroral and other signal losses
-					Lh = FindLh(path->CP[MP], dh, mpltime, path->month);
+					Lh = FindLh(path->CP[MP], path->distance, mpltime, path->month);
 				}
 				else { // (path->distance > 2000.0) There are three control points
 
@@ -201,14 +239,20 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[R1k].fH[HR100km]*sin(path->CP[R1k].dip[HR100km])))/3.0;
 
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month) +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month))/3.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month))/3.0;
 				} // (path->distance <= 2000.0)
 	
 				// All the variable have been calculated to determine
 				// Absorption loss (dB) for an n-hop mode, Li
-				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				if(PEN) {
+					// AT is already the mean of ATj/(f + fLj)^2 over the penetration points
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/cos(aoi110);
+				}
+				else {
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				}
 
 				// "Above-the-MUF" loss, P.533-14 equations (24) and (25).
 				// Lm = 0 for f <= fb; for E modes above fb,
@@ -287,7 +331,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 				
 								        
 				// Find the elevation angle from equation 13 Section 5.1 Elevation angle.
-				// ITU-R P.533-12
+				// ITU-R P.533-14
 				delta = ElevationAngle(path->distance/(n+1.0), hr_F2);
 
 				// Store the elevation angle
@@ -324,7 +368,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 					fL = fabs(path->CP[MP].fH[HR100km]*sin(path->CP[MP].dip[HR100km])); 
 					
 					// Determine auroral and other signal losses
-					Lh = FindLh(path->CP[MP], dh, mpltime, path->month);
+					Lh = FindLh(path->CP[MP], path->distance, mpltime, path->month);
 				}
 				else if((2000.0 < path->distance) && (path->distance <= path->dmax)) { // There are three control points
 
@@ -345,9 +389,9 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[R1k].fH[HR100km]*sin(path->CP[R1k].dip[HR100km])))/3.0;
 
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month) +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month))/3.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month))/3.0;
 				}
 				else { // There are 5 control points.
 
@@ -372,16 +416,22 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
 						  fabs(path->CP[Rd02].fH[HR100km]*sin(path->CP[Rd02].dip[HR100km])))/5.0;
 					
 					// Determine auroral and other signal losses
-					Lh = (FindLh(path->CP[MP], dh, mpltime, path->month)  +
-						  FindLh(path->CP[T1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[R1k], dh, mpltime, path->month) +
-						  FindLh(path->CP[Td02], dh, mpltime, path->month)+
-						  FindLh(path->CP[Rd02], dh, mpltime, path->month))/5.0;
+					Lh = (FindLh(path->CP[MP], path->distance, mpltime, path->month)  +
+						  FindLh(path->CP[T1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[R1k], path->distance, mpltime, path->month) +
+						  FindLh(path->CP[Td02], path->distance, mpltime, path->month)+
+						  FindLh(path->CP[Rd02], path->distance, mpltime, path->month))/5.0;
 				} // (path->distance <= 2000.0)
 
 				// All the variable have been calculated to determine
 				// Absorption loss (dB) for an n-hop mode, Li.
-				Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				if(PEN) {
+					// AT is already the mean of ATj/(f + fLj)^2 over the penetration points
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/cos(aoi110);
+				}
+				else {
+					Li = ((n+1.0)*(1.0 + 0.0067*SSN)*AT)/(pow((path->frequency + fL),2)*cos(aoi110));
+				}
 	
 				// "Above-the-MUF" loss, P.533-14 equations (24) and (26).
 				// Lm = 0 for f <= fb; for F2 modes above fb,
@@ -482,7 +532,7 @@ void MedianSkywaveFieldStrengthShort(struct PathData *path) {
     } // End F2 modes median sky-wave field strength calculation
 
 	// Determine the overall resultant equivalent median sky-wave field strength, Es
-	// See "Modes considered" Section 5.2.1 P.533-12
+	// See "Modes considered" Section 5.2.1 P.533-14
 	// Es should be very small, reinitialize it for clarity.
 	path->Es = TINYDB;
 	// Initialize the other locals needed here.
@@ -569,17 +619,28 @@ double AbsorptionTerm(struct ControlPt CP, int month, double fv) {
 	 		i) Absorption factor at local noon
 	 		ii) Absorption layer penetration factor
 	 		iii) Diurnal absorption exponent
-	 		These three factors can be seen in Figures 1, 2, and 3 of P.533-12 
-	 		Section 5.2.2 "Field strength determination". The absorption factor is the product of these
-	 		three factors
-	 
+	 		These three factors can be seen in Figures 1, 2, and 3 of P.533-14
+	 		section 5.2.2 "Field strength determination". The term returned is the j-th summand of
+			equation (20) without its 1/(f + fLj)^2 divisor:
+				ATjnoon * F(chi_j)/F(chi_jnoon) * phi_n(fv/foE_j)
+			with F(chi) = cos^p(0.881 chi) or 0.02, whichever is greater (equation (21)), chi_j the
+			solar zenith angle at the point "or 102 degrees whichever is the smaller", chi_jnoon its
+			value at local noon, ATnoon from Fig. 1, phi_n from Fig. 2 and p from Fig. 3.
+
 	 		INPUT
-	 			struct ControlPt CP - the Control point of interest
-	 			int month - The month index
-	 			double fv - Vertical-incidence wave frequency
-	 
+	 			struct ControlPt CP - the Control point (or penetration point) of interest, after
+						CalculateCPParameters(): L (radians), foE (MHz), dip[HR100km] (radians),
+						Sun.sza (radians) at the current hour and Sun.lsn (local solar noon, UTC hours)
+	 			int month - The 0-based month index
+	 			double fv - Vertical-incidence wave frequency fv = f cos(i), equation (22) (MHz)
+
 	 		OUTPUT
-	 			returns the absorption term used to calculate Li in Eqn (20)
+	 			returns the absorption term used to calculate Li in Eqn (20) (dimensionless apart
+				from the units of ATnoon)
+
+			NOTES
+				chi_jnoon is the solar zenith angle computed by SolarParameters() at the point's local
+				solar noon Sun.lsn (which includes the equation of time for the middle of the month).
 	 
 	 		SUBROUTINES
 				ZeroCP()
@@ -653,16 +714,25 @@ double DiurnalAbsorptionExponent(struct ControlPt CP, int month) {
 
 	/*
 
-	 	 DiurnalAbsorptionExponent() Determine the diurnal absorption exponent, p. 
-	 		The exponent, p, is a function of the month and magnetic dip angle.
-	 		The p vs magnetic dip angle graph is shown as Figure 3 ITU-R P.533-12.
-	 
+	 	 DiurnalAbsorptionExponent() Determine the diurnal absorption exponent, p, used in equation (21).
+	 		The exponent, p, is a function of the month and the modified magnetic dip at 100 km.
+	 		The p vs modified magnetic dip graph is shown as Figure 3 ITU-R P.533-14, which refers to
+			Recommendation ITU-R P.1239, Annex 1, for the modified dip; P.1239-4 equation (4) gives it as
+			X = arctan(I / sqrt(cos(lat))). The figure is represented by two degree-6 polynomials per
+			month (below and above a month-dependent break dip, ppt[]), in a normalised dip; the
+			coefficients come from REC533 and cannot be checked against the figure's text.
+
 	 		INPUT
-	 			struct ControlPt CP - control point of interest
-	 			int month - month index	
-	 
+	 			struct ControlPt CP - control point of interest: L.lat (radians), dip[HR100km] (radians)
+	 			int month - 0-based month index; for southern latitudes it is shifted by six months,
+						the second (Southern) month axis of Fig. 3
+
 	 		OUTPUT
-	 			return p the diurnal absorption exponent
+	 			return p the diurnal absorption exponent (dimensionless)
+
+			NOTES
+				The modified dip is taken as its absolute value and limited to 70 degrees (the top of
+				Fig. 3, "70-90").
 	 
 			SUBROUTINES
 				None
@@ -793,14 +863,24 @@ double AbsorptionFactor(struct ControlPt CP, int month) {
 
 	/*
 
-	  AbsorptionFactor() Calculates the absorption factor ATnoon as shown Figure 1 ITU-R P.533-12 
-	 
+	  AbsorptionFactor() Calculates the absorption factor ATnoon as shown Figure 1 ITU-R P.533-14
+			("absorption factor at local noon for the j-th penetration point and R12 = 0 given as a
+			function of geographic latitude and month from Fig. 1"), used in equation (20).
+			The figure is held as a table ATNO[9][29]: nine month columns and 29 latitudes from 0 to
+			70 degrees in 2.5 degree steps, linearly interpolated in latitude. May and August share a
+			column, as do June and July, and December and January (see the month map below). The
+			values come from REC533 and cannot be checked against the figure's text.
+
 	 		INPUT
-	 			struct ControlPt CP - Control point of interest
-	 			int month - month index	
-	 
+	 			struct ControlPt CP - Control point of interest: L.lat (radians)
+	 			int month - 0-based month index; shifted by six months for southern latitudes (the
+						Southern month axis of Fig. 1)
+
 	 		OUTPUT
 	 			returns ATnoon - The absorption factor at local noon and R12 = 0.
+
+			NOTES
+				|latitude| is limited to just below 70 degrees (the "70-90" top of Fig. 1).
 	 
 	 		SUBROUTINES
 				None
@@ -914,13 +994,19 @@ double AbsorptionLayerPenetrationFactor(double T) {
 	/*
 
 	 	AbsorptionLayerPenetrationFactor() - Determines the absorption layer penetration factor
-	 		shown in Figure 2 P.533-12.
-	 
+	 		phi_n(fv/foE) shown in Figure 2 P.533-14, used in equation (20).
+			The curve is represented piecewise: polynomials for 0 <= T <= 1 and 1 < T <= 2.2 (each
+			capped at 0.53), a linear decrease to 0.34 at T = 10, and 0.34 beyond; the result is
+			divided by 0.34. The fits come from REC533 and cannot be checked against the figure's text.
+
 	 		INPUT
-	 			T - the ratio of the Vertical-incidence wave frequency and foE
-	 
+	 			T - the ratio fv/foE of the vertical-incidence wave frequency (equation (22)) and foE
+						(dimensionless)
+
 	 		OUTPUT
-	 			returns phi the absorption layer penetration factor
+	 			returns phi the absorption layer penetration factor (dimensionless); 0 for T < 0.
+				A non-finite T (foE = 0 at the point) fails every range test, falls through to 0.34
+				and gives 1.0.
 	 
 	 		SUBROUTINES
 				None
@@ -966,21 +1052,46 @@ double AbsorptionLayerPenetrationFactor(double T) {
 }
 
 
-double FindLh(struct ControlPt CP, double dh, double hour, int month) {
+double FindLh(struct ControlPt CP, double D, double hour, int month) {
 
 	/*	
-	 *	FindLh() - Finds the value of Lh from Table 2 ITU-R P.533-12 "Values of Lh giving auroral and other signal losses".
+	 *	FindLh() - Finds the value of Lh from Table 2 ITU-R P.533-14 "Values of Lh giving auroral and other signal losses".
+	 *
+	 *		P.533-14 section 5.2: "Each value is evaluated in terms of the geomagnetic
+	 *		latitude Gn ... and local time t ...: mean values for the control points of
+	 *		Table 1d) are taken." The caller averages the values this returns for each
+	 *		control point; the season is that of the control point's own hemisphere.
+	 *
+	 *		Table 2 a) and b) are for "transmission ranges" up to and beyond 2 500 km.
+	 *		The Recommendation uses "range" for the path length throughout and "hop
+	 *		length" for D/n, so the sub-table is chosen by the path length D. It was
+	 *		chosen by the hop length, which gave the modes of one path different
+	 *		sub-tables.
+	 *
+	 *		Used for Lh in equation (18). Gn is the geomagnetic latitude for "an Earth-centred
+	 *		dipole with pole at 78.5 N, 68.2 W" (GeomagneticCoords()). "For Gn < 42.5 degrees,
+	 *		Lh = 0 dB". Seasons: "In the Northern Hemisphere, winter is taken as December-February,
+	 *		equinox as March-May and September-November and summer as June-August. In the Southern
+	 *		Hemisphere, the months for winter and summer are interchanged" (WhatSeasonforLh()).
 	 *
 	 *		INPUT
-	 *			struct ControlPt CP
-	 *			double dh - hop distance
-	 *			int hour - hour index
-	 *			int month - month index
+	 *			struct ControlPt CP - one Table 1d) control point: L (radians)
+	 *			double D - path length (km), the "transmission range"
+	 *			double hour - mid-path local (mean) time t (hours, 0 <= t < 24), the same for every
+	 *				control point of the path
+	 *			int month - 0-based month index
 	 *
 	 *		OUTPUT
-	 *			returns the value of Lh
-	 *	
-	 */	 
+	 *			returns the value of Lh (dB) for this control point
+	 *
+	 *		NOTES
+	 *			The eight columns are 01-04, 04-07, ..., 19-22 and 22-01 h, lower bound inclusive.
+	 *			|Gn| is used; a bound such as 77.5 degrees belongs to the higher band (Gn >= 77.5
+	 *			is row 0). The 22-01 h column of Table 2 a) is cut off in the plain-text copy of
+	 *			P.533-14 used when this header was written, so those eight values per season were
+	 *			not checked.
+	 *
+	 */
 	 	
 	 /*	
 	  * The upper three blocks of the array 
@@ -1091,11 +1202,11 @@ double FindLh(struct ControlPt CP, double dh, double hour, int month) {
 
 	// Lh[Transmission range][season][geomagnetic latitude][mid-path local time]
 	// Determine the indices
-	// Transmit range index
-	if(dh <= 2500.0) {
+	// Transmission range index, from the path length
+	if(D <= 2500.0) {
 		txrange = 0;
 	}
-	else { // (dh > 2500.0)
+	else { // (D > 2500.0)
 		txrange = 1;
 	}
 
@@ -1173,13 +1284,19 @@ int WhatSeasonforLh(struct Location L, int month) {
 
 	/*
 	 *	WhatSeasonforLh() - Determines the index into the Lh array dependent on the month and latitude.
+	 *		P.533-14 section 5.2.2 (Lh, Table 2): "In the Northern Hemisphere, winter is taken as
+	 *		December-February, equinox as March-May and September-November and summer as
+	 *		June-August. In the Southern Hemisphere, the months for winter and summer are
+	 *		interchanged." These seasons differ from those of the P.1239 decile tables
+	 *		(WhatSeason() in InitializePath.c).
 	 *
 	 *		INPUT
-	 *			struct Location L - location of interest
-	 *			int month - month index
+	 *			struct Location L - location of interest (radians); lat >= 0 (including the
+	 *				equator) is taken as the Northern Hemisphere
+	 *			int month - 0-based month index
 	 *
 	 *		OUTPUT
-	 *			returns the season
+	 *			returns the season: WINTER (0), EQUINOX (1) or SUMMER (2)
 	 */
 
 	//Initialise to prevent warning C4701: potentially uninitialized local variable 'season' used
@@ -1220,13 +1337,16 @@ int SmallestCPfoF2(struct PathData path) {
 
 	/*
 	 
-	 	SmallestCPfoF2() - Determines the smallest Control point foF2
-	 
+	 	SmallestCPfoF2() - Determines the Table 1c) control point with the smallest foF2, whose
+			M(3000)F2 gives the F2 mirror-reflection height hr of equation (2) for paths from dmax to
+			9000 km (P.533-14 section 5.2.1).
+
 	 		INPUT
-	 			struct PathData path
-	 
+	 			struct PathData path - path.CP[Td02], CP[MP], CP[Rd02] with foF2 (MHz) set
+
 	 		OUTPUT
-				returns the index to the control point with the smallest foF2
+				returns the index (Td02, MP or Rd02) of the control point with the smallest foF2;
+				on a tie the first in that order
 
 			SUBROUTINES
 				None
@@ -1252,15 +1372,25 @@ int SmallestCPfoF2(struct PathData path) {
 double AntennaGain(struct PathData path, struct Antenna Ant, double delta, int direction) {
 
 	/*
-		AntennaGain() - Finds the antenna gain at the desired elevation, delta
+		AntennaGain() - Finds the antenna gain at the desired elevation, delta, and the great-circle
+			azimuth of the path. Gives Gt of equation (17) and Grw of equation (43) (P.533-14 sections
+			5.2.2 and 6). The pattern is bilinearly interpolated between whole degrees of azimuth and
+			elevation; for a multi-frequency pattern the block whose frequency is nearest to
+			path.frequency is used (no interpolation in frequency).
 
-	 		INPUT
-	 			struct PathData path
-				struct Antenna Ant
-				double delta
+			INPUT
+				struct PathData path - supplies L_tx, L_rx, SorL (short or long great circle) and
+					frequency (MHz)
+				struct Antenna Ant - pattern[freq][azimuth 0-359][elevation 0-90] (dBi)
+				double delta - elevation angle (radians)
+				int direction - TXTORX: azimuth is the bearing from tx to rx; RXTOTX: from rx to tx
 
-	 		OUTPUT
-				returns the interpolated antenna gain at the desired elevation, delta
+			OUTPUT
+				returns the interpolated antenna gain (dBi) at the desired elevation, delta
+
+			NOTES
+				delta is clamped to 0 - 90 degrees (see the comment in the body). Any other value of
+				direction leaves the bearing 0 (north).
 
 			SUBROUTINES
 				Bearing()
@@ -1356,13 +1486,14 @@ void ZeroCP(struct ControlPt *CP) {
 
 	/*
 
-		ZeroCP() - Initializes (zeros) the control point
-	
+		ZeroCP() - Initializes (zeros) the control point. Not part of the Recommendation.
+
 			INPUT
-	 			struct ControlPoint *CP
-	 
+	 			struct ControlPt *CP
+
 	 		OUTPUT
-				struct ControlPoint *CP
+				*CP with L, distance, foE, foF2, M3kF2, fH[], dip[], all of Sun, ltime and hr set to
+				0.0. The member x is not touched.
 
 			SUBROUTINES
 				None
@@ -1392,8 +1523,31 @@ void ZeroCP(struct ControlPt *CP) {
 		
 }
 
+/*
+	PenetrationPoints() - Evaluates the summand of P.533-14 equation (20) at the 90 km penetration
+		points of one mode and returns their mean:
+			(1/m) sum_j  ATjnoon F(chi_j)/F(chi_jnoon) phi_n(fv/foE_j) / (f + fLj)^2
+		with m = 2(noh + 1) points ("two penetration points per hop"), located for a fixed
+		reflection height of 300 km and a penetration height of 90 km with the hop length D/(noh+1)
+		(equation (13) for the elevation angle). fLj is equation (23) at each point
+		(LongitudinalGyrofrequency()). The caller forms Li = (noh+1)(1 + 0.0067 R12) sec(i) * mean.
+
+		INPUT
+			struct PathData *path - path->distance (km), L_tx, L_rx, frequency f (MHz), month, and the
+				fields CalculateCPParameters() needs to evaluate a point at the current hour
+			double noh - the mode index n (the mode has noh+1 hops)
+			double fv - vertical-incidence frequency f cos(i110) of the mode, equation (22) (MHz)
+
+		OUTPUT
+			returns the mean over the penetration points of ATj/(f + fLj)^2 (MHz^-2 times the units
+			of ATnoon). This routine itself does not write to path.
+
+		SUBROUTINES
+			ElevationAngle(), IncidenceAngle(), ZeroCP(), GreatCirclePoint(),
+			CalculateCPParameters(), AbsorptionTerm(), LongitudinalGyrofrequency()
+*/
 double PenetrationPoints(struct PathData * path, double noh, double fv) {
- 
+
  	// The routine finds the penetration points as described initially in the long model
  	// As is done in the long model use the control points as penetration points
  	// There are twice as many penetration points as there are hops. 
@@ -1403,6 +1557,15 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
 	// penetration points per hop)." This took the reflection height of the mode
 	// instead -- 110 km for E modes, eq. (2)'s hr for F2 modes -- which moves the
 	// E-mode points by several hundred km (the MATLAB port's D31).
+	//
+	// Equation (20) divides each point's term by (f + fLj)^2, with fLj "the value
+	// of electron gyrofrequency, about the longitudinal component of the Earth's
+	// magnetic field for a height of 100 km, determined at the j-th penetration
+	// point" (23). The callers divided the mean of the terms by (f + fL)^2 with fL
+	// averaged over the Table 1d) control points instead; on a 7 000 km southern
+	// path at 2 MHz, where fLj runs from 0.42 to 1.38 MHz, that made Li 9.5 dB
+	// low. The division is now made here, point by point, and the mean of
+	// ATj/(f + fLj)^2 is returned.
 	const double hr = 300.0;
  	
 	struct ControlPt PP[2]; // Temp
@@ -1415,6 +1578,7 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
 	//double fv;
 	double ATSum = 0.0;
 	double fracd;
+	double f = path->frequency;
 
 	int i;
 
@@ -1458,7 +1622,7 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
  
  		// Calculate the absortion term for the ith hop penetration point
  		// closest to the transmitter and add it to the running absoption term sum	
- 		ATSum += AbsorptionTerm(PP[TXEND], path->month, fv);
+ 		ATSum += AbsorptionTerm(PP[TXEND], path->month, fv)/pow(f + LongitudinalGyrofrequency(PP[TXEND]), 2);
  			
  		// Next the end nearest to the receiver for this hop
  		fracd = ((i+1)*dh  - dh90)/path->distance;
@@ -1469,13 +1633,30 @@ double PenetrationPoints(struct PathData * path, double noh, double fv) {
  
  		// Calculate the absortion term for the ith hop penetration point
  		// closest to the receiver and add it to the running absoption term sum	
- 		ATSum += AbsorptionTerm(PP[RXEND], path->month, fv);
+ 		ATSum += AbsorptionTerm(PP[RXEND], path->month, fv)/pow(f + LongitudinalGyrofrequency(PP[RXEND]), 2);
 
 
  		}
 
-    // Return the Ave of the absorption over all penetration points	
+    // Return the mean of ATj/(f + fLj)^2 over all penetration points
 	return ATSum/(2.0*(noh+1));
  
  }
+
+/*
+	LongitudinalGyrofrequency() - P.533-14 equation (23): fL = |fH sin(I)|, the
+		electron gyrofrequency about the longitudinal component of the Earth's
+		magnetic field at 100 km, at a point whose parameters are set.
+
+		INPUT
+			struct ControlPt P - a point after CalculateCPParameters()
+
+		OUTPUT
+			returns fL (MHz)
+*/
+static double LongitudinalGyrofrequency(struct ControlPt P) {
+
+	return fabs(P.fH[HR100km]*sin(P.dip[HR100km]));
+
+}
 

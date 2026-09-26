@@ -11,37 +11,47 @@ void CalculateCPParameters( struct PathData *path, struct ControlPt *here) {
 
 	/*
 	 
-	  CalculateCPParameters() finds the ionosheric parameters foF2 and M3kF2 for the high (SSN = 100) and low (SSN = 0), the gyrofrequency and magnetic dip at 100 and 300 km 
-	 		and the solar parameters for the control point. The ionospheric parameters are determined by the bi-linear interpolation method in P.1144-3 (2001) 
-	 		and linear interpolation by the desired SSN (Found in path->SSN - the user selected SSN) the routine determines the foF2 and M3F2 at the point of interest. 
-	 		This routine further determines foE at the point of interest. 
-	 
+	  CalculateCPParameters() finds the ionosheric parameters foF2 and M3kF2 for the high (SSN = 100) and low (SSN = 0), the gyrofrequency and magnetic dip at 100 and 300 km
+	 		and the solar parameters for the control point. The ionospheric parameters are determined by the bi-linear interpolation method in P.1144-3 (2001)
+	 		and linear interpolation by the desired SSN (Found in path->SSN - the user selected SSN) the routine determines the foF2 and M3F2 at the point of interest.
+	 		This routine further determines foE at the point of interest.
+			It supplies the control-point quantities of P.533-14 section 3.2 (foE "as defined in
+			Recommendation ITU-R P.1239") and section 3.4 (foF2 and M(3000)F2 from the P.1239
+			numerical maps, magnetic field evaluated at 300 km), for the control points of Table 1.
+			The four subroutines are called in this order: IonosphericParameters(),
+			SolarParameters(), FindfoE() (which needs the solar zenith angle and declination),
+			magfit() at 100 km and at 300 km.
+
 	 		INPUT
-	 			struct PathData *path
+	 			struct PathData *path - reads path->foF2 and path->M3kF2 (the month's maps),
+					path->hour (hour index 0-23, used both as the map hour and as the UTC
+					hour), path->month (0-11) and path->SSN (R12)
 	 			struct ControlPt *here - This is a pointer to the control point of interest.
-	 
+					here->L (lat, lng in radians) must already be set (GreatCirclePoint()).
+
 	 		OUTPUT
-	 			There are four subroutines in this program that calculate the parameters for 
+	 			There are four subroutines in this program that calculate the parameters for
 	 			the control point. Which subroutine calulates which parameter is summarized below
-	 
+
 	 			via IonosphericParameters()
-	 				here->foF2 - Critical frequency of the F2 layer
-	 				here->M3kF2 - Critical frequency of the F2 layer for 3000 km
+	 				here->foF2 - Critical frequency of the F2 layer (MHz)
+	 				here->M3kF2 - M(3000)F2, the propagation factor MUF(3000)F2/foF2 (dimensionless)
 	 			via FindFoE()
-	 				here->foE - Critical frequency fo the E layer
-	 				here->ltime - Local time
+	 				here->foE - Critical frequency fo the E layer (MHz)
+	 			via SolarParameters()
+	 				here->ltime - The UTC hour (not local time, despite the field name)
 	 			via magfit()
-	 				here->dip[2] - Magnetic dip calculated at 100 and 300 km
-	 				here->fH[2] - Gyrofreqency calculated at 100 and 300 km
+	 				here->dip[2] - Magnetic dip calculated at 100 and 300 km (radians)
+	 				here->fH[2] - Gyrofreqency calculated at 100 and 300 km (MHz)
 	 			via SolarParameters() 
 	 				here->Sun.ha - Hour angle (radians)
-	 				here->Sun.sha -  Sunrise/Sunset hour angle (radians)
+	 				here->Sun.sha -  Sunrise/Sunset hour angle (radians) for a 90.833 deg zenith angle; PI = Sun never sets, 0 = never rises
 	 				here->Sun.sza - Solar zenith angle (radians)
 	  				here->Sun.decl - Solar declination (radians)
 	  				here->Sun.eot- Equation of time (minutes)
-	 				here->Sun.lsr - local sunrise (hours)
-	 				here->Sun.lsn - local solar noon (hours)
-	 				here->Sun.lss - local sunset (hours)
+	 				here->Sun.lsr - local sunrise (hours UTC, 0-24)
+	 				here->Sun.lsn - local solar noon (hours UTC, 0-24)
+	 				here->Sun.lss - local sunset (hours UTC, 0-24)
 	 
 	 		SUBROUTINES
 				IonosphericParameters()
@@ -67,7 +77,7 @@ void CalculateCPParameters( struct PathData *path, struct ControlPt *here) {
 	SolarParameters(here, path->month, (double)path->hour);
 		
 	/*
-	 * Calculate foE by the method outlined in P.1239-2. 
+	 * Calculate foE by the method outlined in P.1239-2 (now P.1239-4 section 4, equations (12)-(18)).
 	 */
 	FindfoE(here, path->month, path->hour, path->SSN);
 
@@ -89,17 +99,29 @@ void IonosphericParameters(struct ControlPt *here, float ****foF2, float ****M3k
 	/*
 	 
 	  IonosphericParameters() - Finds foF2 and M(3000)F2 by Bilinear Interpolation.
-	 
+			The monthly median foF2 and M(3000)F2 are read from the P.1239 grid-point maps
+			(1.5 degree grid, R12 = 0 and 100), bilinearly interpolated to the control point
+			(P.1239-4 section 3.1 refers to P.1144 Annex 1 for this; P.1144 text not provided)
+			and then linearly interpolated or extrapolated in R12 (P.533-14 section 3.4,
+			P.1239-4 section 3.1).
+
 	  	INPUTS
-	 		struct ControlPt *here,
-	  		double ****foF2
-	 		double ****M3kF2
-	 		int hour
-	 		int SSN
-	 
+	 		struct ControlPt *here - here->L (lat, lng in radians) is read
+	  		float ****foF2 - foF2 map, indexed [hour][lng index 0-240][lat index 0-120][R12 index 0/1]
+	 		float ****M3kF2 - M(3000)F2 map, same indexing
+	 		int hour - Hour index 0-23 into the maps (path->hour)
+	 		int SSN - R12, 12-month smoothed sunspot number
+
 	 	OUTPUT
-	 		here->foF2
-	 		here->M3KF2
+	 		here->foF2 - foF2 (MHz)
+	 		here->M3KF2 - M(3000)F2 (dimensionless)
+
+		NOTES
+			R12 is limited to MAXSSN = 160 for both foF2 and M(3000)F2. P.533-14 section 3.4
+			states the limit "in the case of foF2 only", but P.1239-4 section 3.1 also takes
+			M(3000)F2 "to be the value obtained for R12 = 160" above 160, which is what the
+			code does. Grid indices are clamped to the map, so points at the edges (poles,
+			180 degrees) use the edge row or column.
 
 		SUBROUTINES
 			BilinearInterpolation()
@@ -206,9 +228,9 @@ void IonosphericParameters(struct ControlPt *here, float ****foF2, float ****M3k
     // End of calculation for foF2 and M3kF2
 
 	/*
-	 * Now interpolate by the SSN. Note the SSN maximum has been restricted to a maximm of 160 ITU-R P.533-12.
+	 * Now interpolate by the SSN. Note the SSN maximum has been restricted to a maximm of 160 ITU-R P.533-12 (P.533-14 section 3.4 for foF2; P.1239-4 section 3.1 for M(3000)F2 too).
 	 * "For most purposes it is adequate to assume a linear relationship with R12 for both foF2 and M(3000)F2." 
-	 * ITU-R P.1239-2 (10-2009)
+	 * ITU-R P.1239-2 (10-2009); the same sentence is in P.1239-4 section 3.1
 	 * Note the index on foF2 and M3kF2 in the neighbor structure is for the SSN = 0 (index = 0) and SSN = 100 (index = 1)
 	 */
 	SSN = min(SSN, MAXSSN);
@@ -226,19 +248,36 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 
 	/* 
 	 
-	  FindFoE() - Determines the critical frequency of the E-layer, foE, by the method in 
-	  		ITU-R P.1239. This routine assumes that the solar parameters have been calculated 
+	  FindFoE() - Determines the critical frequency of the E-layer, foE, by the method in
+	  		ITU-R P.1239. This routine assumes that the solar parameters have been calculated
 	 		for the control point before execution.
-	  		
+			Implements P.1239-4 section 4, equations (12) (foE^4 = A B C D), (13) A,
+			(14) B, (15a)/(15b) the exponent m, (16a)-(16c) C, (17a)-(17e) D and (18) the
+			night-time minimum, as required by P.533-14 section 3.2.
+
 	 		INPUT
-	 			struct ControlPt *here
-	 			int month
-	 			int hour
-	 			int SSN
-	 
+	 			struct ControlPt *here - reads here->L (radians), here->Sun.sza, .decl, .eot
+					(set by SolarParameters())
+	 			int month - 0-11; not used (kept for the interface)
+	 			int hour - Hour index 0-23, used as the UTC hour for the hours-after-sunset h
+					of equation (17d)
+	 			int SSN - R12. Not limited to 160 here (see the note in the body).
+
 	 		OUTPUT
-	 			here->foE critical frequency of the E-layer determined for the control point here
-	 
+	 			here->foE critical frequency of the E-layer determined for the control point here (MHz)
+
+			NOTES
+				- Phi12 is estimated from R12 by a quadratic that is not in the texts
+				  available (P.1239-4 refers to P.371); unverified.
+				- Latitude tests: |lat| < 32 deg uses (15a)/(16b), otherwise (15b)/(16c);
+				  p = 1.31 for |lat| <= 12 deg, otherwise 1.20.
+				- 73 deg < chi < 90 deg uses (17b)/(17c); chi >= 90 deg uses the greater of
+				  (17d) and (17e), or (17e) alone in polar night. For (17d) sunset is found at
+				  chi = 90 deg exactly, not at the 90.833 deg sunset in here->Sun.lss.
+				- The result is the greater of equation (12) and equation (18) at all hours,
+				  not only at night; since (18) is the night-time floor this only matters when
+				  (12) falls below it.
+
 	 		SUBROUTINES
 				None
 
@@ -279,6 +318,8 @@ void FindfoE(struct ControlPt *here, int month, int hour, int SSN) {
 	/* 
 	 * Calculation for A : solar activity factor
 	 * First find phi sub 12 (phi) by eqn (2) in P.1239-2 (2009)
+	 * (P.1239-4 section 4 says only that Phi12 is estimated from R12 "see Recommendation
+	 * ITU-R P.371"; this R12-to-Phi12 relation is not in the texts available, unverified)
 	 */
 	phi = 63.7 + 0.728*SSN + 0.00089*pow(SSN, 2);
 	A = 1.0 + 0.0094*(phi - 66.0); 
@@ -381,23 +422,35 @@ void SolarParameters(struct ControlPt *here, int month, double hour) {
 
 	/*
 	 
-	 	SolarParameters() - Calculate the solar parmeters at the control point for the given 
+	 	SolarParameters() - Calculate the solar parmeters at the control point for the given
 	 		time and month.
-	 
+			The Recommendations give no formulae for these; this is a standard low-precision
+			solar ephemeris (see the references below). It provides the solar zenith angle chi
+			and declination for foE (P.1239-4 section 4, equations (14), (17a)-(17e)) and the
+			solar zenith angle of the absorption term (P.533-14 equation (20)), for which
+			P.533-14 section 5.2.2 says "The equation-of-time, for the middle of the month in
+			question, is incorporated": the day is fixed at the 15th of the month.
+
 	 		INPUT
-	 			struct ControlPt *here - The control point of interest
-	 			int month - Month index
-	 			double hour - Decimal hours
-	  
+	 			struct ControlPt *here - The control point of interest (here->L in radians)
+	 			int month - Month index 0-11
+	 			double hour - Decimal hours, UTC (callers pass the path hour index 0-23)
+
 	 		OUTPUT
 	 			here->Sun.ha - Hour angle (radians)
-	 			here->Sun.sha -  Sunrise/Sunset hour angle (radians)
+	 			here->Sun.sha -  Sunrise/Sunset hour angle (radians) for a 90.833 deg zenith angle; PI = Sun never sets, 0 = never rises
 	 			here->Sun.sza - Solar zenith angle (radians)
 	  			here->Sun.decl - Solar declination (radians)
 	  			here->Sun.eot- Equation of time (minutes)
-	 			here->Sun.lsr - local sunrise (hours)
-	 			here->Sun.lsn - local solar noon (hours)
-	 			here->Sun.lss - local sunset (hours)
+	 			here->Sun.lsr - local sunrise (hours UTC, 0-24)
+	 			here->Sun.lsn - local solar noon (hours UTC, 0-24)
+	 			here->Sun.lss - local sunset (hours UTC, 0-24)
+				here->ltime - hour (the UTC hour, as passed in)
+
+			NOTES
+				Sunrise and sunset are for a zenith angle of 90.833 deg (refraction and the
+				solar disc). In polar day or night sha is clamped to PI or 0 (see the body);
+				MUFOperational() tests those two values.
 
 			SUBROUTINES
 				None
@@ -534,19 +587,24 @@ double BilinearInterpolation(double LL, double LR, double UL, double UR, double 
 
 	/*
 
-	 BilinearInterpolation() - Interpolates a value given the Neighbors by 
+	 BilinearInterpolation() - Interpolates a value given the Neighbors by
 			the method in ITU-R P.1144-5 (10/09)
-	 
-	 		INPUT	
+			(P.1144 text not provided: reference unverified. P.1239-4 section 3.1 refers to
+			"the bi-linear interpolation procedure given in Recommendation ITU-R P.1144
+			(Annex 1)" and section 3.2 allows "A bilinear interpolation process" for the
+			decile tables.)
+
+	 		INPUT
 	 			double LL - Lower left neighbor
 	 			double LR - Lower right neighbor
 	 			double UL - Upper left neighbor
 	 			double UR - Upper right neighbor
-	 			double r - Fraction row
-	 			double c - Fractional column
-	 
+	 			double r - Fraction row, 0 to 1, measured from the lower (LL, LR) row
+	 			double c - Fractional column, 0 to 1, measured from the left (LL, UL) column
+
 	 		OUTPUT
-	 			returns the interpolated value
+	 			returns the interpolated value (units of the inputs)
+				No range check: r or c outside [0, 1] extrapolates.
 
 			SUBROUTINES
 				None
