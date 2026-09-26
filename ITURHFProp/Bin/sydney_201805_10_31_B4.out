@@ -1,9 +1,9 @@
 ---------------------------------------------------------------------------
  International Telecommunications Union - Radiocommunication Sector (ITU-R)
-     ITURHFProp         Ver Sep 25 2026
+     ITURHFProp         Ver Sep 26 2026
      HF Model (P533)    Ver 14.2
      Noise Model (P372) Ver 14.3
-     Analysis Prepared  Fri Sep 25 21:49:18 2026
+     Analysis Prepared  Sat Sep 26 02:52:03 2026
 
 ---------------------------------------------------------------------------
 
@@ -51,12 +51,12 @@
 	dmax     =  4000.000
 ************ Maximum Usable Frequencies (MHz) ************
 	basic MUF       =  11.294
-	10% MUF         =  13.813
+	10% MUF         =  14.750
 	50% MUF         =  11.294
-	90% MUF         =  8.480
+	90% MUF         =  8.843
 	Operational MUF =  17.592
-	10% OPMUF       =  21.516
-	90% OPMUF       =  13.210
+	10% OPMUF       =  22.977
+	90% OPMUF       =  13.775
 ********* Lowest Order and Dominant Mode *****************
 	lowest order F2 layer mode = No Mode
 	lowest order E layer mode = No Mode

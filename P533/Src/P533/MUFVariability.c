@@ -23,15 +23,16 @@ void MUFVariability(struct PathData *path) {
 
 	 		INPUT
 	 			struct PathData *path - reads distance (km), frequency (MHz), BMUF and the
-					mode BMUFs (MUFBasic()), CP[MP] (location, ltime = UTC hour), season,
-					SSN and the foF2var decile tables
+					mode BMUFs and cpMUF (MUFBasic()), CP[MP], CP[Td02], CP[Rd02] (location,
+					ltime = UTC hour), month, SSN and the foF2var decile tables
 
 	 		OUTPUT
 	 			path->MUF50 = Path basic MUF 50% of a month (MHz), = path->BMUF
 	 			path->MUF90 = Path basic MUF 90% of a month (MHz)
 	 			path->MUF10 = Path basic MUF 10% of a month (MHz)
-				(MUF90 and MUF10 are each the largest over all modes, taken separately, so
-				 they need not come from the same mode as MUF50)
+				(MUF90 and MUF10 are those of the mode that sets MUF50: the lowest-order F2
+				 mode when its BMUF is the path BMUF, else the lowest-order E mode; unchanged
+				 when neither exists)
 	 			path->Md_E[].MUF50 = E layer 50% of the month MUF
 	 			path->Md_F2[].MUF50 = F2 Layer 50% of the month MUF
 	 			path->Md_E[].MUF90 = E layer 90% of the month MUF
@@ -48,10 +49,13 @@ void MUFVariability(struct PathData *path) {
 				Only modes with BMUF != 0 are set. Nothing is set for D > 9000 km.
 
 			NOTES
-				The F2 decile factors of every F2 mode are read at the mid-path control point:
-				its local mean time (LocalMeanTime()), its geographic latitude and path->season,
-				also for paths longer than dmax. P.1239-4 section 3.2 says only "the local time
-				and geographic latitude at the control point".
+				The F2 decile factors of each F2 mode are read at the control point whose value
+				set its basic MUF (Md_F2[].cpMUF: mid-path up to dmax; beyond dmax the Table 1a)
+				point T + d0/2 or R - d0/2 whose equation (3) or (7) value was selected): its
+				local mean time (LocalMeanTime()), its geographic latitude and the P.1239-4
+				season of its hemisphere (WhatSeason()). P.1239-4 section 3.2 says "the local
+				time and geographic latitude at the control point"; the choice of point is the
+				owner's ruling.
 
 
 			SUBROUTINES
@@ -61,9 +65,10 @@ void MUFVariability(struct PathData *path) {
 
 	int i;		// Index
 	int decile; // Decile flag
+	int season; // P.1239-4 season of the decile control point
+	struct ControlPt *cp; // Control point at which the F2 decile factors are read
 
-	double EMUF10, EMUF90;		// Temp 10% and 90% E layer MUF
-	double F2MUF10, F2MUF90;	// Temp 10% and 90% F2 layer MUF
+	struct Mode *setter;		// The mode whose MUF(50) is the path MUF(50)
 
 	
 	// Only do this subroutine if the path is less than or equal to 9000 km if not exit
@@ -81,16 +86,18 @@ void MUFVariability(struct PathData *path) {
 			// Section 3.6 P.533-12 indicates that the basic MUF and MUF(50) are the same.
 			path->Md_F2[i].MUF50 = path->Md_F2[i].BMUF;
 
-			// P.1239-4 Tables 2 and 3 give the decile factors as a function of local time;
-			// CP.ltime is the UTC hour, which is what was passed here.
-			// Determine the decile factors
+			// P.1239-4 section 3.2: the decile factors are "for the local time and geographic
+			// latitude at the control point". By the owner's ruling that is the control point
+			// whose value set the mode's basic MUF (mid-path up to dmax, the selected Table 1a)
+			// point beyond), with the season of that point's hemisphere.
+			cp = &path->CP[path->Md_F2[i].cpMUF];
+			season = WhatSeason(cp->L, path->month);
+
 			decile = DL; // Lower decile
-			// Find the deltal in the foF2var array
-			path->Md_F2[i].deltal = FindfoF2var(*path, LocalMeanTime(path->CP[MP]), path->CP[MP].L.lat, decile);
+			path->Md_F2[i].deltal = FindfoF2var(*path, season, LocalMeanTime(*cp), cp->L.lat, decile);
 				
 			decile = DU; // Upper decile
-			// Find the deltau in the foF2var array
-			path->Md_F2[i].deltau = FindfoF2var(*path, LocalMeanTime(path->CP[MP]), path->CP[MP].L.lat, decile);
+			path->Md_F2[i].deltau = FindfoF2var(*path, season, LocalMeanTime(*cp), cp->L.lat, decile);
 
 			// Find the other MUFs
 			path->Md_F2[i].MUF10 = path->Md_F2[i].deltau*path->Md_F2[i].MUF50;
@@ -137,35 +144,28 @@ void MUFVariability(struct PathData *path) {
 		}
 	}
 
-	// Now assume that the same procedure that applies to the basic MUF does for the variability MUFs
-	// As was done in the MUFBasic() determine the largest of the MUF90 and MUF10
-	// Pick the MUF extrema for the path for the E and F2 layer
-	EMUF10 = 0.0;
-	EMUF90 = 0.0;
-	for(i=0; i<MAXEMDS; i++) {
-		if(path->Md_E[i].BMUF != 0.0) { // If the Basic MUF is set the layer exists
-			if(path->Md_E[i].MUF90 > EMUF90) EMUF90 = path->Md_E[i].MUF90;
-			if(path->Md_E[i].MUF10 > EMUF10) EMUF10 = path->Md_E[i].MUF10;
-		}
-    }
-    F2MUF10 = 0.0;
-	F2MUF90 = 0.0;
-	for(i=0; i<MAXF2MDS; i++) {
-		if(path->Md_F2[i].BMUF != 0.0) { // If the Basic MUF is set the layer exists
-			if(path->Md_F2[i].MUF90 > F2MUF90) F2MUF90 = path->Md_F2[i].MUF90;
-			if(path->Md_F2[i].MUF10 > F2MUF10) F2MUF10 = path->Md_F2[i].MUF10;
-		}
-    }
-
-    // Determine the 90% and 10% MUF amongst all existant modes
-	path->MUF90 = max(EMUF90, F2MUF90); // largest 90% MUF
-	path->MUF10 = max(EMUF10, F2MUF10); // largest 10% MUF
+	// Path MUF(90) and MUF(10): section 3.6 gives deciles per mode only. By the owner's
+	// ruling they are those of the mode that sets the path MUF(50) = BMUF (section 3.1):
+	// the lowest-order F2 mode when its basic MUF is the path basic MUF, otherwise the
+	// lowest-order E mode, as for the path operational MUF (MUFOperational()). They were
+	// the largest MUF90 and the largest MUF10 over all modes, taken separately.
+	if((path->n0_F2 != NOLOWESTMODE) && (path->Md_F2[path->n0_F2].BMUF >= path->BMUF)) {
+		setter = &path->Md_F2[path->n0_F2];
+	}
+	else if(path->n0_E != NOLOWESTMODE) {
+		setter = &path->Md_E[path->n0_E];
+	}
+	else {
+		return; // No mode: the path deciles keep their initial values
+	}
+	path->MUF90 = setter->MUF90;
+	path->MUF10 = setter->MUF10;
 
 	return;
 
 }
 
-double FindfoF2var(struct PathData path, double hour, double lat, int decile) { 
+double FindfoF2var(struct PathData path, int season, double hour, double lat, int decile) { 
 
 	/*
 
@@ -178,8 +178,10 @@ double FindfoF2var(struct PathData path, double hour, double lat, int decile) {
 			(5 degree rows) and hour (1 hour columns) as section 3.2 permits.
 
 	 		INPUT
-	 			struct PathData path - reads path.season (WINTER/EQUINOX/SUMMER), path.SSN and
+	 			struct PathData path - reads path.SSN and
 					path.foF2var[season][hour 0-23][|lat| index 0-18 in 5 deg steps][R12 range][decile]
+	 			int season - P.1239-4 season (WINTER/EQUINOX/SUMMER) of the point's hemisphere,
+					from WhatSeason()
 	 			double hour - Hour of interest: local time, hours 0 to < 24 (callers pass
 					LocalMeanTime()); hour 23 to 24 interpolates towards hour 0
 	 			double lat - Latitude of interest (radians); only |lat| is used, the tables
@@ -255,10 +257,10 @@ double FindfoF2var(struct PathData path, double hour, double lat, int decile) {
 	}
 
     // Find the neighbors
-	LL = path.foF2var[path.season][hourL][latL][ssn][decile];
-	LR = path.foF2var[path.season][hourU][latL][ssn][decile];
-	UL = path.foF2var[path.season][hourL][latU][ssn][decile];
-	UR = path.foF2var[path.season][hourU][latU][ssn][decile];
+	LL = path.foF2var[season][hourL][latL][ssn][decile];
+	LR = path.foF2var[season][hourU][latL][ssn][decile];
+	UL = path.foF2var[season][hourL][latU][ssn][decile];
+	UR = path.foF2var[season][hourU][latU][ssn][decile];
 
 	Irc = BilinearInterpolation(LL, LR, UL, UR, r, c);
 
