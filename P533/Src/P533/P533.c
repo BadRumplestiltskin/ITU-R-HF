@@ -53,10 +53,15 @@
 		rather than overrunning.
 
 		INPUT
-			char *out, size_t n, const char *dir, const char *file
+			char *out - destination buffer
+			size_t n - size of out in bytes, including the terminating NUL
+			const char *dir - data directory; may be empty, with or without a trailing / or \
+			const char *file - file name to append
 
 		OUTPUT
-			returns TRUE when the joined path fitted
+			returns TRUE when the joined path fitted in out; FALSE if any pointer is NULL, n is 0,
+			or the result was truncated (out then holds the truncated, NUL-terminated string;
+			in the NULL / n == 0 cases out is not written)
 
 		SUBROUTINES
 			None
@@ -163,11 +168,11 @@ int LoadP372(void) {
 		P533()
 			This program provides methods for the prediction of available frequencies, signal levels, and the predicted reliability
 			for analogue and digital-modulated HF systems, taking into account not only the signal-to-noise ratio but also the expected
-			time and frequency spreads of the channel. This program calculates the HF path parameters that appear in ITU-R P.533-12.
+			time and frequency spreads of the channel. This program calculates the HF path parameters that appear in ITU-R P.533-14.
 			This program is loosely based on the program REC533. This model uses control points to determine the modes of propagation of
 			HF signals in the ionosphere.
 
-			Great care has been taken in this implementation to follow the ITU published standard P.533-12. The flow of this implementation
+			Great care has been taken in this implementation to follow the ITU published standard P.533-14. The flow of this implementation
 			was designed primarily for readability and clarity, with performance being the secondary goal. Unfortunately, clever performance-enhancing
 			algorithms tend to obscure many calculations. It is hoped that this code will illuminate the standard and be easily maintainable.
 
@@ -203,16 +208,16 @@ int LoadP372(void) {
 				i) Ionospheric data or maps. This data is in the ~/IonMap directory which contains monthly median foF2and M(3000)F2 data at 1.5-degree latitude and
 				longitude increments for low and high sunspot numbers. The subroutine ReadIonParameters() reads these map files. The data in these files was generated
 				by the methods in REC533(). Prior to this implementation, the data in these files only existed internally to REC533(). The method to derive these maps
-				is derived from arrays of spherical harmonic coefficients, see Equation (3) P.1239-2. The coefficients in this form do not allow for contemporary data
+				is derived from arrays of spherical harmonic coefficients, see equation (3) of P.1239-4. The coefficients in this form do not allow for contemporary data
 				to be incorporated into the maps easily. For this reason the ITU has freed this data in the form of a map that can be updated.
 
 				ii) Atmospheric data. Mixed coefficient files that were compiled by Dambolt and Suessman. These files contain the original spherical harmonic coefficients
 				for foF2 and M(3000)F2 in addition to other data related to atmospheric noise, layer thickness, MUF statistics, etc. for a particular month. Some  of this
-				data appears to be deprecated. For instance, much of the foE data has been replaced by the method found in Section 4 of ITU-R P.1239-2. In this
+				data appears to be deprecated. For instance, much of the foE data has been replaced by the method found in section 4 of ITU-R P.1239-4. In this
 				implementation only the atmospheric data will be used. Much of the detail about the arrays found in these coefficient files will be available in
 				REC533() code; ReadFamDud() shows how the atmospheric arrays are read.
 
-				iii) MUF variability. The file "P1239-2 Decile Factors.txt" is read in to get the decile factors related to MUF variability. This file is read in by using
+				iii) MUF variability. The file "P1239-3 Decile Factors.txt" (Tables 2 and 3 of P.1239) is read in to get the decile factors related to MUF variability. This file is read in by using
 				the subroutine ReadP1239(path);
 
 				iv) Antenna data. The PathData structure requires the antenna pattern for the transmitter and receiver. At preset this pattern is 360 degrees azimuth
@@ -226,12 +231,25 @@ int LoadP372(void) {
 				The MUF variability data, iii), are for an entire year.
 
 			INPUT
-				struct PathData *path
+				struct PathData *path - the user inputs (see P533.h and ValidatePath()) and the data
+					arrays foF2, M3kF2, foF2var, noiseP and the antenna patterns, already loaded.
+					path->month is the 0-based month index and path->hour = h means h:00 UTC.
 
 			OUTPUT
-				struct PathData *path
+				struct PathData *path - every calculated field of PathData for this month, hour,
+					frequency and path (Parts 1 - 3 of P.533-14).
+				returns RTN_P533OK (10) on success, RTN_ERRP372DLL if libp372 / P372.dll cannot be
+					loaded, a ValidatePath() error code (100 - 125) for bad input, or the P372
+					Noise() error code when that call does not return RTN_NOISEOK. On an error
+					return the path is left partly calculated or untouched.
+
+			NOTES
+				Part 1 (MUFBasic(), MUFVariability(), MUFOperational(), ELayerScreeningFrequency())
+				runs for every distance; for D > 9000 km MedianSkywaveFieldStrengthLong() then
+				replaces the basic and operational MUFs with those of section 5.3.1.
 
 			SUBROUTINES
+				LoadP372()
 				ValidatePath()
 				InitializePath()
 				MUFBasic()
@@ -332,9 +350,9 @@ int LoadP372(void) {
 	 		ii) MUFVariability()
 	  		iii) MUFOperational()
 	   Have to be executed in the order above because they slowly populate the path structure
-	   as the calculation progresses. Typically they follow the flow of ITU-R P533-11
+	   as the calculation progresses. Typically they follow the flow of ITU-R P.533-14
 	   since the standard is not necessarily a discription of a computer algorythm some of the 
-	   calculation is out of sequence with ITU-R P.533-12.
+	   calculation is out of sequence with ITU-R P.533-14.
 
 	   Note: The following 4 subroutines are only applicable to paths less than or equal to 9000 km
 	 */
@@ -394,7 +412,7 @@ DLLEXPORT char const * P533Version(void) {
 	 			None
 	 
 	 		OUTPUT
-	 			returns a pointer to the version character string
+	 			returns a pointer to the static version character string P533VER (P533.h)
 
 			SUBROUTINES
 				None
@@ -415,7 +433,7 @@ DLLEXPORT char const * P533CompileTime(void) {
 	 			None
 	 
 	 		OUTPUT
-	 			returns a pointer to the version character string
+	 			returns a pointer to the static string P533CT, the __TIMESTAMP__ of P533.c
 
 			SUBROUTINES
 				None
@@ -428,7 +446,8 @@ DLLEXPORT char const * P533CompileTime(void) {
 
 DLLEXPORT int sizeofPathDataStruct(void) {
 	/*
-		sizeofPathStruct() - Returns the sizeof(pathdata) for testing.
+		sizeofPathDataStruct() - Returns sizeof(struct PathData) for testing, so that a caller
+			written in another language can check that its copy of the structure layout matches.
 			INPUT	
 				None
 			OUTPUT

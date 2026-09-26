@@ -14,23 +14,42 @@ void magfit(struct ControlPt *here, double height) {
 	/*
 	 	magfit() calculates the magnetic dip and the gyrofrequency
 			This calculation is described in Section 2 of Rec P.1239 (1997) equations (5) thru (11).
+			(Verified against P.1239-4 Annex 1 section 2: the sixth-order spherical-harmonic
+			field model, epoch 1960, equations (5a)-(5c) for Fx, Fy, Fz, (6a)-(6c), (7) the
+			associated Legendre functions, (8) R = 6371.2/(6371.2 + hr), (9) F, (10) the dip
+			I = arctan(Fz/sqrt(Fx^2 + Fy^2)) and (11) fH = 2.8 F.)
 			This subroutine is patterned after the Fortran subroutine by the same name in the ITS
 			propagation package, 2006.
 			The input lat and long are in radians.
-	 
+			P.533-14 uses the results at 300 km for fH in equation (3) (section 3.5.1.1) and at
+			100 km for fL = |fH sin(I)|, equation (23), and the dip of the absorption and
+			scattering calculations.
+
 	 		Initialized the arrays
 	 		P = The Associated Legendre function
 	 		DP = The derivative of P
 	 		CT = Appears to be the Associated Legendre function coefficients as a function of m and n
 	 		G & H = Numerical coefficients for the field model (gauss)
-	 
+			(The G and H values are not printed in P.1239-4, which only states that the
+			epoch 1960 model is used; they are taken from the ITS/REC533 code and are not
+			verified against the Recommendation here.)
+
 	 		INPUT
-	 			struct ControlPt *here - Control point of interest
-	 			double height - Height at which the calculation is made
-	 
+	 			struct ControlPt *here - Control point of interest; here->L.lat and
+					here->L.lng (radians, N and E positive) are read
+	 			double height - Height at which the calculation is made (km). Must be exactly
+					100.0 or 300.0: the result is stored only in the HR100km or HR300km slot.
+					Any other height is computed but written to the HR100km slot (index 0).
+
  	 		OUTPUT
-	 			here->dip[hr] - Magnetic dip
-	 			here->fH[hr] - Gyrofrequency
+	 			here->dip[hr] - Magnetic dip I (radians, positive when the field points
+					downward, i.e. in the northern magnetic hemisphere)
+	 			here->fH[hr] - Gyrofrequency (MHz), 2.8 x total field in gauss
+				where hr = HR100km (height 100 km) or HR300km (height 300 km)
+
+			NOTES
+				The scaling radius is RMAG = 6371.2 km, P.1239-4 equation (8), not the path
+				geometry's R0 = 6371 km (P.533-14 section 4).
 
 	 		SUBROUTINES
 				None

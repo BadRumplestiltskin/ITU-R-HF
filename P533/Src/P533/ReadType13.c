@@ -21,11 +21,17 @@ DLLEXPORT void SetAntennaPatternVal(struct PathData * path, int TXorRX, int azim
 	either out of range writes nothing.
 
 	INPUT
-		struct PathData
-		int TXorRX
-		int azimuth
-		int elevation
-		double value
+		struct PathData *path
+		int TXorRX - 0 for the transmitter antenna (path->A_tx), anything else for the receiver
+			(path->A_rx)
+		int azimuth - azimuth (whole degrees, 0 - 359, clockwise from true north)
+		int elevation - elevation (whole degrees, 0 - 90)
+		double value - gain (dBi)
+
+	OUTPUT
+		pattern[0][azimuth][elevation] of the chosen antenna. Only frequency block 0 is written.
+		A newly allocated pattern gets freqs[0] = 0.0 and uninitialised gains elsewhere; if that
+		allocation fails nothing is written.
 
 	*/
 	int frequencyIndex = 0;
@@ -84,6 +90,24 @@ static int ReadGains(char *line, FILE *fp, double *g, int n) {
 }
 
 
+/*
+	ReadType11() - Reads a VOACAP Type 11 antenna file: one table of 91 gains versus elevation
+		(0 - 90 degrees), the same for every azimuth. Not part of P.533.
+
+		File format: a name line, a parameter-count line, the maximum gain (dBi) line, the
+		antenna type line and the efficiency line (both ignored), then 91 gains, ten per line.
+		If the maximum gain is not 0 it is added to every value.
+
+		INPUT
+			struct Antenna *Ant - empty or allocated antenna; (re)allocated here for 1 frequency
+			FILE *fp - the open file, positioned at its start (not closed here)
+			int silent - TRUE suppresses the progress message
+
+		OUTPUT
+			Ant->Name, Ant->freqs[0] = 0, Ant->pattern[0][0..359][0..90] (dBi)
+			returns RTN_READANTENNAPATTERNSOK (16); RTN_ERRCANTOPENANTFILE (138) if fp is NULL;
+			RTN_ERRALLOCATEANT (137); RTN_ERRREADANTFILE (142) if the file is truncated or malformed
+*/
 int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 
 	#ifdef __GNUC__
@@ -111,8 +135,8 @@ int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 	if (retval != RTN_ALLOCATEP533OK) return retval;
 
 	/*
-   * Read a VOACAP antenna pattern Type 14 file
-	 * Typically, the whole file will look like the following (The file contains a 
+   * Read a VOACAP antenna pattern Type 11 file
+	 * Typically, the whole file will look like the following (The file contains a  
    * single gain block).
 	 *
 	 * SWWhip for REC533  :Sample type 11  Gain Table versus Elevation Angle
@@ -179,6 +203,28 @@ int ReadType11(struct Antenna *Ant, FILE *fp, int silent) {
 }
 
 
+/*
+	ReadType13() - Reads a VOACAP Type 13 antenna file: a 360 x 91 table of gains versus azimuth
+		and elevation for one frequency, rotated to the antenna's bearing. Not part of P.533.
+
+		File format: a name line, a parameter-count line, the maximum gain (dBi), the antenna type,
+		the efficiency (ignored) and the frequency (MHz) lines, then 360 azimuth blocks, each of
+		the azimuth followed by 91 gains (dBi) for elevations 0 - 90 degrees, ten per line. The
+		azimuth read from the file is not used: block i is stored at azimuth (i + bearing) mod 360,
+		the bearing rounded down to a whole degree. The maximum gain is read but not added.
+
+		INPUT
+			struct Antenna *Ant - empty or allocated antenna; (re)allocated here for 1 frequency
+			FILE *fp - the open file, positioned at its start (not closed here)
+			double bearing - direction of the antenna's azimuth 0 (radians, clockwise from north);
+				a non-finite value is treated as 0
+			int silent - TRUE suppresses the progress message
+
+		OUTPUT
+			Ant->Name, Ant->freqs[0] (MHz), Ant->pattern[0][0..359][0..90] (dBi)
+			returns RTN_READANTENNAPATTERNSOK (16); RTN_ERRCANTOPENANTFILE (138) if fp is NULL;
+			RTN_ERRALLOCATEANT (137); RTN_ERRREADANTFILE (142) if the file is truncated or malformed
+*/
 int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 
 	#ifdef __GNUC__
@@ -292,6 +338,25 @@ int ReadType13(struct Antenna *Ant, FILE * fp, double bearing, int silent) {
 }
 
 
+/*
+	ReadType14() - Reads a VOACAP Type 14 antenna file: for each of 30 frequencies a table of 91
+		gains versus elevation, the same for every azimuth. Not part of P.533.
+
+		File format: a name line, a parameter-count line, the maximum gain (dBi), the antenna type
+		and a frequency line, then 30 blocks, each of the frequency (MHz), the efficiency (ignored)
+		and 91 gains (dBi) for elevations 0 - 90 degrees, ten gains per line. If the maximum gain
+		is not 0 it is added to every value. AntennaGain() uses the block nearest in frequency.
+
+		INPUT
+			struct Antenna *Ant - empty or allocated antenna; (re)allocated here for 30 frequencies
+			FILE *fp - the open file, positioned at its start (not closed here)
+			int silent - TRUE suppresses the progress message
+
+		OUTPUT
+			Ant->Name, Ant->freqs[0..29] (MHz), Ant->pattern[0..29][0..359][0..90] (dBi)
+			returns RTN_READANTENNAPATTERNSOK (16); RTN_ERRCANTOPENANTFILE (138) if fp is NULL;
+			RTN_ERRALLOCATEANT (137); RTN_ERRREADANTFILE (142) if the file is truncated or malformed
+*/
 int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
 
 	#ifdef __GNUC__
@@ -411,6 +476,18 @@ int ReadType14(struct Antenna *Ant, FILE *fp, int silent) {
 }
 
 
+/*
+	IsotropicPattern() - Fills an antenna with a constant gain at every azimuth and elevation.
+
+		INPUT
+			struct Antenna *Ant - empty or allocated antenna; (re)allocated here for 1 frequency
+			double G - the gain (dBi)
+			int silent - TRUE suppresses the progress message
+
+		OUTPUT
+			Ant->freqs[0] = 0, Ant->pattern[0][0..359][0..90] = G. If the allocation fails the
+			antenna is left empty (pattern NULL); nothing is returned.
+*/
 void IsotropicPattern(struct Antenna *Ant, double G, int silent) {
 
 	int azin, elen, freqn;			// Number of frequencies, elevations and azimuths

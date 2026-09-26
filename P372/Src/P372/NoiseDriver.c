@@ -3,6 +3,37 @@
 #include "Common.h"
 #include "Noise.h"
 
+/*
+    main() - Stand alone test driver for the P372 noise routines.
+
+        Runs AllocateNoiseMemory(), ReadFamDud() and Noise() once with fixed
+        inputs and prints the inputs, the twelve results, ManMadeNoise, and
+        the addresses and corner values of the coefficient arrays
+        (dud, fam, fakp, fakabp) as a check that the file was read and
+        reshaped.
+
+        Fixed inputs
+            manMadeNoise  RESIDENTIAL (category code 1.0) - printed only;
+                          it is never copied into noiseP.ManMadeNoise, which
+                          Noise() reads uninitialised (InitializeNoise() is
+                          not called either)
+            longitude     10 degrees east (passed in radians)
+            latitude      40 degrees north (passed in radians)
+            frequency     10 MHz
+            hour          7 (UTC hour index for Noise())
+            month         1 (0-based, so February: reads COEFF02W.txt)
+            data path     ".\\" (current directory)
+
+        Note: the "Run Successful" messages are printed unconditionally; the
+        return codes of AllocateNoiseMemory(), ReadFamDud() and Noise() are
+        not checked, and the memory is not freed before exit.
+
+        INPUT
+            None (no command line arguments)
+
+        OUTPUT
+            Text on stdout. Returns 0.
+*/
 int main() {
     struct NoiseParams noiseP;
     double manMadeNoise = RESIDENTIAL;

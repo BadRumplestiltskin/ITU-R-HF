@@ -11,13 +11,35 @@ int ValidatePath(struct PathData *path) {
 
 	/*
 
-		ValidatePath() - Checks the data in the path for correct input.
+		ValidatePath() - Checks the user-supplied inputs in the path structure before P533()
+			calculates anything. It implements no equation of the Recommendation; the limits
+			are those of this implementation (for example 1 - 30 MHz, the HF band the
+			ionospheric maps and the method are used for).
 
 		INPUT
 		struct PathData *path
+			year (1900 - 2100), month (0-based index 0 - 11), hour (0 - 23; path->hour = h
+			means h:00 UTC), noiseP.ManMadeNoise (one of the CITY ... QUIET category flags,
+			a figure in the open interval (100, 200), or any negative value to skip the
+			man-made noise), SSN (R12 >= 0, no upper limit), Modulation (ANALOG or DIGITAL),
+			frequency (1 - 30 MHz), BW (0.005 - 3e6 Hz), txpower (-30 - 60 dB(1 kW)),
+			SNRr and SIRr (-30 - 200 dB), F0 and T0 (0 - 1000; frequency and time spread at -10 dB),
+			A (0 - 1000 dB),
+			TW (0 - 50 ms), FW (0 - 1000 Hz), L_tx and L_rx (|lat| <= PI/2, |lng| <= PI
+			radians), SNRXXp (1 - 99 %), and the array pointers foF2, M3kF2, foF2var,
+			noiseP.dud, noiseP.fam, A_tx.pattern and A_rx.pattern (must be non-NULL).
 
 		OUTPUT
-		returns an integer representing the validity of the data
+		returns RTN_VALIDDATAOK (17) when every check passes, otherwise the code of the
+		first failing check, in the order tested: RTN_ERRYEAR (100), RTN_ERRMONTH (101),
+		RTN_ERRHOUR (102), RTN_ERRMANMADENOISE (103), RTN_ERRNOFOF2DATA (104),
+		RTN_ERRNOM3KF2DATA (105), RTN_ERRNODUDDATA (106), RTN_ERRNOFAMDATA (107),
+		RTN_ERRNOFOF2VARDATA (108), RTN_ERRSSN (109), RTN_ERRMODULATION (110),
+		RTN_ERRFREQUENCY (111), RTN_ERRBW (112), RTN_ERRTXPOWER (113), RTN_ERRSNRR (114),
+		RTN_ERRSIRR (115), RTN_ERRF0 (116), RTN_ERRT0 (117), RTN_ERRA (118), RTN_ERRTW (119),
+		RTN_ERRFW (120), RTN_ERRLTX (121), RTN_ERRLRX (122), RTN_ERRRXANTENNAPATTERN (123),
+		RTN_ERRTXANTENNAPATTERN (124), RTN_ERRSNRXXP (125).
+		The path structure is not modified. NaN in any range-checked double is rejected.
 
 		SUBROUTINES
 		None

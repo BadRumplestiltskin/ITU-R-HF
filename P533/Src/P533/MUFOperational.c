@@ -12,23 +12,46 @@ void MUFOperational(struct PathData *path) {
 	/*
 
 	 	 MUFOperational() - Calculates the operational MUF from P.533-12 Section 3.7 "The path operational MUF".
-	 
+			Verified against P.533-14 section 3.7: F2 modes, operational MUF = basic MUF x Rop,
+			"where Rop is given in Table 1 to Recommendation ITU-R P.1240"; E modes, operational
+			MUF = basic MUF; the path operational MUF is the greater of the two; the 10 % and
+			90 % values are the median operational MUF times the P.1239 Table 3 / Table 2
+			factors for F modes and 1.05 / 0.95 for E modes. The Rop values themselves and
+			the P.1240 day/night, season and e.i.r.p. selection are from P.1240, whose text
+			was not provided (unverified).
+
 	 		INPUT
-	 			struct PathData *path
-	 
+	 			struct PathData *path - reads distance (km), Md_F2[]/Md_E[] BMUF, MUF50, deltal,
+					deltau (from MUFBasic() and MUFVariability()), season (WhatSeason()),
+					CP[MP] (ltime = UTC hour, Sun.lsr/lss/sha, hr), txpower (dB(1 kW)),
+					A_tx, n0_F2
+
 	 		OUTPUT
-	 			path->Md_F2[].OPMUF - Operational MUF
-	 			path->Md_F2[i].OPMUF10 - 10% of the month Operational MUF
-	 			path->Md_F2[i].OPMUF90 - 90% of the month Operational MUF
-	 			path->Md_E[].OPMUF - Operational MUF
-	 			path->Md_E[i].OPMUF10 - 10% of the month Operational MUF
-	 			path->Md_E[i].OPMUF90 - 90% of the month Operational MUF
-	 			path->OPMUF - Path operational MUF
-	 			path->OPMUF10 - Path operational MUF for 10% of the month 
-	 			path->OPMUF90 - Path operational MUF for 90% of the month 
+	 			path->Md_F2[].OPMUF - Operational MUF (MHz), MUF50 x Rop
+	 			path->Md_F2[i].OPMUF10 - 10% of the month Operational MUF (x deltau)
+	 			path->Md_F2[i].OPMUF90 - 90% of the month Operational MUF (x deltal)
+	 			path->Md_E[].OPMUF - Operational MUF (MHz), = BMUF
+	 			path->Md_E[i].OPMUF10 - 10% of the month Operational MUF (x 1.05)
+	 			path->Md_E[i].OPMUF90 - 90% of the month Operational MUF (x 0.95)
+	 			path->OPMUF - Path operational MUF (MHz), the largest mode OPMUF
+	 			path->OPMUF10 - Path operational MUF for 10% of the month, of the mode that sets OPMUF
+	 			path->OPMUF90 - Path operational MUF for 90% of the month, of the mode that sets OPMUF
+				path->EIRP - Pt + 30 (dBW) plus the transmit antenna gain along the lowest-order
+					F2 mode (dBi); Pt + 30 alone if there is no F2 mode
+				Nothing is set for D > 9000 km (the fields keep their InitializePath() values).
+
+			NOTES
+				- Day or night is decided at the mid-path control point from the 90.833 deg
+				  sunrise and sunset in UTC hours, with the wrap through midnight and polar
+				  day/night handled (see the body).
+				- EIRP <= 30 dBW selects the first row of Rop, > 30 dBW the second.
+				- The season index is path->season, the P.1239-4 section 3.2 season at mid-path.
+				- Only modes with BMUF != 0 are considered. If several modes share the path
+				  OPMUF, an F2 mode is used for the deciles.
 
 			SUBROUTINES
-				None
+				AntennaGain()
+				ElevationAngle()
 	 
 	 */
 

@@ -13,29 +13,63 @@ void MUFBasic(struct PathData *path) {
 
 	  MUFBasic() Determines the Basic MUF as described in ITU-R P.533-12 Section 3.5 F2-layer basic MUF.
 	 		and Section 3.3 E-layer basic MUF. This routine stores the F2 and E mode information to the path structure.
-	 
+			Verified against P.533-14:
+				section 3.5.1.1  equation (2) hr at mid-path; equation (3) with (4)-(6) for the
+				                 lowest-order mode, dmax limited to 4000 km
+				section 3.5.1.2  D > dmax: the lower of F2(dmax)MUF (equation (3) with d = dmax)
+				                 at T + d0/2 and R - d0/2 (Table 1a))
+				section 3.5.2.1  higher-order F2 modes, D <= dmax, equation (3) at mid-path, d = D/n
+				section 3.5.2.2  higher-order F2 modes, D > dmax, equations (7) and (8), dmax
+				                 recalculated (unlimited) at each control point
+				section 3.3      E modes, equation (1) nE(D)MUF = foE sec i110, foE at the
+				                 Table 1a) control points (the lower one for 2000-4000 km)
+				section 3.1      path basic MUF = the higher of the lowest-order E and F2 MUFs
+				section 5.2.1    which modes: lowest-order F2 and the next five (NHIGHERF2),
+				                 lowest-order E and the next two (NHIGHERE), E only to 4000 km
+			Paths longer than 9000 km are skipped (they use section 5.3).
+
 	 		INPUT
-	 			struct PathData *path
-	 
+	 			struct PathData *path - reads path->distance (km) and
+					path->CP[MP] (and CP[T1k], CP[R1k] for D >= 2000 km) from InitializePath()
+
 	 		OUTPUT
-	 			path->CP[MP].hr
-	 			path->n0_F2
-	 			path->n0_E
-	 			path->dmax
-	 			path->BMUF
-	 			path->Md_F2[].BMUF
-	 			path->Md_E[].BMUF
-	 
+	 			path->CP[MP].hr - equation (2) mirror-reflection height (km), min(1490/M(3000)F2 - 176, 500)
+	 			path->n0_F2 - index (hops - 1) of the lowest-order F2 mode, or NOLOWESTMODE (99)
+	 			path->n0_E - index (hops - 1) of the lowest-order E mode: 0 for D <= 2000 km,
+					1 for 2000 < D <= 4000 km; unchanged (NOLOWESTMODE) beyond 4000 km
+	 			path->dmax - dmax at mid-path limited to 4000 km (km); only set if an F2 mode exists
+	 			path->BMUF - path basic MUF (MHz); TOOBIG (DBL_MAX) if neither an E nor an F2 mode
+					exists; not touched (initial 99.9) when D > 9000 km
+	 			path->Md_F2[].BMUF - F2 mode basic MUFs (MHz) for n0_F2 .. n0_F2+5; others stay 0.0
+	 			path->Md_E[].BMUF - E mode basic MUFs (MHz) for n0_E .. n0_E+2; others stay 0.0
+	 			path->Md_E[].hr - 110 km for those E modes
+				path->CP[].x - foF2/foE or 2 (set by CalcB() at every control point it is used on)
+
 	 			via CalculateCPParameters()
 	 			path->CP[Td02] - The parameters for the T + d0/2 control point are determined.
 	 			path->CP[Rd02] - The parameters for the R - d0/2 control point are determined.
-	 
+				(only when D > dmax)
+
+			NOTES
+				- The lowest-order F2 mode is found geometrically: the longest hop is the one
+				  reaching the ground at MINELEANGLES (3 deg) elevation from height hr, limited
+				  to 4000 km, and n0 is the fewest hops (at most MAXN0F2+1) whose hop is
+				  shorter than that. P.533-14 only says n0 "is determined by geometrical
+				  considerations"; the 3 deg minimum is this implementation's choice.
+				- Owner ruling, section 3.5.2.2: for D > dmax the higher-order mode MUF is
+				  formed as F2(dmax)MUF x Mn/Mn0 at each of T + d0/2 and R - d0/2 and the lower
+				  of the two products is taken.
+				- The lowest-order E mode is 1E up to 2000 km and 2E beyond (the body cites
+				  P.1240-2 section 2 for this; P.1240 text not provided, unverified), from
+				  "the lowest-order mode with hop length up to 2 000 km" of section 5.2.1.
+
 			SUBROUTINES
 				IncidenceAngle()
+				ElevationAngle()
 				Calcdmax()
 				CalcF2DMUF()
 				CalcB()
-				GreatCircleDistance()
+				GreatCirclePoint()
 				CalculateCPParameters()
 			
 	 */
@@ -289,7 +323,9 @@ void MUFBasic(struct PathData *path) {
  		(5)				Calcdmax()		(6)
   		(4)				CalcCd()		(5)(6)
  		(3)				CalcF2DMUF()	(4)(5)(6)
- 
+
+  The equation numbers are unchanged in P.533-14 section 3.5.1.1 (verified).
+
  */
 
 double Calcdmax(struct ControlPt *CP) {
@@ -300,11 +336,17 @@ double Calcdmax(struct ControlPt *CP) {
 			Presently, June 2013, dmax can be greater than 4000 km for the calculation of higher order MUFs.
 			all other locations it will typically be restricted to 4000 km. 
 	 
+			P.533-14 section 3.5.1.1 equation (5):
+			dmax = 4780 + (12610 + 2140/x^2 - 49720/x^4 + 688900/x^6)(1/B - 0.303),
+			with B from equation (6) and x = max(foF2/foE, 2).
+
 	 		INPUT
-	 			struct ControlPt *CP - Control point of interest
-	 
+	 			struct ControlPt *CP - Control point of interest (reads foF2, foE, M3kF2)
+
 	 		OUTPUT
-	 			returns result of Eqn (5) P.533-12 dmax
+	 			returns result of Eqn (5) P.533-12 dmax (km), NOT limited to 4000 km: callers
+				apply the limit where section 3.5.1.1 requires it
+				CP->x is set as a side effect (via CalcB())
 
 			SUBROUTINES
 				CalcB()
@@ -328,12 +370,16 @@ double CalcB(struct ControlPt *CP) {
 
 	/*
 		CalcB() - Determines the intermediate values B from Eqn (6) P.533-12
-	 
-	 		INPUT 
-	 			struct ControlPt *CP - Control point of interest		
-	 
-	 		OUTPUT 
-	 			returns the intermediate value B
+			P.533-14 section 3.5.1.1 equation (6):
+			B = M(3000)F2 - 0.124 + ([M(3000)F2]^2 - 4)(0.0215 + 0.005 sin(7.854/x - 1.9635)),
+			x = foF2/foE or 2, whichever is the larger. The sine argument is taken in radians.
+
+	 		INPUT
+	 			struct ControlPt *CP - Control point of interest (reads foF2, foE (MHz), M3kF2)
+
+	 		OUTPUT
+	 			returns the intermediate value B (dimensionless)
+				CP->x - set to x; if CP->foE is 0 (control point not computed) x = 2
 	 
 			SUBROUTINES
 				None
@@ -362,13 +408,16 @@ double CalcCd(double d, double dmax) {
 	/*
 
 	 	CalcCd() - Performs Eqn (4) P.533-12
-	 
+			P.533-14 section 3.5.1.1 equation (4):
+			Cd = 0.74 - 0.591 Z - 0.424 Z^2 - 0.090 Z^3 + 0.088 Z^4 + 0.181 Z^5 + 0.096 Z^6,
+			Z = 1 - 2d/dmax.
+
 	 		INPUT
-	 			double d - hop distance
-	 			double dmax - maximum hop distance
-	 
+	 			double d - hop distance (km)
+	 			double dmax - maximum hop distance (km), non-zero
+
 	 		OUTPUT
-	 			returns the result of Eqn (4)
+	 			returns the result of Eqn (4) (dimensionless)
 
 			SUBROUTINES
 				None
@@ -390,15 +439,25 @@ double CalcF2DMUF(struct ControlPt *CP, double distance, double dmax, double B) 
 	/*
 
 		CalcF2DMUF() - Determines the F2 Layer MUF from Eqn (3) P.533-12
-	  
+			P.533-14 section 3.5.1.1 equation (3):
+			nF2(D)MUF = (1 + (Cd/C3000)(B - 1)) foF2 + (fH/2)(1 - d/dmax),
+			Cd from equation (4) at d, C3000 = Cd at d = 3000 km, fH at 300 km.
+
 	 		INPUT
-	 			struct ControlPt *CP - Control point of interest
-	 			double distance - Hop distance
-	 			double dmax - Maximum hop distance
-	 			double B - Intermediate value B
-	 
+	 			struct ControlPt *CP - Control point of interest (reads foF2 (MHz), fH[HR300km] (MHz))
+	 			double distance - Hop distance d (km)
+	 			double dmax - Maximum hop distance (km), as the caller wants it (limited to
+					4000 km or not)
+	 			double B - Intermediate value B (equation (6), CalcB())
+
 	 		OUTPUT
-	 			return the F2 layer MUF
+	 			return the F2 layer MUF (MHz)
+
+			NOTES
+				If distance > dmax, Cd is evaluated at dmax, but the gyrofrequency term still
+				uses distance/dmax and so becomes negative. Section 3.5.1.2 callers pass
+				distance = dmax; in section 3.5.2.2 the Mn/Mn0 hops D/n are compared with the
+				recalculated (unlimited) dmax.
 	 
 	 		SUBROUTINES
 				CalcCd()
